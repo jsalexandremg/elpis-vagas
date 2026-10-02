@@ -525,7 +525,6 @@ with col_lista:
         if st.button(f"Mostrar mais ({len(filtradas) - n_mostrar} restantes)", width="stretch"):
             st.session_state.mostrar_n = n_mostrar + 15
             st.rerun()
-
 with col_mapa:
     com_pino = sum(1 for v in filtradas if v.get("lat"))
     st.markdown(f"<div style='font-size:16px; font-weight:600; color:#0F2A4A; margin-bottom:4px;'>"
