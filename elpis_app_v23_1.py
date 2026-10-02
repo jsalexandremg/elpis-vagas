@@ -23,7 +23,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.26-Unified-Standard"
+APP_VERSION = "2026-10-02-v24.27-Logo-Highlight-Animated"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
 # Previne tradução automática indevida do Chrome
@@ -99,6 +99,49 @@ html, body, [data-testid="stAppViewContainer"] {
     max-width: 100% !important;
 }
 .stApp {background: var(--background) !important;}
+
+/* =========================================================
+   DESTAQUE E ANIMAÇÃO PREMIUM: LOGOTIPO ÉLPIS
+   ========================================================= */
+.elpis-brand-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    height: 36px;
+}
+
+.elpis-brand {
+    font-size: 32px !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.6px !important;
+    line-height: 1 !important;
+    display: inline-block !important;
+    cursor: default !important;
+    user-select: none !important;
+    background: linear-gradient(135deg, #FFD166 0%, #F6A000 50%, #FF9F1C 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 4px rgba(246, 160, 0, 0.35));
+    animation: elpis-glow 3.5s ease-in-out infinite alternate;
+    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.25s ease;
+}
+
+.elpis-brand:hover {
+    transform: scale(1.04);
+    filter: drop-shadow(0 0 10px rgba(255, 209, 102, 0.8));
+}
+
+@keyframes elpis-glow {
+    0% {
+        filter: drop-shadow(0 1px 3px rgba(246, 160, 0, 0.35));
+    }
+    50% {
+        filter: drop-shadow(0 2px 8px rgba(246, 160, 0, 0.65));
+    }
+    100% {
+        filter: drop-shadow(0 2px 12px rgba(255, 209, 102, 0.85));
+    }
+}
 
 /* =========================================================
    BLINDAGEM TOTAL DOS CHECKBOXES (AZUL CORPORATIVO ÉLPIS)
@@ -198,7 +241,7 @@ label[data-baseweb="checkbox"]:has(input:checked) div,
 .sb-off {background: var(--status-neutral-bg); color: #475569;}
 
 /* =========================================================
-   BLOCO "ORDEM & PUBLICAÇÃO": HARMONIZADO CONFORME IMAGEM 2 (11px, 28px)
+   BLOCO "ORDEM & PUBLICAÇÃO": HARMONIZADO EM 11PX & 28PX
    ========================================================= */
 .st-key-sec_filtros_pos [data-testid="stSelectbox"],
 .st-key-painel_filtros [data-testid="stSelectbox"],
@@ -207,7 +250,6 @@ label[data-baseweb="checkbox"]:has(input:checked) div,
     margin-top: 1px !important;
 }
 
-/* Caixa fechada do selectbox */
 .st-key-sec_filtros_pos [data-testid="stSelectbox"] div[data-baseweb="select"] > div,
 .st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] > div,
 [data-testid="stSelectbox"]:not([data-testid="stForm"] [data-testid="stSelectbox"]) div[data-baseweb="select"] > div {
@@ -224,7 +266,6 @@ label[data-baseweb="checkbox"]:has(input:checked) div,
     align-items: center !important;
 }
 
-/* Sem borda vermelha no foco/clique */
 .st-key-sec_filtros_pos [data-testid="stSelectbox"] div[data-baseweb="select"] > div:hover,
 .st-key-sec_filtros_pos [data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus,
 .st-key-sec_filtros_pos [data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus-within,
@@ -239,7 +280,6 @@ label[data-baseweb="checkbox"]:has(input:checked) div,
     outline: none !important;
 }
 
-/* Tipografia unificada em 11px em todos os textos do selectbox */
 .st-key-sec_filtros_pos [data-testid="stSelectbox"] div[data-baseweb="select"] *,
 .st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] *,
 [data-testid="stSelectbox"]:not([data-testid="stForm"] [data-testid="stSelectbox"]) div[data-baseweb="select"] * {
@@ -474,7 +514,6 @@ li[role="option"]:hover {
 [data-testid="stForm"] button[kind="primary"]:hover, [data-testid="stForm"] button[kind="primaryFormSubmit"]:hover {
     background: var(--elpis-orange-hover) !important;
 }
-.elpis-brand {color: var(--elpis-orange); font-weight: 800; font-size: 24px; line-height: 36px;}
 
 /* ---------- CARTÕES DE VAGAS ---------- */
 .job-card {
@@ -883,11 +922,16 @@ def limpar_filtros():
 
 
 # ==========================================
-# 1) HEADER DE BUSCA ULTRA-COMPACTO
+# 1) HEADER DE BUSCA COM LOGO DESTACADO E ANIMADO
 # ==========================================
 with st.form("search_form"):
-    c0, c1, c2, c3, c4 = st.columns([1.1, 3.8, 2.7, 1.8, 1.4], vertical_alignment="center")
-    with c0: st.markdown("<div class='elpis-brand'>Élpis</div>", unsafe_allow_html=True)
+    # c0 recebe 1.3 de proporção para acomodar com folga a logo de 32px e o efeito de glow
+    c0, c1, c2, c3, c4 = st.columns([1.3, 3.7, 2.7, 1.7, 1.4], vertical_alignment="center")
+    with c0:
+        st.markdown(
+            "<div class='elpis-brand-container'><span class='elpis-brand'>Élpis</span></div>",
+            unsafe_allow_html=True
+        )
     with c1: cargo = st.text_input("Cargo / Função", placeholder="💼  Cargo / Função", label_visibility="collapsed")
     with c2: local = st.text_input("Localidade", placeholder="📍  Localidade (ex: Belo Horizonte)", label_visibility="collapsed")
     with c3: nivel = st.selectbox("Senioridade", ["(qualquer)", "Analista", "Especialista", "Coordenador", "Gerente", "Diretor", "VP"], label_visibility="collapsed")
