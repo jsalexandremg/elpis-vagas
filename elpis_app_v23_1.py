@@ -21,7 +21,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v23.11-Ultra-Compact-Blue"
+APP_VERSION = "2026-10-02-v23.12-Ultra-Blue-Tags"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="expanded")
 
 # O Chrome oferece/aplica tradução automática e isso corrompe a interface
@@ -39,39 +39,46 @@ st.markdown("""
     .block-container { padding-top: 1.5rem; padding-bottom: 2rem; padding-left: 2rem; padding-right: 2rem; }
     
     /* ========================================================= */
-    /* 1. MÚLTIPLA ESCOLHA (MULTISELECT) - AZUL E MICRO TAMANHO  */
+    /* 1. MÚLTIPLA ESCOLHA (MULTISELECT) - AZUL FORÇADO ABSOLUTO */
     /* ========================================================= */
-    div[data-baseweb="select"] span[data-baseweb="tag"] {
-        background-color: #1D4ED8 !important; /* Azul Executivo Forçado */
+    
+    /* Regras agressivas para sobrepor a injeção nativa de cor do Streamlit */
+    .stMultiSelect [data-baseweb="tag"], 
+    div[data-testid="stMultiSelect"] span[data-baseweb="tag"],
+    div[data-testid="stMultiSelect"] div[data-baseweb="tag"] {
+        background-color: #1D4ED8 !important; /* Azul Executivo */
         border: none !important;
-        border-radius: 4px !important;
-        padding: 0px 4px !important;
+        border-radius: 3px !important;
+        padding: 0px 6px !important;
         margin: 2px !important;
-        height: 20px !important; /* Altura ultra reduzida */
+        min-height: 20px !important;
+        max-height: 22px !important;
     }
-    div[data-baseweb="select"] span[data-baseweb="tag"] span {
+    .stMultiSelect [data-baseweb="tag"] span,
+    div[data-testid="stMultiSelect"] span[data-baseweb="tag"] span,
+    div[data-testid="stMultiSelect"] div[data-baseweb="tag"] span {
         color: #FFFFFF !important; /* Texto branco */
-        font-size: 0.65rem !important; /* Fonte minúscula */
+        font-size: 11px !important; /* Fonte minúscula */
         font-weight: 600 !important;
-        padding-left: 2px !important;
-        padding-right: 2px !important;
+        line-height: 1.2 !important;
     }
-    div[data-baseweb="select"] span[data-baseweb="tag"] svg {
+    .stMultiSelect [data-baseweb="tag"] svg,
+    div[data-testid="stMultiSelect"] span[data-baseweb="tag"] svg {
         color: #FFFFFF !important; /* X branco */
         height: 10px !important;
         width: 10px !important;
     }
-    div[data-baseweb="select"] span[data-baseweb="tag"] svg:hover {
+    .stMultiSelect [data-baseweb="tag"] svg:hover {
         color: #F87171 !important; 
     }
 
     /* ========================================================= */
-    /* 2. PÍLULAS DE DIAGNÓSTICO (VERDE, AMARELO, CINZA) - COMPACTO */
+    /* 2. PÍLULAS DE DIAGNÓSTICO E CARTÕES                      */
     /* ========================================================= */
     .pill-green, .pill-yellow, .pill-gray { 
-        border-radius: 4px !important; /* Mais quadrado/corporativo */
-        padding: 2px 6px !important;   /* Menos espaço interno */
-        font-size: 11px !important;    /* Fonte super reduzida */
+        border-radius: 4px !important;
+        padding: 2px 6px !important;
+        font-size: 11px !important;
         display: inline-block;
         margin-right: 4px; 
         margin-bottom: 4px; 
@@ -83,9 +90,6 @@ st.markdown("""
     .pill-yellow { background: #FFFBEB; color: #92400E; border-color: #FDE68A; }
     .pill-gray { background: #F3F4F6; color: #374151; border-color: #D1D5DB; }
 
-    /* ========================================================= */
-    /* 3. CARTÕES DE VAGA E ETIQUETAS INTERNAS                   */
-    /* ========================================================= */
     .job-card { background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 14px; margin-bottom: 10px;
         box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: transform 0.1s, box-shadow 0.1s; }
     .job-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -93,13 +97,8 @@ st.markdown("""
     .job-company { font-size: 12px; color: #6B7280; margin-top: 4px; }
     
     .badge-source { 
-        background: #EFF6FF; 
-        color: #1D4ED8; 
-        border-radius: 4px; 
-        padding: 2px 6px; 
-        font-size: 10px !important; /* Fonte minúscula na vaga */
-        font-weight: 600; 
-        border: 1px solid #BFDBFE;
+        background: #EFF6FF; color: #1D4ED8; border-radius: 4px; padding: 2px 6px; 
+        font-size: 10px !important; font-weight: 600; border: 1px solid #BFDBFE;
     }
     .badge-global { background: #F0FDFA; color: #0F766E; border-color: #99F6E4; }
     .badge-also { font-size: 10px; color: #6B7280; margin-left: 8px; }
@@ -109,7 +108,7 @@ st.markdown("""
     .btn-apply:hover { background: #D97706; color: #FFF !important; }
 
     /* ========================================================= */
-    /* 4. REDUÇÃO DE ESPAÇOS E TEXTOS DA BARRA LATERAL           */
+    /* 3. REDUÇÃO DE ESPAÇOS NA BARRA LATERAL                    */
     /* ========================================================= */
     [data-testid="stSidebar"] p, 
     [data-testid="stSidebar"] label, 
@@ -123,8 +122,8 @@ st.markdown("""
         padding-bottom: 0px !important;
         font-size: 0.8rem !important;
     }
-    [data-testid="stSidebar"] .element-container { margin-bottom: -12px !important; }
-    [data-testid="stSidebarUserContent"] { padding-top: 1rem !important; }
+    [data-testid="stSidebar"] .element-container { margin-bottom: -14px !important; }
+    [data-testid="stSidebarUserContent"] { padding-top: 0.5rem !important; }
     hr { margin-top: 0.4rem !important; margin-bottom: 0.4rem !important; }
 
     /* FORMULÁRIO DE BUSCA - TEMA CORPORATIVO RESPONSIVO */
@@ -241,7 +240,7 @@ def cadastro_dialog():
             st.rerun()
 
 # ==========================================
-# PAINEL LATERAL (CLÁSSICO COMPACTADO E LIMPO)
+# PAINEL LATERAL (CLÁSSICO COMPACTADO)
 # ==========================================
 sid = st.session_state.get("temporary_session_id")
 current_session = sessao_atual(sid)
@@ -523,6 +522,7 @@ with col_lista:
         if st.button(f"Mostrar mais ({len(filtradas) - n_mostrar} restantes)", use_container_width=True):
             st.session_state.mostrar_n = n_mostrar + 15
             st.rerun()
+
 with col_mapa:
     com_pino = sum(1 for v in filtradas if v.get("lat"))
     st.markdown(f"<div style='font-size:16px; font-weight:600; color:#0F2A4A; margin-bottom:4px;'>"
