@@ -22,7 +22,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.16-Compact-Align"
+APP_VERSION = "2026-10-02-v24.17-Modalidade-Fixed"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
 # Previne tradução automática indevida do Chrome
@@ -114,7 +114,34 @@ div[data-baseweb="checkbox"] div[aria-checked="true"],
     fill: #FFFFFF !important;
 }
 
-/* ---------- COMPACTAÇÃO DA LISTA DE FONTES (MENOS ESPAÇO ENTRE ADESIVOS) ---------- */
+/* ---------- COMPACTAÇÃO DA SEÇÃO MODALIDADE (SEM CORTE DE TEXTO) ---------- */
+.st-key-sec_modalidade [data-testid="stCheckbox"] {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.st-key-sec_modalidade [data-testid="stCheckbox"] label {
+    gap: 3px !important;
+    padding: 0 !important;
+    min-height: auto !important;
+    align-items: center !important;
+}
+.st-key-sec_modalidade [data-testid="stCheckbox"] label div:first-child {
+    margin-right: 0px !important;
+    flex-shrink: 0 !important;
+    width: 14px !important;
+    height: 14px !important;
+}
+.st-key-sec_modalidade [data-testid="stCheckbox"] label p {
+    font-size: 10.5px !important;
+    line-height: 1.1 !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+}
+
+/* ---------- COMPACTAÇÃO DA LISTA DE FONTES ---------- */
 .st-key-lista_fontes [data-testid="stHorizontalBlock"] {
     margin-bottom: -12px !important;
     align-items: center !important;
@@ -463,7 +490,7 @@ with st.form("search_form"):
 # ==========================================
 # 2) ESTRUTURA HORIZONTAL CALIBRADA (VIEWPORT)
 # ==========================================
-col_filtros, col_main = st.columns([1.15, 4.85], gap="small")
+col_filtros, col_main = st.columns([1.22, 4.78], gap="small")
 with col_main:
     status_slot = st.container()
     aviso_slot = st.container()
@@ -495,8 +522,11 @@ with col_filtros:
                 badge_slots[nome].markdown(badge_fonte(nome, mapa_prev, False), unsafe_allow_html=True)
 
         st.markdown("<div class='f-sec'>🎛️ Modalidade</div>", unsafe_allow_html=True)
-        mod_cols = st.columns(3, gap="small")
-        mods = [m for m, c in zip(MODALIDADES, mod_cols) if c.checkbox(m, key=f"mod_{m}")]
+        # Colunas com proporção dinâmica: 'Presencial' recebe mais espaço para não truncar
+        with st.container(key="sec_modalidade"):
+            c_pres, c_rem, c_hib = st.columns([1.35, 1.0, 1.0], gap="small")
+            mod_cols = [c_pres, c_rem, c_hib]
+            mods = [m for m, c in zip(MODALIDADES, mod_cols) if c.checkbox(m, key=f"mod_{m}")]
 
         filtros_pos = st.container()
 
