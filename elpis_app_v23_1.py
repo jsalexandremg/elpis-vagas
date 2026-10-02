@@ -22,7 +22,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.21-Map-Reactive-Fix"
+APP_VERSION = "2026-10-02-v24.22-Typography-Harmonized"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
 # Previne tradução automática indevida do Chrome
@@ -40,7 +40,7 @@ try:
 except Exception:
     pass
 
-# 2. DESIGN SYSTEM CORPORATIVO ÉLPIS (Zero Outer Scroll & Tipografia Harmonizada)
+# 2. DESIGN SYSTEM CORPORATIVO ÉLPIS (Zero Outer Scroll & Tipografia Padronizada)
 st.markdown("""
 <style>
 :root {
@@ -75,7 +75,7 @@ st.markdown("""
 header[data-testid="stHeader"], [data-testid="stSidebar"],
 [data-testid="stSidebarCollapsedControl"], [data-testid="collapsedControl"] {display: none !important;}
 
-/* Oculta contentores invisíveis para cortar o espaço branco no topo */
+/* Oculta contentores invisíveis para cortar espaço branco no topo */
 div[data-testid="stElementContainer"]:has(> style),
 div[data-testid="stElementContainer"]:has(> script),
 div[data-testid="stElementContainer"]:empty {
@@ -85,7 +85,7 @@ div[data-testid="stElementContainer"]:empty {
     padding: 0 !important;
 }
 
-/* Trava a tela para impedir rolagem da janela inteira */
+/* Trava a tela para impedir rolagem global da janela */
 html, body, [data-testid="stAppViewContainer"] {
     overflow-x: hidden !important;
     overflow-y: hidden !important;
@@ -101,7 +101,7 @@ html, body, [data-testid="stAppViewContainer"] {
 div[data-baseweb="select"] ul {max-height: 180px !important;}
 
 /* =========================================================
-   BLINDAGEM GERAL DE CHECKBOXES (AZUL CORPORATIVO ÉLPIS)
+   BLINDAGEM TOTAL DOS CHECKBOXES (AZUL CORPORATIVO ÉLPIS)
    ========================================================= */
 [data-testid="stCheckbox"] {
     margin: 0 !important;
@@ -122,25 +122,147 @@ div[data-baseweb="select"] ul {max-height: 180px !important;}
 [data-testid="stCheckbox"] input:checked ~ div,
 [data-testid="stCheckbox"] div[role="checkbox"][aria-checked="true"],
 [data-testid="stCheckbox"] div[aria-checked="true"],
-div[data-baseweb="checkbox"] span[aria-checked="true"],
-div[data-baseweb="checkbox"] div[aria-checked="true"] {
+[data-testid="stCheckbox"] span[aria-checked="true"],
+div[data-baseweb="checkbox"]:has(input:checked) > div,
+label[data-baseweb="checkbox"]:has(input:checked) div,
+[data-testid="stCheckbox"] label div:has(> svg) {
     background-color: var(--elpis-primary) !important;
     border-color: var(--elpis-primary) !important;
 }
 [data-testid="stCheckbox"] svg {
     fill: #FFFFFF !important;
-}
-[data-testid="stCheckbox"] label p {
-    font-size: 11px !important;
-    line-height: 1.3 !important;
-    color: var(--text-primary) !important;
-    margin: 0 !important;
-    white-space: normal !important;
-    word-break: normal !important;
+    stroke: #FFFFFF !important;
 }
 
 /* =========================================================
-   EXPANDER: IA & OPÇÕES (SEM CONFLITO DE LARGURA)
+   PAINEL LATERAL ESQUERDO: PADRONIZAÇÃO TIPOGRÁFICA GERAL
+   ========================================================= */
+.f-title {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: var(--elpis-primary) !important;
+    padding-top: 2px !important;
+}
+.f-sec {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: var(--elpis-primary) !important;
+    margin: 8px 0 4px 0 !important;
+    display: flex !important;
+    align-items: center !important;
+}
+.f-sec .help {
+    display: inline-block;
+    width: 13px;
+    height: 13px;
+    line-height: 13px;
+    text-align: center;
+    border: 1px solid var(--border-dark);
+    border-radius: 50%;
+    font-size: 8px;
+    color: var(--text-secondary);
+    margin-left: 4px;
+    cursor: help;
+}
+
+/* 1. TIPOGRAFIA UNIFICADA PARA TODOS OS CHECKBOXES DO PAINEL */
+.st-key-painel_filtros [data-testid="stCheckbox"] label p {
+    font-size: 11.5px !important;
+    font-weight: 500 !important;
+    color: var(--text-primary) !important;
+    line-height: 1.2 !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+}
+
+/* 2. LINHAS DE MOTORES DE BUSCA (ALINHAMENTO SIMÉTRICO) */
+.st-key-lista_fontes [data-testid="stHorizontalBlock"] {
+    margin-bottom: -8px !important;
+    align-items: center !important;
+    min-height: 24px !important;
+}
+.st-key-lista_fontes [data-testid="column"] {
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* 3. ADESIVOS DE STATUS (MICRO-TAMANHO HARMONIZADO) */
+.sb {
+    display: inline-block;
+    border-radius: 6px;
+    padding: 2px 6px !important;
+    font-size: 9.5px !important;
+    font-weight: 600 !important;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+.sb-ok {background: var(--status-success-bg); color: #087F68;}
+.sb-wait {background: var(--status-warning-bg); color: #9A5800;}
+.sb-off {background: var(--status-neutral-bg); color: #475569;}
+
+/* 4. SELETORES COMPACTOS E PADRONIZADOS (ORDEM & PUBLICAÇÃO) */
+[data-testid="column"]:first-child [data-testid="stSelectbox"],
+.st-key-painel_filtros [data-testid="stSelectbox"] {
+    margin-bottom: 4px !important;
+}
+[data-testid="column"]:first-child [data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+    min-height: 32px !important;
+    height: 32px !important;
+    padding: 0 8px !important;
+    border-radius: var(--radius-sm) !important;
+    border: 1px solid var(--border) !important;
+    background-color: var(--surface) !important;
+}
+[data-testid="column"]:first-child [data-testid="stSelectbox"] div[data-baseweb="select"] span,
+[data-testid="column"]:first-child [data-testid="stSelectbox"] div[data-baseweb="select"] div,
+.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] span {
+    font-size: 11.5px !important;
+    font-weight: 500 !important;
+    color: var(--text-primary) !important;
+    line-height: 30px !important;
+}
+[data-testid="column"]:first-child [data-testid="stSelectbox"] svg,
+.st-key-painel_filtros [data-testid="stSelectbox"] svg {
+    width: 16px !important;
+    height: 16px !important;
+}
+
+/* 5. CAIXA INFORMATIVA E SESSÃO */
+.info-box {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 6px 8px;
+    margin: 8px 0;
+    font-size: 10px;
+    color: var(--text-secondary);
+}
+.info-box b {
+    display: block;
+    color: var(--elpis-primary);
+    font-size: 11px;
+}
+.st-key-limpar button {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    color: var(--status-info) !important;
+    font-size: 11px !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    float: right;
+}
+.st-key-limpar button p {
+    color: var(--status-info) !important;
+    font-size: 11px !important;
+}
+
+/* =========================================================
+   EXPANDER: IA & OPÇÕES (HARMONIZADO COM O RESTANTE)
    ========================================================= */
 [data-testid="stExpander"] {
     border: 1px solid var(--border) !important;
@@ -154,7 +276,7 @@ div[data-baseweb="checkbox"] div[aria-checked="true"] {
 }
 [data-testid="stExpander"] details summary p,
 [data-testid="stExpander"] details summary span {
-    font-size: 11px !important;
+    font-size: 11.5px !important;
     font-weight: 700 !important;
     color: var(--elpis-primary) !important;
 }
@@ -169,12 +291,9 @@ div[data-baseweb="checkbox"] div[aria-checked="true"] {
     color: var(--elpis-primary) !important;
     margin-bottom: 2px !important;
 }
-
-/* Slider: Azul Corporativo total */
 [data-testid="stExpander"] [data-testid="stSlider"] div[role="slider"] {
     background-color: var(--elpis-primary) !important;
     border: 2px solid #FFFFFF !important;
-    box-shadow: 0 0 0 1px var(--elpis-primary) !important;
 }
 [data-testid="stExpander"] [data-testid="stSlider"] div[data-baseweb="slider"] div[style*="background-color"] {
     background-color: var(--elpis-primary) !important;
@@ -184,8 +303,6 @@ div[data-baseweb="checkbox"] div[aria-checked="true"] {
     font-weight: 700 !important;
     font-size: 11px !important;
 }
-
-/* Input de chave dentro do Expander */
 [data-testid="stExpander"] input {
     min-height: 28px !important;
     height: 28px !important;
@@ -193,8 +310,6 @@ div[data-baseweb="checkbox"] div[aria-checked="true"] {
     padding: 2px 8px !important;
     border-radius: var(--radius-sm) !important;
 }
-
-/* Botões dentro do Expander */
 [data-testid="stExpander"] button {
     min-height: 26px !important;
     height: 26px !important;
@@ -205,70 +320,13 @@ div[data-baseweb="checkbox"] div[aria-checked="true"] {
     font-size: 11px !important;
 }
 [data-testid="stExpander"] [data-testid="stCheckbox"] {
-    margin-top: 6px !important;
-    margin-bottom: 4px !important;
+    margin-top: 4px !important;
+    margin-bottom: 2px !important;
 }
 [data-testid="stExpander"] [data-testid="stCheckbox"] label p {
     font-size: 11px !important;
     font-weight: 500 !important;
     white-space: normal !important;
-    overflow: visible !important;
-}
-
-/* ---------- COMPACTAÇÃO DA SEÇÃO MODALIDADE ---------- */
-.st-key-sec_modalidade [data-testid="column"] {
-    padding: 0 1px !important;
-    min-width: 0 !important;
-}
-.st-key-sec_modalidade [data-testid="stCheckbox"] label {
-    gap: 3px !important;
-    min-height: 20px !important;
-}
-.st-key-sec_modalidade [data-testid="stCheckbox"] label p {
-    font-size: 10px !important;
-    font-weight: 600 !important;
-    white-space: nowrap !important;
-}
-
-/* ---------- COMPACTAÇÃO DA LISTA DE FONTES ---------- */
-.st-key-lista_fontes [data-testid="stHorizontalBlock"] {
-    margin-bottom: -12px !important;
-    align-items: center !important;
-}
-.st-key-lista_fontes [data-testid="stCheckbox"] label {
-    min-height: 20px !important;
-}
-.st-key-lista_fontes [data-testid="stCheckbox"] p {
-    font-size: 11px !important;
-}
-
-/* ADESIVOS DE STATUS (MICRO-TAMANHO) */
-.sb {
-    display: inline-block;
-    border-radius: 6px;
-    padding: 1px 5px !important;
-    font-size: 9px !important;
-    font-weight: 600;
-    white-space: nowrap;
-    line-height: 1.3;
-}
-.sb-ok {background: var(--status-success-bg); color: #087F68;}
-.sb-wait {background: var(--status-warning-bg); color: #9A5800;}
-.sb-off {background: var(--status-neutral-bg); color: #475569;}
-
-/* ---------- CAMPOS DE SELEÇÃO (ORDEM & DATA) ---------- */
-.st-key-painel_filtros [data-testid="stSelectbox"] {
-    margin-bottom: -4px !important;
-}
-.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] > div {
-    min-height: 28px !important;
-    height: 28px !important;
-    padding: 0 6px !important;
-    border-radius: var(--radius-sm) !important;
-    font-size: 11px !important;
-}
-.st-key-painel_filtros [data-testid="stSelectbox"] span {
-    font-size: 11px !important;
 }
 
 /* ---------- HEADER / FORMULÁRIO COMPACTO ---------- */
@@ -295,21 +353,6 @@ div[data-baseweb="checkbox"] div[aria-checked="true"] {
     background: var(--elpis-orange-hover) !important;
 }
 .elpis-brand {color: var(--elpis-orange); font-weight: 800; font-size: 24px; line-height: 36px;}
-
-/* ---------- PAINEL DE FILTROS (ESQUERDA) ---------- */
-.f-title {font-weight: 700; font-size: 13px; color: var(--elpis-primary); padding-top: 2px;}
-.f-sec {font-weight: 700; font-size: 11px; color: var(--elpis-primary); margin: 6px 0 2px 0;}
-.f-sec .help {display:inline-block; width:13px; height:13px; line-height:13px; text-align:center;
-    border:1px solid var(--border-dark); border-radius:50%; font-size:8px; color:var(--text-secondary);
-    margin-left:4px; cursor:help;}
-
-.info-box {display:flex; gap:6px; align-items:center; background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); padding: 6px 8px; margin: 8px 0; font-size: 10px; color: var(--text-secondary);}
-.info-box b {display:block; color: var(--elpis-primary); font-size: 10px;}
-
-.st-key-limpar button {background: transparent !important; border: 0 !important; box-shadow: none !important;
-    color: var(--status-info) !important; font-size: 11px !important; min-height: 0 !important; padding: 0 !important; float: right;}
-.st-key-limpar button p {color: var(--status-info) !important; font-size: 11px !important;}
 
 /* ---------- CARTÕES DE VAGAS ---------- */
 .job-card {
@@ -556,7 +599,6 @@ def montar_mapa(vagas, aproximar):
         d = core.idade_dias(v.get("data"))
         cor = "#94A3B8" if d is None or d > 10 else ("#10B981" if d <= 2 else "#F59E0B")
 
-        # Higienização de strings para blindar contra syntax error no JS do Folium
         empresa_limpa = str(v.get('empresa', '')).replace('"', "'").replace('\n', ' ').strip()
         titulo_limpo = str(v.get('titulo', '')).replace('"', "'").replace('\n', ' ').strip()
         tt_texto = f"{empresa_limpa} | {titulo_limpo}"[:120]
@@ -861,10 +903,8 @@ with col_mapa:
         com_pino = sum(1 for v in filtradas if v.get("lat"))
         st.markdown(f"<div class='map-head'>📍 Mapa · {com_pino} vagas</div>", unsafe_allow_html=True)
 
-        # Montagem fresca e direta (sem cache corruptor em session_state)
         mapa_obj = montar_mapa(filtradas, aproximar)
 
-        # Chave dinâmica e reativa: força o React a recriar o iframe do Leaflet ao mudar filtros
         map_key = f"mapa_{rid}_{len(filtradas)}_{periodo}_{ordem}_{com_pino}"
         st_folium(mapa_obj, height=440, use_container_width=True, returned_objects=[], key=map_key)
 
