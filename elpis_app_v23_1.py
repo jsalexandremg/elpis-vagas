@@ -12,17 +12,17 @@ import os
 import sqlite3
 import time
 import uuid
-
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
+
 import folium
 import streamlit as st
-
 from streamlit_folium import st_folium
+
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.8-Enterprise-Final"
+APP_VERSION = "2026-10-02-v24.9-Corporate-Master-Fix"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="expanded")
 
 # O Chrome oferece/aplica tradução automática e isso corrompe a interface
@@ -40,25 +40,26 @@ try:
 except Exception:
     pass
 
-# 2. INJETA O DESIGN SYSTEM CORPORATIVO ÉLPIS POR ÚLTIMO (Vence a Cascata)
+# 2. INJETA O DESIGN SYSTEM CORPORATIVO ÉLPIS POR ÚLTIMO (Sobrescreve o padrão do Streamlit)
 st.markdown("""
 <style>
 /* =========================================================
-   SISTEMA DE DESIGN ÉLPIS — CORPORATE ENTERPRISE THEME
+   SISTEMA DE DESIGN ÉLPIS (Design Tokens & Streamlit Overrides)
    ========================================================= */
 :root {
+  --primary-color: #142F50 !important; /* Força a cor primária nativa do Streamlit para Azul */
   --elpis-primary: #142F50;
-  --elpis-primary-dark: #0A192F;
+  --elpis-primary-dark: #0D223A;
   --elpis-orange: #F6A000;
   --elpis-orange-hover: #D98900;
   --status-success: #10B981;
   --status-success-bg: #D2F7EF;
   --status-info: #3B82F6;
-  --status-info-bg: #E0E7FF;
+  --status-info-bg: #DCE9FA;
   --status-warning: #F59E0B;
   --status-warning-bg: #FFF2C7;
   --status-neutral: #94A3B8;
-  --status-neutral-bg: #F1F5F9;
+  --status-neutral-bg: #E5E7EB;
   --background: #F8FAFC;
   --surface: #FFFFFF;
   --text-primary: #111827;
@@ -83,7 +84,7 @@ header[data-testid="stHeader"] {display: none;}
 }
 .stApp { background: var(--background) !important; }
 
-/* ---------- SIDEBAR CORPORATIVA ---------- */
+/* ---------- SIDEBAR ---------- */
 [data-testid="stSidebar"] {
     background: var(--surface) !important;
     border-right: 1px solid var(--border) !important;
@@ -96,36 +97,36 @@ header[data-testid="stHeader"] {display: none;}
     border-color: var(--border) !important;
     margin: 0.8rem 0 !important;
 }
+
+/* Ocultar barra rolável desnecessária no multiselect */
 div[data-baseweb="select"] ul { max-height: 220px !important; }
 
 /* =========================================================
-   BLINDAGEM ABSOLUTA: ELIMINAÇÃO DO VERMELHO NAS TAGS
+   BLINDAGEM CSS: GARANTIR TAGS AZUIS EM TODOS OS MULTISELECTS
    ========================================================= */
 div[data-testid="stMultiSelect"] span[data-baseweb="tag"],
 div[data-baseweb="select"] span[data-baseweb="tag"],
-div[data-baseweb="tag"],
-.stMultiSelect [data-baseweb="tag"] {
+div[data-baseweb="tag"] {
     background-color: var(--elpis-primary) !important;
     border: none !important;
-    border-radius: var(--radius-sm) !important;
-    padding: 2px 8px !important;
+    border-radius: 4px !important;
+    padding: 0px 6px !important;
     margin: 2px !important;
-    min-height: 24px !important;
+    min-height: 22px !important;
 }
 div[data-testid="stMultiSelect"] span[data-baseweb="tag"] span,
 div[data-baseweb="select"] span[data-baseweb="tag"] span,
-div[data-baseweb="tag"] span,
-.stMultiSelect [data-baseweb="tag"] span {
+div[data-baseweb="tag"] span {
     color: var(--text-light) !important;
     font-size: 11px !important;
-    font-weight: 700 !important;
+    font-weight: 600 !important;
 }
 div[data-testid="stMultiSelect"] span[data-baseweb="tag"] svg,
 div[data-baseweb="select"] span[data-baseweb="tag"] svg,
 div[data-baseweb="tag"] svg {
     color: var(--text-light) !important;
-    height: 12px !important;
-    width: 12px !important;
+    height: 10px !important;
+    width: 10px !important;
 }
 div[data-testid="stMultiSelect"] span[data-baseweb="tag"] svg:hover,
 div[data-baseweb="select"] span[data-baseweb="tag"] svg:hover {
@@ -607,6 +608,7 @@ with col_lista:
         if st.button(f"Carregar mais resultados ({len(filtradas) - n_mostrar})", use_container_width=True):
             st.session_state.mostrar_n = n_mostrar + 15
             st.rerun()
+
 with col_mapa:
     com_pino = sum(1 for v in filtradas if v.get("lat"))
     st.markdown(f"<div style='font-size:17px; font-weight:800; color:var(--elpis-primary); margin-bottom:10px;'>"
