@@ -1,4 +1,4 @@
-# Élpis — Buscador de Vagas com IA (Brasil & Internacional) — v23
+# Élpis — Buscador de Vagas com IA (Brasil & Internacional) — v24
 # © 2026 INOVHIA Desenvolvimento Tecnológico. Todos os direitos reservados.
 # Contato: Jeferson Alexandre — +55 31 99484-8343
 # É proibida a reprodução, total ou parcial, sem autorização prévia da INOVHIA.
@@ -21,7 +21,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.0-Elpis-Corporate-Layout"
+APP_VERSION = "2026-10-02-v24.1-Elpis-Corporate"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="expanded")
 
 # O Chrome oferece/aplica tradução automática e isso corrompe a interface
@@ -37,30 +37,23 @@ st.markdown("""
 <style>
 /* =========================================================
    ELPIS V24 — DESIGN SYSTEM CORPORATIVO
-   Layout: sidebar + busca + fontes + resultados + mapa
-   Regra: somente apresentação; lógica funcional preservada.
    ========================================================= */
 :root {
     --elpis-navy: #142F50;
-    --elpis-navy-dark: #0D223A;
+    --elpis-navy-dark: #0A192F;
     --elpis-orange: #F6A000;
     --elpis-orange-hover: #D98900;
     --elpis-green: #10B981;
     --elpis-green-bg: #D2F7EF;
-    --elpis-blue-bg: #DCE9FA;
-    --elpis-map: #E8EFF8;
-    --elpis-warning: #F59E0B;
-    --elpis-warning-bg: #FFF2C7;
-    --elpis-gray: #94A3B8;
-    --elpis-gray-bg: #E5E7EB;
-    --elpis-red: #EF4444;
+    --elpis-blue-bg: #E8F0FE;
+    --elpis-warning-bg: #FFF3CD;
+    --elpis-gray-bg: #F1F5F9;
     --elpis-bg: #F8FAFC;
     --elpis-text: #111827;
-    --elpis-muted: #64748B;
     --elpis-border: #E2E8F0;
 }
 
-/* ---------- BASE ---------- */
+header[data-testid="stHeader"] {display: none;}
 .block-container {
     padding-top: 1.25rem !important;
     padding-bottom: 2rem !important;
@@ -70,221 +63,125 @@ st.markdown("""
 }
 .stApp { background: var(--elpis-bg); }
 
-/* ---------- SIDEBAR: preservada e visualmente integrada ---------- */
+/* ---------- SIDEBAR ---------- */
 [data-testid="stSidebar"] {
-    background: #EEF2F7 !important;
-    border-right: 1px solid #D9E2EC !important;
+    background: #FFFFFF !important;
+    border-right: 1px solid #E2E8F0 !important;
 }
-[data-testid="stSidebar"] > div:first-child {
-    background: #EEF2F7 !important;
-}
-[data-testid="stSidebar"] [data-testid="stVerticalBlock"] { gap: 0.45rem; }
-[data-testid="stSidebar"] p,
-[data-testid="stSidebar"] label,
-[data-testid="stSidebar"] span,
-[data-testid="stSidebar"] div.stMarkdown {
-    font-size: 0.82rem !important;
+[data-testid="stSidebar"] p, [data-testid="stSidebar"] label, [data-testid="stSidebar"] span {
+    font-size: 0.85rem !important;
     color: #334155;
 }
-[data-testid="stSidebar"] h1,
-[data-testid="stSidebar"] h2,
-[data-testid="stSidebar"] h3 {
-    color: var(--elpis-navy) !important;
-}
-[data-testid="stSidebar"] button {
-    min-height: 32px !important;
-    padding: 2px 10px !important;
-    font-size: 0.8rem !important;
-    border-radius: 8px !important;
-}
 [data-testid="stSidebar"] hr {
-    border-color: #CBD5E1 !important;
-    margin: 0.5rem 0 !important;
+    border-color: #E2E8F0 !important;
+    margin: 0.8rem 0 !important;
 }
-[data-testid="stSidebar"] input,
-[data-testid="stSidebar"] textarea,
-[data-testid="stSidebar"] [data-baseweb="select"] > div {
-    background: #FFFFFF !important;
-    border-color: #D7DEE8 !important;
-    border-radius: 8px !important;
-}
-[data-testid="stSidebar"] [data-testid="stMultiSelect"] [data-baseweb="tag"] {
-    background: var(--elpis-orange) !important;
-    border: none !important;
-    border-radius: 7px !important;
-    min-height: 25px !important;
-    max-height: 28px !important;
-    padding: 2px 7px !important;
-}
-[data-testid="stSidebar"] [data-testid="stMultiSelect"] [data-baseweb="tag"] span {
-    color: #172A3F !important;
-    font-weight: 700 !important;
-    font-size: 11px !important;
-}
-[data-testid="stSidebar"] [data-testid="stMultiSelect"] [data-baseweb="tag"] svg {
-    color: #172A3F !important;
-}
+
+/* Ocultar barra rolável desnecessária no multiselect */
+div[data-baseweb="select"] ul { max-height: 220px !important; }
 
 /* ---------- HEADER / FORM DE BUSCA ---------- */
 [data-testid="stForm"] {
     background: var(--elpis-navy) !important;
     border: 0 !important;
-    border-radius: 18px !important;
-    padding: 22px 26px !important;
-    box-shadow: 0 8px 22px rgba(20,47,80,.12) !important;
-    margin-bottom: 1rem !important;
+    border-radius: 12px !important;
+    padding: 16px 24px !important;
+    box-shadow: 0 4px 12px rgba(20,47,80,.15) !important;
+    margin-bottom: 1.5rem !important;
 }
-[data-testid="stForm"] input,
-[data-testid="stForm"] div[data-baseweb="select"] > div {
+[data-testid="stForm"] input, [data-testid="stForm"] div[data-baseweb="select"] > div {
     background: #FFFFFF !important;
     color: var(--elpis-text) !important;
-    border: 1px solid #E2E8F0 !important;
-    border-radius: 12px !important;
-    min-height: 52px !important;
+    border: none !important;
+    border-radius: 8px !important;
+    min-height: 44px !important;
 }
-[data-testid="stForm"] input::placeholder { color: #7B8491 !important; opacity: 1; }
-[data-testid="stForm"] [data-baseweb="select"] span { color: #334155 !important; }
-[data-testid="stForm"] button[kind="primary"],
-[data-testid="stForm"] button[kind="primaryFormSubmit"] {
+[data-testid="stForm"] button[kind="primary"] {
     background: var(--elpis-orange) !important;
     color: var(--elpis-navy-dark) !important;
     border: 0 !important;
-    border-radius: 12px !important;
-    min-height: 52px !important;
+    border-radius: 8px !important;
+    min-height: 44px !important;
     font-weight: 800 !important;
-    box-shadow: none !important;
+    transition: background .2s ease;
 }
-[data-testid="stForm"] button[kind="primary"] p,
-[data-testid="stForm"] button[kind="primaryFormSubmit"] p { color: var(--elpis-navy-dark) !important; }
-[data-testid="stForm"] button[kind="primary"]:hover,
-[data-testid="stForm"] button[kind="primaryFormSubmit"]:hover {
+[data-testid="stForm"] button[kind="primary"]:hover {
     background: var(--elpis-orange-hover) !important;
+    color: #FFFFFF !important;
 }
+.elpis-brand { color: var(--elpis-orange); font-weight: 800; font-size: 28px; line-height: 44px;}
 
-/* ---------- MARCA DO HEADER ---------- */
-.elpis-brand { color: var(--elpis-orange); font-weight: 700; font-size: 30px; }
-
-/* ---------- CHIPS DE FONTES ---------- */
+/* ---------- CHIPS SUPERIORES (FONTES) ---------- */
 .pill-green, .pill-yellow, .pill-gray {
-    border-radius: 9px !important;
-    padding: 6px 10px !important;
+    border-radius: 20px !important;
+    padding: 6px 14px !important;
     font-size: 12px !important;
     display: inline-block;
-    margin-right: 5px;
-    margin-bottom: 6px;
+    margin-right: 8px;
+    margin-bottom: 8px;
     white-space: nowrap;
-    font-weight: 700;
-    border: 1px solid transparent;
-    line-height: 1.1;
+    font-weight: 600;
 }
-.pill-green { background: var(--elpis-green-bg); color: #087F68; border-color: #B5EDE2; }
-.pill-yellow { background: var(--elpis-warning-bg); color: #9A5800; border-color: #F6D98A; }
-.pill-gray { background: var(--elpis-gray-bg); color: #475569; border-color: #D4DAE2; }
+.pill-green { background: var(--elpis-green-bg); color: #087F68; }
+.pill-yellow { background: var(--elpis-warning-bg); color: #9A5800; }
+.pill-gray { background: var(--elpis-gray-bg); color: #475569; }
 
-/* ---------- FILTROS ---------- */
-[data-testid="stSelectbox"] [data-baseweb="select"] > div,
-[data-testid="stMultiSelect"] [data-baseweb="select"] > div {
-    border-radius: 11px !important;
-    border-color: var(--elpis-border) !important;
-    background: #FFFFFF !important;
-}
-[data-testid="stToggle"] label span { color: #334155 !important; }
-
-/* ---------- TAGS DO MULTISELECT PRINCIPAL ---------- */
-[data-testid="stMultiSelect"] [data-baseweb="tag"] {
-    background: var(--elpis-blue-bg) !important;
-    border: 1px solid #C7DAF5 !important;
-    border-radius: 7px !important;
-    padding: 2px 7px !important;
-}
-[data-testid="stMultiSelect"] [data-baseweb="tag"] span {
-    color: #214A7A !important;
-    font-weight: 650 !important;
-    font-size: 11px !important;
-}
-[data-testid="stMultiSelect"] [data-baseweb="tag"] svg { color: #214A7A !important; }
-
-/* ---------- RESULTADOS ---------- */
+/* ---------- CARTÕES DE RESULTADOS ---------- */
 .job-card {
     background: #FFFFFF;
     border: 1px solid var(--elpis-border);
-    border-radius: 18px;
-    padding: 18px 20px;
-    margin-bottom: 12px;
-    box-shadow: 0 2px 8px rgba(15,23,42,.045);
-    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 5px rgba(0,0,0,.02);
+    transition: transform .15s ease, box-shadow .15s ease;
 }
 .job-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(15,23,42,.08);
-    border-color: #CBD8E8;
+    box-shadow: 0 6px 12px rgba(0,0,0,.08);
 }
-.job-title {
-    font-size: 17px;
-    font-weight: 800;
-    color: var(--elpis-navy);
-    line-height: 1.28;
-}
-.job-company {
-    font-size: 13px;
-    color: #64748B;
-    margin-top: 5px;
-}
-.badge-source {
-    background: var(--elpis-blue-bg);
-    color: #214A7A;
-    border-radius: 8px;
-    padding: 5px 9px;
-    font-size: 11px !important;
-    font-weight: 750;
-    border: 1px solid #C7DAF5;
-}
-.badge-global { background: var(--elpis-green-bg); color: #087F68; border-color: #B5EDE2; }
-.badge-also { font-size: 10px; color: #64748B; margin-left: 8px; }
+.job-title { font-size: 17px; font-weight: 800; color: var(--elpis-navy); line-height: 1.3; }
+.job-company { font-size: 13px; color: #64748B; margin-top: 4px; }
+.badge-source { background: var(--elpis-blue-bg); color: #142F50; border-radius: 20px; padding: 4px 10px; font-size: 11px; font-weight: 700;}
+.badge-also { font-size: 11px; color: #94A3B8; margin-left: 8px; }
+
 .btn-apply {
     background: var(--elpis-orange);
     color: var(--elpis-navy-dark) !important;
-    border-radius: 10px;
-    padding: 8px 18px;
-    font-size: 12px;
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-size: 13px;
     font-weight: 800;
     text-decoration: none !important;
     display: inline-block;
-    text-align: center;
-    transition: background .2s ease, transform .2s ease;
+    transition: background .2s ease;
 }
-.btn-apply:hover { background: var(--elpis-orange-hover); color: #FFFFFF !important; transform: translateY(-1px); }
+.btn-apply:hover { background: var(--elpis-orange-hover); color: #FFF !important;}
 
-/* ---------- MAPA ---------- */
-[data-testid="stVerticalBlockBorderWrapper"] {
-    border-radius: 18px !important;
-}
-/* Container do mapa continua sendo Folium; esta regra só dá acabamento à área. */
+/* ---------- MAPA E EXTRAS ---------- */
 iframe[title="streamlit_folium.st_folium"] {
-    border-radius: 18px !important;
-    overflow: hidden !important;
-    border: 1px solid #D9E2EC !important;
-}
-
-/* ---------- CONTAINERS / DIAGNÓSTICO ---------- */
-[data-testid="stExpander"] {
+    border-radius: 12px !important;
     border: 1px solid var(--elpis-border) !important;
-    border-radius: 14px !important;
-    background: #FFFFFF !important;
 }
 
-/* ---------- RESPONSIVIDADE ---------- */
-@media (max-width: 1200px) {
-    .block-container { padding-left: 1rem !important; padding-right: 1rem !important; }
-    [data-testid="stForm"] { padding: 18px !important; }
+.elpis-footer {
+    background-color: var(--elpis-navy-dark);
+    color: #CBD5E1;
+    padding: 16px 24px;
+    border-top: 3px solid var(--elpis-orange);
+    border-radius: 8px;
+    margin-top: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
 }
+.elpis-footer b { color: #FFFFFF; }
+.elpis-footer a { color: var(--elpis-orange); text-decoration: none; font-weight: bold;}
+
 @media (max-width: 900px) {
-    [data-testid="stForm"] { padding: 14px !important; }
-    .job-title { font-size: 15px; }
-}
-@media (max-width: 768px) {
-    .block-container { padding-left: .75rem !important; padding-right: .75rem !important; }
-    [data-testid="stForm"] { border-radius: 14px !important; }
+    .elpis-footer { flex-direction: column; text-align: center; gap: 10px; }
+    [data-testid="stForm"] { padding: 12px !important; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -296,13 +193,12 @@ CREDITO_TELEFONE = "+55 31 99484-8343"
 CREDITO_TEL_LINK = "+5531994848343"
 
 def rodape_inovhia():
-    st.markdown("---")
     st.markdown(
-        f"<div style='text-align:center;font-size:0.8rem;opacity:0.85;line-height:1.6'>"
-        f"Desenvolvido por <b>{html.escape(CREDITO_EMPRESA)}</b><br>"
-        f"Contato: {html.escape(CREDITO_CONTATO)} · "
-        f"<a href='tel:{CREDITO_TEL_LINK}'>{html.escape(CREDITO_TELEFONE)}</a><br>"
-        f"© {datetime.now().year} {html.escape(CREDITO_EMPRESA)}. Todos os direitos reservados.</div>",
+        f"<div class='elpis-footer'>"
+        f"<div><b>Élpis</b> &nbsp;|&nbsp; Conectando talentos a grandes oportunidades</div>"
+        f"<div>Desenvolvido por <b>{html.escape(CREDITO_EMPRESA)}</b><br>"
+        f"{html.escape(CREDITO_CONTATO)} · Contato: <a href='tel:{CREDITO_TEL_LINK}'>{html.escape(CREDITO_TELEFONE)}</a></div>"
+        f"</div>",
         unsafe_allow_html=True)
 
 st.session_state.setdefault("vagas", [])
@@ -369,94 +265,86 @@ def record_usage(sid):
     con.execute("update active_sessions set searches = searches + 1 where session_id = ?", (sid,))
     con.commit(); con.close()
 
-@st.dialog("Antes de buscar")
+@st.dialog("Bem-vindo à Élpis")
 def cadastro_dialog():
-    st.markdown("Para iniciar a sua sessão gratuita, diga como deseja ser identificado. **Sem senha e sem e-mail.**")
+    st.markdown("Identifique-se para iniciar a sua sessão gratuita. **Sem senha e sem e-mail.**")
     nome = st.text_input("Nome completo ou profissional", placeholder="Como deseja ser identificado?", key="dlg_nome").strip()
-    email = st.text_input("E-mail (opcional)", placeholder="Não será confirmado nesta versão", key="dlg_email").strip()
-    aceite = st.checkbox("Aceito os Termos de Uso e a Política de Privacidade para esta sessão.", key="dlg_aceite")
-    st.caption("A sessão expira em 24 horas e os registos operacionais são apagados ao encerrar.")
-    if st.button("Continuar e buscar", type="primary", use_container_width=True):
+    email = st.text_input("E-mail (opcional)", placeholder="Não será verificado nesta versão", key="dlg_email").strip()
+    aceite = st.checkbox("Aceito os Termos de Uso e Política de Privacidade.", key="dlg_aceite")
+    st.caption("A sessão expira em 24 horas.")
+    if st.button("Acessar Plataforma", type="primary", use_container_width=True):
         if not nome or not aceite:
-            st.warning("Informe o seu nome e aceite a Política de Privacidade.")
+            st.warning("Informe o seu nome e aceite a Política.")
         else:
             st.session_state.temporary_session_id = criar_sessao(nome, email)
             st.session_state.busca_pendente = st.session_state.pop("busca_aguardando", None)
             st.rerun()
 
 # ==========================================
-# PAINEL LATERAL (CLÁSSICO COMPACTADO)
+# PAINEL LATERAL 
 # ==========================================
 sid = st.session_state.get("temporary_session_id")
 current_session = sessao_atual(sid)
 
 with st.sidebar:
     if current_session:
-        st.caption(f"Sessão: {current_session['nome']}")
+        st.markdown(f"<div style='color:#142F50; font-weight:bold; font-size:16px;'>👤 {html.escape(current_session['nome'])}</div>", unsafe_allow_html=True)
         uso_slot = st.empty()
-        uso_slot.caption(f"Plano gratuito · {usage_today(sid)}/{FREE_DAILY_LIMIT} buscas realizadas")
-        if st.button("Encerrar e apagar sessão", use_container_width=True):
+        uso_slot.caption(f"Uso: **{usage_today(sid)} / {FREE_DAILY_LIMIT}** buscas gratuitas")
+        if st.button("Encerrar sessão", use_container_width=True):
             apagar_sessao(sid)
             st.session_state.pop("temporary_session_id", None)
             st.session_state.vagas, st.session_state.resultados = [], []
             st.rerun()
     else:
         uso_slot = None
-        st.caption("Sessão não iniciada: o cadastro rápido aparece na sua primeira busca.")
+        st.caption("Acesso visitante.")
         
-    st.caption(f"Desenvolvido por {CREDITO_EMPRESA}")
     st.markdown("---")
     
-    st.header("⚙️ Configuração")
+    st.markdown("**⚙️ Motores de Busca**")
     todas = core.disponiveis()
-    fontes_ativas = st.multiselect("Motores ativos", todas, default=todas, help="Fontes marcadas como beta usam páginas sem API oficial.")
-    prazo = st.slider("Tempo máximo da busca (s)", 8, 40, 20, help="Fontes que não responderem a tempo são descartadas.")
+    fontes_ativas = st.multiselect("Selecione as plataformas", todas, default=todas, label_visibility="collapsed")
+    prazo = st.slider("Timeout da busca (segundos)", 8, 40, 20)
     
+    st.markdown("---")
+    st.markdown("**🧠 Inteligência Artificial**")
     st.session_state.setdefault("gemini_key", os.getenv("GEMINI_API_KEY", ""))
     st.session_state.setdefault("gemini_connected", False)
     st.session_state.setdefault("gemini_status", "")
     
-    chave_digitada = st.text_input("Chave de API Gemini (opcional)", type="password", value=st.session_state["gemini_key"], help="A chave não é gravada em banco de dados.")
+    chave_digitada = st.text_input("Chave Gemini API", type="password", value=st.session_state["gemini_key"], placeholder="Insira a chave (opcional)")
     
     col_con, col_des = st.columns(2)
     if col_con.button("Conectar", use_container_width=True):
         chave_t = (chave_digitada or "").strip()
         if not chave_t:
-            st.session_state["gemini_status"] = "Informe uma chave Gemini."
+            st.session_state["gemini_status"] = "Informe a chave."
             st.session_state["gemini_connected"] = False
         else:
             try:
                 from google import genai
                 cliente = genai.Client(api_key=chave_t)
-                modelos = list(cliente.models.list())
-                if modelos:
+                if list(cliente.models.list()):
                     st.session_state["gemini_key"] = chave_t
                     st.session_state["gemini_connected"] = True
-                    st.session_state["gemini_status"] = "Gemini conectado com sucesso."
-            except Exception as exc:
+                    st.session_state["gemini_status"] = "Conectado."
+            except Exception:
                 st.session_state["gemini_connected"] = False
-                st.session_state["gemini_status"] = "Chave recusada ou indisponível."
+                st.session_state["gemini_status"] = "Falha na conexão."
 
-    if col_des.button("Desconectar", use_container_width=True):
+    if col_des.button("Remover", use_container_width=True):
         st.session_state["gemini_key"], st.session_state["gemini_connected"] = "", False
-        st.session_state["gemini_status"] = "Chave Gemini desconectada."
+        st.session_state["gemini_status"] = "Desconectado."
         
     if st.session_state["gemini_connected"]: st.success(st.session_state["gemini_status"])
     elif st.session_state["gemini_status"]: st.warning(st.session_state["gemini_status"])
     
     chave = st.session_state["gemini_key"] if st.session_state["gemini_connected"] else ""
     
-    aproximar = st.checkbox("Aproximar mapa das vagas", value=True)
-    parciais = st.checkbox("Incluir correspondências parciais", value=False)
-    
     st.markdown("---")
-    with st.expander("👨‍💻 Sobre o Desenvolvedor"):
-        st.markdown(
-            "**Jeferson Alexandre**\n\n"
-            "Especialista em Auditoria, GRC e Engenharia de Dados Aplicada a Controles Internos.\n\n"
-            "Formado em **Ciências Contábeis** e **Análise e Desenvolvimento de Sistemas**, com **MBA em Gestão Estratégica**. "
-            "Combina a profundidade analítica de Compliance com a agilidade da Tecnologia."
-        )
+    aproximar = st.checkbox("Aproximar mapa automaticamente", value=True)
+    parciais = st.checkbox("Exibir correspondências parciais", value=False)
 
 # ==========================================
 # FUNÇÕES DE FORMATAÇÃO E IA
@@ -477,20 +365,20 @@ def chips_html(resultados):
         n, s = len(r.itens), round(r.ms / 1000, 1)
         if r.status == "ok":
             origem_cache = any("cache" in x for x in r.notas)
-            classe, txt = "pill-green", f"{r.nome} · {n} · " + ("cache" if origem_cache else f"{s}s")
+            classe, txt = "pill-green", f"✅ {r.nome} · {n} · " + ("cache" if origem_cache else f"{s}s")
         elif r.status == "vazio":
-            classe, txt = "pill-yellow", f"{r.nome} · 0 vagas"
+            classe, txt = "pill-yellow", f"⚠️ {r.nome} · 0 vagas"
         elif r.status == "timeout":
-            classe, txt = "pill-gray", f"{r.nome} · tempo esgotado"
+            classe, txt = "pill-gray", f"⏳ {r.nome} · esgotado"
         else:
-            classe, txt = "pill-gray", f"{r.nome} · erro"
+            classe, txt = "pill-gray", f"❌ {r.nome} · erro"
         dica = esc((r.erro + " | " if r.erro else "") + " | ".join(r.notas))
         partes.append(f'<span class="{classe}" title="{dica}">{esc(txt)}</span>')
     return f'<div style="margin:5px 0 16px 0;">{"".join(partes)}</div>'
 
 def analisar_com_gemini(vagas, cargo, nivel, chave):
     base = [{"i": i, "titulo": v["titulo"], "empresa": v["empresa"], "local": v["local"]} for i, v in enumerate(vagas)]
-    prompt = (f"Busca: {cargo} ({nivel}). Para cada vaga REAL abaixo, escreva 1 frase sobre aderência ao perfil "
+    prompt = (f"Busca: {cargo} ({nivel}). Para cada vaga REAL abaixo, escreva 1 frase curta sobre aderência ao perfil "
               "usando SOMENTE título/empresa/local fornecidos, sem inventar requisitos. Responda APENAS array JSON "
               f'puro: [{{"i":0,"analise":"..."}}]\n{json.dumps(base, ensure_ascii=False)}')
     modelo = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
@@ -507,7 +395,8 @@ def analisar_com_gemini(vagas, cargo, nivel, chave):
         if 0 <= idx < len(vagas): vagas[idx]["analise"] = it["analise"]
 
 def montar_mapa(vagas, aproximar):
-    m = folium.Map(location=[-15.7801, -47.9292], zoom_start=4, min_zoom=2, tiles="OpenStreetMap", world_copy_jump=True, control_scale=False)
+    # Alterado para CartoDB positron para espelhar o mapa limpo do layout corporativo
+    m = folium.Map(location=[-15.7801, -47.9292], zoom_start=4, min_zoom=2, tiles="CartoDB positron", world_copy_jump=True, control_scale=False)
     from folium.plugins import MarkerCluster
     grupo = MarkerCluster(options={"maxClusterRadius": 35}).add_to(m)
     pts = []
@@ -525,15 +414,15 @@ def montar_mapa(vagas, aproximar):
 # HEADER DE BUSCA PRINCIPAL
 # ==========================================
 with st.form("search_form"):
-    c0, c1, c2, c3, c4 = st.columns([1.2, 3.8, 3, 2, 2])
+    c0, c1, c2, c3, c4 = st.columns([1.5, 3.5, 3, 2, 2])
     with c0: st.markdown("<div class='elpis-brand'>Élpis</div>", unsafe_allow_html=True)
-    with c1: cargo = st.text_input("Cargo / Função", placeholder="🏢 Cargo / Função (ex: Auditor Interno, Controller)", label_visibility="collapsed")
-    with c2: local = st.text_input("Localidade", placeholder="📍 Localidade (ex: Belo Horizonte, Brasil)", label_visibility="collapsed")
-    with c3: nivel = st.selectbox("Nível / Senioridade", ["(qualquer)", "Analista", "Especialista", "Coordenador", "Gerente", "Diretor", "VP"], label_visibility="collapsed")
+    with c1: cargo = st.text_input("Cargo / Função", placeholder="🏢 Cargo / Função", label_visibility="collapsed")
+    with c2: local = st.text_input("Localidade", placeholder="📍 Localidade (ex: Belo Horizonte)", label_visibility="collapsed")
+    with c3: nivel = st.selectbox("Senioridade", ["(qualquer)", "Analista", "Especialista", "Coordenador", "Gerente", "Diretor", "VP"], label_visibility="collapsed")
     with c4: buscar = st.form_submit_button("Buscar", type="primary", use_container_width=True)
 
 # ==========================================
-# MOTOR DE EXECUÇÃO E RENDERIZAÇÃO
+# MOTOR DE EXECUÇÃO
 # ==========================================
 params = None
 if buscar and not cargo.strip(): st.warning("Informe o Cargo / Função para buscar.")
@@ -558,14 +447,14 @@ if params:
     st.markdown(bv.ESCONDER, unsafe_allow_html=True) 
     brutas, resultados, t0 = [], [], time.perf_counter()
 
-    with st.status("Consultando fontes em paralelo…", expanded=True) as box:
+    with st.status("Consultando bases de dados...", expanded=True) as box:
         slot = st.empty()
         for r in core.executar(fontes_ativas, termo, local, prazo=prazo):
             resultados.append(r)
             brutas += r.itens
             slot.markdown(chips_html(resultados), unsafe_allow_html=True)
-            box.update(label=f"{len(resultados)}/{len(fontes_ativas)} fontes · {len(brutas)} vagas brutas")
-        box.update(label=f"Busca concluída em {time.perf_counter() - t0:.1f}s", state="complete", expanded=False)
+            box.update(label=f"Processando {len(resultados)}/{len(fontes_ativas)} fontes · {len(brutas)} registos")
+        box.update(label=f"Concluído em {time.perf_counter() - t0:.1f}s", state="complete", expanded=False)
 
     falhas = [r for r in resultados if r.status in ("erro", "timeout")]
     st.session_state.rede = core.verificar_rede() if len(falhas) >= max(3, len(resultados) // 2) else None
@@ -589,7 +478,7 @@ if params:
 
     record_usage(sid)
     if uso_slot is not None:
-        uso_slot.caption(f"Plano gratuito · {usage_today(sid)}/{FREE_DAILY_LIMIT} buscas realizadas")
+        uso_slot.caption(f"Uso: **{usage_today(sid)} / {FREE_DAILY_LIMIT}** buscas gratuitas")
         
     st.session_state.update(vagas=unicas, resultados=resultados, tempo=time.perf_counter() - t0,
                             resultado_id=time.time_ns(), mostrar_n=15, termo_busca=termo, nivel_busca=nivel)
@@ -604,20 +493,18 @@ def banner_falhas(resultados):
     falhas = [r for r in resultados if r.status in ("erro", "timeout")]
     if len(falhas) < max(3, len(resultados) // 2): return
     comuns = Counter((r.erro or "")[:90] for r in falhas).most_common(3)
-    st.error(f"{len(falhas)} de {len(resultados)} fontes falharam. Causas:\n\n" + "\n".join(f"- **{n}×** `{msg}`" for msg, n in comuns))
-    if st.session_state.get("rede"):
-        st.warning("Teste de rede: " + " · ".join(f"{k}: {v}" for k, v in st.session_state["rede"].items()))
+    st.error(f"{len(falhas)} fontes falharam. Causas principais:\n\n" + "\n".join(f"- **{n}×** `{msg}`" for msg, n in comuns))
 
 banner_falhas(resultados)
 
 filtradas = vagas_todas
 if vagas_todas:
     f1, f2, f3, f4 = st.columns([2, 2, 2, 4])
-    periodo = f1.selectbox("Período", ["Qualquer data", "Últimos 3 dias", "Últimos 7 dias", "Últimos 15 dias", "Últimos 30 dias"], key=f"f_per_{rid}")
-    ordem = f2.selectbox("Ordenar por", ["Relevância", "Mais recentes"], key=f"f_ord_{rid}")
-    so_remoto = f3.toggle("Somente remotas", key=f"f_rem_{rid}")
+    periodo = f1.selectbox("Data de publicação", ["Qualquer data", "Últimos 3 dias", "Últimos 7 dias", "Últimos 15 dias", "Últimos 30 dias"], key=f"f_per_{rid}")
+    ordem = f2.selectbox("Classificação", ["Relevância", "Mais recentes"], key=f"f_ord_{rid}")
+    so_remoto = f3.toggle("Trabalho Remoto", key=f"f_rem_{rid}")
     origens = sorted({v["origem"] for v in vagas_todas})
-    escolhidas = f4.multiselect("Fontes da Busca Atual", origens, default=origens, key=f"f_ori_{rid}")
+    escolhidas = f4.multiselect("Filtrar por Fonte", origens, default=origens, key=f"f_ori_{rid}")
     
     dias_max = {"Últimos 3 dias": 3, "Últimos 7 dias": 7, "Últimos 15 dias": 15, "Últimos 30 dias": 30}.get(periodo)
     filtradas = [v for v in vagas_todas
@@ -627,21 +514,21 @@ if vagas_todas:
         filtradas = sorted(filtradas, key=lambda v: v.get("data") or core.MIN_DATA, reverse=True)
         
     barra1, barra2 = st.columns([5, 3])
-    barra1.caption(f"{len(filtradas)} de {len(vagas_todas)} vagas · processado em {st.session_state.get('tempo', 0):.1f}s")
-    if chave and filtradas and barra2.button("✨ Analisar as 12 primeiras com IA", use_container_width=True):
+    barra1.caption(f"{len(filtradas)} resultados processados em {st.session_state.get('tempo', 0):.1f}s")
+    if chave and filtradas and barra2.button("✨ Gerar Insights de Perfil (Gemini AI)", use_container_width=True):
         try:
-            with st.spinner("Processando Inteligência Analítica..."):
+            with st.spinner("Analisando competências..."):
                 analisar_com_gemini(filtradas[:12], st.session_state.get("termo_busca", ""), st.session_state.get("nivel_busca", "(qualquer)"), chave)
-        except Exception as e: st.warning(f"Erro na API de IA: {str(e)[:120]}")
+        except Exception as e: st.warning(f"Erro na IA: {str(e)[:120]}")
 
 col_lista, col_mapa = st.columns([3, 2], gap="large")
 
 with col_lista:
-    painel = st.container(height=600)
+    painel = st.container(height=650)
     if not vagas_todas and not resultados:
         painel.markdown(bv.html_boas_vindas(len(fontes_ativas), FREE_DAILY_LIMIT), unsafe_allow_html=True)
-    elif not vagas_todas: painel.info("Informe o Cargo / Função desejada e clique em Buscar.")
-    elif not filtradas: painel.info("Nenhuma vaga com os filtros aplicados.")
+    elif not vagas_todas: painel.info("Utilize a barra superior para realizar uma nova pesquisa.")
+    elif not filtradas: painel.info("Nenhuma vaga atende aos filtros atuais.")
     
     n_mostrar = st.session_state.get("mostrar_n", 15)
     for v in filtradas[:n_mostrar]:
@@ -649,7 +536,7 @@ with col_lista:
         descricao = (v.get("analise") or v.get("resumo") or "")[:240]
         link = v["link"] if core.eh_http(v.get("link")) else "#"
         badge_cls = "badge-source badge-global" if v.get("grupo") in ("Global", "Empresas") else "badge-source"
-        tambem = f'<span class="badge-also">também em {esc(", ".join(v["tambem"]))}</span>' if v.get("tambem") else ""
+        tambem = f'<span class="badge-also">também via {esc(", ".join(v["tambem"]))}</span>' if v.get("tambem") else ""
         
         painel.markdown(
             f'<div class="job-card">'
@@ -657,33 +544,26 @@ with col_lista:
             f'<div style="flex:1;"><div class="job-title">{esc(v["titulo"])}</div>'
             f'<div class="job-company">{esc(v["empresa"])} &middot; {esc(v["local"])}</div></div>'
             f'<div class="{classe_idade(dias)}">{texto_idade(dias)}</div></div>'
-            f'<div style="font-size:13px;color:#4B5563;margin:10px 0 12px;line-height:1.4;">{esc(descricao)}</div>'
-            f'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;">'
+            f'<div style="font-size:13px;color:#64748B;margin:12px 0;line-height:1.5;">{esc(descricao)}...</div>'
+            f'<div style="display:flex;justify-content:space-between;align-items:center;">'
             f'<div><span class="{badge_cls}">{esc(v["origem"])}</span>{tambem}</div>'
             f'<a href="{esc(link)}" target="_blank" rel="noopener noreferrer" class="btn-apply">Candidatar-se</a>'
             f'</div></div>', unsafe_allow_html=True)
             
     if len(filtradas) > n_mostrar:
-        if st.button(f"Mostrar mais ({len(filtradas) - n_mostrar} restantes)", use_container_width=True):
+        if st.button(f"Carregar mais resultados ({len(filtradas) - n_mostrar})", use_container_width=True):
             st.session_state.mostrar_n = n_mostrar + 15
             st.rerun()
 
 with col_mapa:
     com_pino = sum(1 for v in filtradas if v.get("lat"))
-    st.markdown(f"<div style='font-size:16px; font-weight:600; color:#0F2A4A; margin-bottom:4px;'>"
-                f"Mapa &middot; {com_pino} de {len(filtradas)} vagas localizadas</div>", unsafe_allow_html=True)
-    st.caption("Verde: até 2 dias · Âmbar: até 10 dias · Cinza: mais antiga ou sem data.")
+    st.markdown(f"<div style='font-size:17px; font-weight:800; color:#142F50; margin-bottom:10px;'>"
+                f"📍 Mapeamento Geoespacial ({com_pino} vagas)</div>", unsafe_allow_html=True)
     chave_mapa = (tuple(v["link"] for v in filtradas), aproximar)
     if st.session_state.get("_mapa_chave") != chave_mapa:
         st.session_state["_mapa_chave"], st.session_state["_mapa"] = chave_mapa, montar_mapa(filtradas, aproximar)
-    st_folium(st.session_state["_mapa"], height=550, use_container_width=True, returned_objects=[], key="mapa")
-
-if resultados:
-    muitas = sum(r.status in ("erro", "timeout") for r in resultados) >= max(3, len(resultados) // 2)
-    with st.expander("🔎 Diagnóstico das fontes (o que cada motor respondeu)", expanded=muitas):
-        st.dataframe([{
-            "Fonte": r.nome, "Grupo": r.grupo, "Situação": {"ok": "OK", "vazio": "Sem vagas", "erro": "Erro", "timeout": "Tempo esgotado"}[r.status],
-            "Vagas": len(r.itens), "Tempo (s)": round(r.ms / 1000, 1), "Detalhe": (r.erro + " | " if r.erro else "") + " | ".join(r.notas),
-        } for r in resultados], hide_index=True, width="stretch")
+    st_folium(st.session_state["_mapa"], height=560, use_container_width=True, returned_objects=[], key="mapa")
+    st.markdown("<div style='text-align:center; font-size:12px; color:#64748B; margin-top:8px;'>"
+                "🟢 Recente (até 2 dias) &nbsp;&nbsp;|&nbsp;&nbsp; 🟠 Médio (até 10 dias) &nbsp;&nbsp;|&nbsp;&nbsp; ⚪ Antigo / S/Data</div>", unsafe_allow_html=True)
 
 rodape_inovhia()
