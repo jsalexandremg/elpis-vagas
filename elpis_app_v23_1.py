@@ -22,7 +22,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.15-Viewport-Locked"
+APP_VERSION = "2026-10-02-v24.16-Compact-Align"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
 # Previne tradução automática indevida do Chrome
@@ -40,7 +40,7 @@ try:
 except Exception:
     pass
 
-# 2. DESIGN SYSTEM CORPORATIVO ÉLPIS (Zero Outer Scroll & Redução de Espaços)
+# 2. DESIGN SYSTEM CORPORATIVO ÉLPIS (Zero Outer Scroll & Alta Densidade)
 st.markdown("""
 <style>
 :root {
@@ -75,7 +75,7 @@ st.markdown("""
 header[data-testid="stHeader"], [data-testid="stSidebar"],
 [data-testid="stSidebarCollapsedControl"], [data-testid="collapsedControl"] {display: none !important;}
 
-/* Oculta containers invisíveis para cortar o espaço branco no topo pela metade */
+/* Oculta containers invisíveis para cortar o espaço branco no topo */
 div[data-testid="stElementContainer"]:has(> style),
 div[data-testid="stElementContainer"]:has(> script),
 div[data-testid="stElementContainer"]:empty {
@@ -91,7 +91,7 @@ html, body, [data-testid="stAppViewContainer"] {
     overflow-y: hidden !important;
 }
 .block-container {
-    padding-top: 0.25rem !important; /* Cortado pela metade */
+    padding-top: 0.25rem !important;
     padding-bottom: 0.2rem !important;
     padding-left: 1rem !important;
     padding-right: 1rem !important;
@@ -100,13 +100,66 @@ html, body, [data-testid="stAppViewContainer"] {
 .stApp {background: var(--background) !important;}
 div[data-baseweb="select"] ul {max-height: 180px !important;}
 
-/* ---------- CHECKBOXES NO AZUL CORPORATIVO ---------- */
+/* ---------- CHECKBOXES NO AZUL CORPORATIVO (ANTI-VERMELHO) ---------- */
+[data-testid="stCheckbox"] div[role="checkbox"][aria-checked="true"],
+[data-testid="stCheckbox"] span[aria-checked="true"],
+[data-testid="stCheckbox"] div[aria-checked="true"],
+div[data-baseweb="checkbox"] span[aria-checked="true"],
+div[data-baseweb="checkbox"] div[aria-checked="true"],
 [data-testid="stCheckbox"] input:checked + div {
     background-color: var(--elpis-primary) !important;
     border-color: var(--elpis-primary) !important;
 }
-[data-testid="stCheckbox"] span {
-    font-size: 12px !important;
+[data-testid="stCheckbox"] svg {
+    fill: #FFFFFF !important;
+}
+
+/* ---------- COMPACTAÇÃO DA LISTA DE FONTES (MENOS ESPAÇO ENTRE ADESIVOS) ---------- */
+.st-key-lista_fontes [data-testid="stHorizontalBlock"] {
+    margin-bottom: -12px !important;
+    align-items: center !important;
+}
+.st-key-lista_fontes [data-testid="stCheckbox"] {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.st-key-lista_fontes [data-testid="stCheckbox"] label {
+    min-height: 20px !important;
+    padding: 0 !important;
+}
+.st-key-lista_fontes [data-testid="stCheckbox"] p {
+    font-size: 11px !important;
+    line-height: 1.1 !important;
+    margin: 0 !important;
+}
+
+/* ADESIVOS DE STATUS (MICRO-TAMANHO) */
+.sb {
+    display: inline-block;
+    border-radius: 6px;
+    padding: 1px 5px !important;
+    font-size: 9px !important;
+    font-weight: 600;
+    white-space: nowrap;
+    line-height: 1.3;
+}
+.sb-ok {background: var(--status-success-bg); color: #087F68;}
+.sb-wait {background: var(--status-warning-bg); color: #9A5800;}
+.sb-off {background: var(--status-neutral-bg); color: #475569;}
+
+/* ---------- CAMPOS DE SELEÇÃO (ORDEM & DATA LEGÍVEIS) ---------- */
+.st-key-painel_filtros [data-testid="stSelectbox"] {
+    margin-bottom: -4px !important;
+}
+.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+    min-height: 28px !important;
+    height: 28px !important;
+    padding: 0 6px !important;
+    border-radius: var(--radius-sm) !important;
+    font-size: 11px !important;
+}
+.st-key-painel_filtros [data-testid="stSelectbox"] span {
+    font-size: 11px !important;
 }
 
 /* ---------- HEADER / FORMULÁRIO COMPACTO ---------- */
@@ -140,16 +193,11 @@ div[data-baseweb="select"] ul {max-height: 180px !important;}
 .f-sec .help {display:inline-block; width:13px; height:13px; line-height:13px; text-align:center;
     border:1px solid var(--border-dark); border-radius:50%; font-size:8px; color:var(--text-secondary);
     margin-left:4px; cursor:help;}
-.sb {display:inline-block; border-radius: 8px; padding: 1px 6px; font-size: 10px; font-weight: 600; white-space: nowrap;}
-.sb-ok {background: var(--status-success-bg); color: #087F68;}
-.sb-wait {background: var(--status-warning-bg); color: #9A5800;}
-.sb-off {background: var(--status-neutral-bg); color: #475569;}
 
 .info-box {display:flex; gap:6px; align-items:center; background: var(--surface); border: 1px solid var(--border);
     border-radius: var(--radius-sm); padding: 6px 8px; margin: 8px 0; font-size: 10px; color: var(--text-secondary);}
 .info-box b {display:block; color: var(--elpis-primary); font-size: 10px;}
 
-.st-key-painel_filtros [data-testid="stCheckbox"] p {font-size: 11px !important; color: var(--text-primary) !important;}
 .st-key-limpar button {background: transparent !important; border: 0 !important; box-shadow: none !important;
     color: var(--status-info) !important; font-size: 11px !important; min-height: 0 !important; padding: 0 !important; float: right;}
 .st-key-limpar button p {color: var(--status-info) !important; font-size: 11px !important;}
@@ -192,7 +240,7 @@ div[data-baseweb="select"] ul {max-height: 180px !important;}
 .dot {display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:3px; vertical-align:middle;}
 iframe[title="streamlit_folium.st_folium"] {border-radius: var(--radius-sm) !important;}
 
-/* ---------- RODAPÉ FIXADO SLIM ---------- */
+/* ---------- RODAPÉ SLIM ---------- */
 .elpis-footer {
     background-color: var(--elpis-primary-dark); color: var(--border-dark);
     padding: 6px 16px; border-radius: var(--radius-sm); margin-top: 6px;
@@ -438,7 +486,7 @@ with col_filtros:
                     "<span class='help' title='Motores consultados'>?</span></div>",
                     unsafe_allow_html=True)
         # Altura enxuta para caber perfeitamente no monitor sem estourar o rodapé
-        with st.container(height=150, key="lista_fontes"):
+        with st.container(height=160, key="lista_fontes"):
             for nome in todas:
                 st.session_state.setdefault(f"fonte_{nome}", True)
                 ca, cb = st.columns([5, 4], vertical_alignment="center", gap="small")
@@ -595,24 +643,22 @@ with aviso_slot:
     banner_falhas(resultados)
 
 # ==========================================
-# 5) FILTROS DE RESULTADO (Data e Ordem)
+# 5) FILTROS DE RESULTADO (Data e Ordem Empilhados e Legíveis)
 # ==========================================
 filtradas = vagas_todas
 with filtros_pos:
     if vagas_todas:
-        st.markdown("<div class='f-sec'>🗓️ Ordem & Data</div>", unsafe_allow_html=True)
-        col_ord, col_per = st.columns(2, gap="small")
-        with col_ord:
-            ordem = st.selectbox("Classificação", ["Relevância", "Recentes"], key=f"f_ord_{rid}", label_visibility="collapsed")
-        with col_per:
-            periodo = st.selectbox("Período", ["Qualquer", "3 dias", "7 dias", "15 dias", "30 dias"], key=f"f_per_{rid}", label_visibility="collapsed")
+        st.markdown("<div class='f-sec'>🗓️ Ordem & Publicação</div>", unsafe_allow_html=True)
+        # Empilhados para evitar corte do texto "Relevância" e "Qualquer data"
+        ordem = st.selectbox("Classificação", ["Relevância", "Mais recentes"], key=f"f_ord_{rid}", label_visibility="collapsed")
+        periodo = st.selectbox("Período", ["Qualquer data", "Últimos 3 dias", "Últimos 7 dias", "Últimos 15 dias", "Últimos 30 dias"], key=f"f_per_{rid}", label_visibility="collapsed")
 
-        dias_max = {"3 dias": 3, "7 dias": 7, "15 dias": 15, "30 dias": 30}.get(periodo)
+        dias_max = {"Últimos 3 dias": 3, "Últimos 7 dias": 7, "Últimos 15 dias": 15, "Últimos 30 dias": 30}.get(periodo)
         
         filtradas = [v for v in vagas_todas
                      if v["origem"] in fontes_ativas and (not mods or modalidade(v) in mods)
                      and (dias_max is None or (core.idade_dias(v.get("data")) is not None and core.idade_dias(v["data"]) <= dias_max))]
-        if ordem == "Recentes":
+        if ordem == "Mais recentes":
             filtradas = sorted(filtradas, key=lambda v: v.get("data") or core.MIN_DATA, reverse=True)
 
         if chave and filtradas and st.button("✨ Insights IA", use_container_width=True):
@@ -660,7 +706,6 @@ with col_lista:
                 f'<a href="{esc(link)}" target="_blank" rel="noopener noreferrer" class="btn-apply">Candidatar-se</a>'
                 f'</div></div>', unsafe_allow_html=True)
 
-        # BOTÃO MOVIDO PARA DENTRO DO CONTÊINER (Fim do Scroll Global da Página)
         if len(filtradas) > n_mostrar:
             if st.button(f"Carregar mais ({len(filtradas) - n_mostrar} restantes)", use_container_width=True):
                 st.session_state.mostrar_n = n_mostrar + 15
@@ -677,7 +722,6 @@ with col_mapa:
         if st.session_state.get("_mapa_chave") != chave_mapa:
             st.session_state["_mapa_chave"], st.session_state["_mapa"] = chave_mapa, montar_mapa(filtradas, aproximar)
         
-        # Altura calibrada para se nivelar perfeitamente aos 510px da lista e do painel esquerdo
         st_folium(st.session_state["_mapa"], height=440, use_container_width=True, returned_objects=[], key="mapa")
         st.markdown(
             "<div class='legend'>"
