@@ -21,7 +21,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.4-Enterprise-Match"
+APP_VERSION = "2026-10-02-v24.5-Corporate-Master"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="expanded")
 
 # O Chrome oferece/aplica tradução automática e isso corrompe a interface
@@ -33,6 +33,13 @@ try { const d = window.parent.document;
     m.name = 'google'; m.content = 'notranslate'; d.head.appendChild(m); } } catch (e) {}
 </script>""", unsafe_allow_javascript=True)
 
+# 1. INJETA O CSS ANTIGO PRIMEIRO (Para que possa ser sobrescrito)
+try:
+    st.markdown(bv.CSS, unsafe_allow_html=True)
+except Exception:
+    pass
+
+# 2. INJETA O NOVO CSS CORPORATIVO POR ÚLTIMO (A Regra "Cascata" garante que este vence)
 st.markdown("""
 <style>
 /* =========================================================
@@ -57,8 +64,9 @@ st.markdown("""
   --text-secondary: #64748B;
   --text-light: #FFFFFF;
   --border: #E2E8F0;
+  --border-dark: #CBD5E1;
   --shadow-sm: 0 2px 6px rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.12);
+  --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 20px;
@@ -66,13 +74,13 @@ st.markdown("""
 
 header[data-testid="stHeader"] {display: none;}
 .block-container {
-    padding-top: 1.5rem !important;
+    padding-top: 1.25rem !important;
     padding-bottom: 2rem !important;
     padding-left: 2rem !important;
     padding-right: 2rem !important;
     max-width: 100% !important;
 }
-.stApp { background: var(--background); }
+.stApp { background: var(--background) !important; }
 
 /* ---------- SIDEBAR ---------- */
 [data-testid="stSidebar"] {
@@ -83,119 +91,151 @@ header[data-testid="stHeader"] {display: none;}
     font-size: 0.85rem !important;
     color: var(--text-secondary);
 }
-[data-testid="stSidebar"] hr { border-color: var(--border) !important; margin: 0.8rem 0 !important; }
+[data-testid="stSidebar"] hr {
+    border-color: var(--border) !important;
+    margin: 0.8rem 0 !important;
+}
+
+/* Ocultar barra rolável desnecessária no multiselect */
 div[data-baseweb="select"] ul { max-height: 220px !important; }
 
 /* =========================================================
    BLINDAGEM CSS: FORÇAR AZUL NOS MULTISELECTS (ANTI-VERMELHO)
    ========================================================= */
-div[data-testid="stMultiSelect"] span[data-baseweb="tag"] {
+div[data-testid="stMultiSelect"] span[data-baseweb="tag"],
+div[data-baseweb="select"] span[data-baseweb="tag"] {
     background-color: var(--elpis-primary) !important;
     border: none !important;
     border-radius: 4px !important;
-    padding: 0px 8px !important;
+    padding: 0px 6px !important;
     margin: 2px !important;
-    height: 22px !important;
+    min-height: 22px !important;
 }
-div[data-testid="stMultiSelect"] span[data-baseweb="tag"] span {
+div[data-testid="stMultiSelect"] span[data-baseweb="tag"] span,
+div[data-baseweb="select"] span[data-baseweb="tag"] span {
     color: var(--text-light) !important;
     font-size: 11px !important;
     font-weight: 600 !important;
 }
-div[data-testid="stMultiSelect"] span[data-baseweb="tag"] svg {
+div[data-testid="stMultiSelect"] span[data-baseweb="tag"] svg,
+div[data-baseweb="select"] span[data-baseweb="tag"] svg {
     color: var(--text-light) !important;
-    height: 12px !important;
-    width: 12px !important;
-    margin-left: 4px !important;
+    height: 10px !important;
+    width: 10px !important;
 }
-div[data-testid="stMultiSelect"] span[data-baseweb="tag"] svg:hover {
+div[data-testid="stMultiSelect"] span[data-baseweb="tag"] svg:hover,
+div[data-baseweb="select"] span[data-baseweb="tag"] svg:hover {
     color: var(--elpis-orange) !important;
 }
 
-/* ---------- HEADER / FORM DE BUSCA (ESTILO NAV BAR) ---------- */
+/* ---------- HEADER / FORM DE BUSCA ---------- */
 [data-testid="stForm"] {
     background: var(--elpis-primary) !important;
     border: 0 !important;
     border-radius: var(--radius-md) !important;
     padding: 16px 24px !important;
     box-shadow: var(--shadow-md) !important;
-    margin-bottom: 2rem !important;
+    margin-bottom: 1.5rem !important;
 }
 [data-testid="stForm"] input, [data-testid="stForm"] div[data-baseweb="select"] > div {
     background: var(--surface) !important;
     color: var(--text-primary) !important;
     border: none !important;
     border-radius: var(--radius-sm) !important;
-    min-height: 46px !important;
-    font-size: 14px !important;
+    min-height: 44px !important;
 }
-[data-testid="stForm"] button[kind="primary"] {
+[data-testid="stForm"] button[kind="primary"], [data-testid="stForm"] button[kind="primaryFormSubmit"] {
     background: var(--elpis-orange) !important;
     color: var(--elpis-primary-dark) !important;
     border: 0 !important;
     border-radius: var(--radius-sm) !important;
-    min-height: 46px !important;
+    min-height: 44px !important;
     font-weight: 800 !important;
     transition: background .2s ease;
 }
-[data-testid="stForm"] button[kind="primary"]:hover {
+[data-testid="stForm"] button[kind="primary"] p, [data-testid="stForm"] button[kind="primaryFormSubmit"] p {
+    color: var(--elpis-primary-dark) !important;
+}
+[data-testid="stForm"] button[kind="primary"]:hover, [data-testid="stForm"] button[kind="primaryFormSubmit"]:hover {
     background: var(--elpis-orange-hover) !important;
     color: var(--text-light) !important;
 }
-.elpis-brand { color: var(--elpis-orange); font-weight: 800; font-size: 32px; line-height: 46px;}
+.elpis-brand { color: var(--elpis-orange); font-weight: 800; font-size: 28px; line-height: 44px;}
 
-/* ---------- CHIPS SUPERIORES (STATUS DE VAGAS) ---------- */
+/* ---------- CHIPS SUPERIORES (FONTES) ---------- */
 .pill-green, .pill-yellow, .pill-gray {
     border-radius: var(--radius-lg) !important;
-    padding: 6px 16px !important;
+    padding: 6px 14px !important;
     font-size: 12px !important;
     display: inline-block;
-    margin-right: 8px; margin-bottom: 8px;
-    white-space: nowrap; font-weight: 700;
+    margin-right: 8px;
+    margin-bottom: 8px;
+    white-space: nowrap;
+    font-weight: 600;
 }
-.pill-green { background: var(--status-success-bg); color: #087F68; }
-.pill-yellow { background: var(--status-warning-bg); color: #9A5800; }
-.pill-gray { background: var(--status-neutral-bg); color: #475569; }
+.pill-green { background: var(--status-success-bg) !important; color: #087F68 !important; border: 1px solid rgba(16, 185, 129, 0.2) !important; }
+.pill-yellow { background: var(--status-warning-bg) !important; color: #9A5800 !important; border: 1px solid rgba(245, 158, 11, 0.2) !important; }
+.pill-gray { background: var(--status-neutral-bg) !important; color: #475569 !important; border: 1px solid rgba(148, 163, 184, 0.2) !important; }
 
 /* ---------- CARTÕES DE RESULTADOS ---------- */
 .job-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
-    padding: 22px; margin-bottom: 16px; box-shadow: var(--shadow-sm); transition: transform .15s ease, box-shadow .15s ease;
+    background: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 20px !important;
+    margin-bottom: 14px !important;
+    box-shadow: var(--shadow-sm) !important;
+    transition: transform .15s ease, box-shadow .15s ease;
 }
-.job-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: #CBD5E1; }
-.job-title { font-size: 18px; font-weight: 800; color: var(--elpis-primary); line-height: 1.3; }
+.job-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md) !important;
+}
+.job-title { font-size: 17px; font-weight: 800; color: var(--elpis-primary); line-height: 1.3; }
 .job-company { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
-.badge-source { background: #E0E7FF; color: var(--elpis-primary); border-radius: var(--radius-lg); padding: 4px 12px; font-size: 11px; font-weight: 700; border: 1px solid #C7D2FE;}
+.badge-source { background: var(--status-info-bg); color: var(--elpis-primary); border-radius: var(--radius-lg); padding: 4px 10px; font-size: 11px; font-weight: 700;}
 .badge-also { font-size: 11px; color: var(--status-neutral); margin-left: 8px; }
 
 .btn-apply {
-    background: var(--elpis-orange); color: var(--elpis-primary-dark) !important; border-radius: var(--radius-sm);
-    padding: 8px 24px; font-size: 13px; font-weight: 800; text-decoration: none !important;
-    display: inline-block; transition: background .2s ease;
+    background: var(--elpis-orange) !important;
+    color: var(--elpis-primary-dark) !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 8px 20px !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    text-decoration: none !important;
+    display: inline-block;
+    transition: background .2s ease;
 }
-.btn-apply:hover { background: var(--elpis-orange-hover); color: var(--text-light) !important;}
+.btn-apply:hover { background: var(--elpis-orange-hover) !important; color: var(--text-light) !important;}
 
 /* ---------- MAPA E EXTRAS ---------- */
 iframe[title="streamlit_folium.st_folium"] {
-    border-radius: var(--radius-md) !important;
+    border-radius: var(--radius-sm) !important;
     border: 1px solid var(--border) !important;
 }
 
 .elpis-footer {
-    background-color: var(--elpis-primary-dark); color: #CBD5E1; padding: 18px 30px;
-    border-top: 4px solid var(--elpis-orange); border-radius: var(--radius-sm); margin-top: 40px;
-    display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;
+    background-color: var(--elpis-primary-dark);
+    color: var(--border-dark);
+    padding: 16px 24px;
+    border-top: 3px solid var(--elpis-orange);
+    border-radius: var(--radius-sm);
+    margin-top: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
 }
 .elpis-footer b { color: var(--text-light); }
 .elpis-footer a { color: var(--elpis-orange); text-decoration: none; font-weight: bold;}
 
 @media (max-width: 900px) {
-    .elpis-footer { flex-direction: column; text-align: center; gap: 12px; }
-    [data-testid="stForm"] { padding: 14px !important; }
+    .elpis-footer { flex-direction: column; text-align: center; gap: 10px; }
+    [data-testid="stForm"] { padding: 12px !important; }
 }
 </style>
 """, unsafe_allow_html=True)
-st.markdown(bv.CSS, unsafe_allow_html=True)
 
 CREDITO_EMPRESA = "INOVHIA Desenvolvimento Tecnológico"
 CREDITO_CONTATO = "Jeferson Alexandre"
@@ -375,13 +415,13 @@ def chips_html(resultados):
         n, s = len(r.itens), round(r.ms / 1000, 1)
         if r.status == "ok":
             origem_cache = any("cache" in x for x in r.notas)
-            classe, txt = "pill-green", f"{r.nome} · {n} · " + ("cache" if origem_cache else f"{s}s")
+            classe, txt = "pill-green", f"✅ {r.nome} · {n} · " + ("cache" if origem_cache else f"{s}s")
         elif r.status == "vazio":
-            classe, txt = "pill-yellow", f"{r.nome} · 0 vagas"
+            classe, txt = "pill-yellow", f"⚠️ {r.nome} · 0 vagas"
         elif r.status == "timeout":
-            classe, txt = "pill-gray", f"{r.nome} · esgotado"
+            classe, txt = "pill-gray", f"⏳ {r.nome} · esgotado"
         else:
-            classe, txt = "pill-gray", f"{r.nome} · erro"
+            classe, txt = "pill-gray", f"❌ {r.nome} · erro"
         dica = esc((r.erro + " | " if r.erro else "") + " | ".join(r.notas))
         partes.append(f'<span class="{classe}" title="{dica}">{esc(txt)}</span>')
     return f'<div style="margin:5px 0 16px 0;">{"".join(partes)}</div>'
@@ -400,180 +440,4 @@ def analisar_com_gemini(vagas, cargo, nivel, chave):
         import google.generativeai as legado
         legado.configure(api_key=chave)
         texto = legado.GenerativeModel(modelo).generate_content(prompt).text
-    for it in json.loads(texto.replace("```json", "").replace("```", "").strip()):
-        idx = int(it["i"])
-        if 0 <= idx < len(vagas): vagas[idx]["analise"] = it["analise"]
-
-def montar_mapa(vagas, aproximar):
-    # API Gratuita e com visualização nativa corporativa clara
-    m = folium.Map(location=[-15.7801, -47.9292], zoom_start=4, min_zoom=2, tiles="CartoDB positron", world_copy_jump=True, control_scale=False)
-    from folium.plugins import MarkerCluster
-    grupo = MarkerCluster(options={"maxClusterRadius": 35}).add_to(m)
-    pts = []
-    for v in vagas:
-        if not v.get("lat"): continue
-        pts.append([v["lat"], v["lon"]])
-        d = core.idade_dias(v.get("data"))
-        cor = "#94A3B8" if d is None or d > 10 else ("#10B981" if d <= 2 else "#F59E0B")
-        folium.CircleMarker(location=[v["lat"], v["lon"]], radius=7, color="white", weight=1.5, fill=True,
-                            fill_color=cor, fill_opacity=1, tooltip=f"{v['empresa']} | {v['titulo']}"[:120]).add_to(grupo)
-    if pts and aproximar: m.fit_bounds(pts, max_zoom=6, padding=(40, 40))
-    return m
-
-# ==========================================
-# HEADER DE BUSCA PRINCIPAL
-# ==========================================
-with st.form("search_form"):
-    c0, c1, c2, c3, c4 = st.columns([1.5, 3.5, 3, 2, 2])
-    with c0: st.markdown("<div class='elpis-brand'>Élpis</div>", unsafe_allow_html=True)
-    with c1: cargo = st.text_input("Cargo / Função", placeholder="🏢 Cargo / Função", label_visibility="collapsed")
-    with c2: local = st.text_input("Localidade", placeholder="📍 Localidade (ex: Belo Horizonte)", label_visibility="collapsed")
-    with c3: nivel = st.selectbox("Senioridade", ["(qualquer)", "Analista", "Especialista", "Coordenador", "Gerente", "Diretor", "VP"], label_visibility="collapsed")
-    with c4: buscar = st.form_submit_button("Buscar", type="primary", use_container_width=True)
-
-# ==========================================
-# MOTOR DE EXECUÇÃO
-# ==========================================
-params = None
-if buscar and not cargo.strip(): st.warning("Informe o Cargo / Função para buscar.")
-elif buscar:
-    pedido = {"cargo": cargo.strip(), "local": local, "nivel": nivel}
-    if current_session is None:
-        st.session_state.busca_aguardando = pedido
-        cadastro_dialog()
-    else: params = pedido
-
-if params is None and current_session is not None:
-    params = st.session_state.pop("busca_pendente", None)
-
-if params:
-    termo, local, nivel = params["cargo"], params["local"], params["nivel"]
-    if usage_today(sid) >= FREE_DAILY_LIMIT:
-        st.error(f"Limite gratuito diário atingido.")
-        st.stop()
-    if not fontes_ativas:
-        st.warning("Selecione ao menos um motor na barra lateral.")
-        st.stop()
-    st.markdown(bv.ESCONDER, unsafe_allow_html=True) 
-    brutas, resultados, t0 = [], [], time.perf_counter()
-
-    with st.status("Consultando bases de dados...", expanded=True) as box:
-        slot = st.empty()
-        for r in core.executar(fontes_ativas, termo, local, prazo=prazo):
-            resultados.append(r)
-            brutas += r.itens
-            slot.markdown(chips_html(resultados), unsafe_allow_html=True)
-            box.update(label=f"Processando {len(resultados)}/{len(fontes_ativas)} fontes · {len(brutas)} registos")
-        box.update(label=f"Concluído em {time.perf_counter() - t0:.1f}s", state="complete", expanded=False)
-
-    falhas = [r for r in resultados if r.status in ("erro", "timeout")]
-    st.session_state.rede = core.verificar_rede() if len(falhas) >= max(3, len(resultados) // 2) else None
-    unicas = core.consolidar(brutas, nivel, limite=60, min_exatas=999 if parciais else 5)
-
-    if aproximar and unicas: 
-        cache_loc, inicio, consultas = {}, time.perf_counter(), 0
-        for v in unicas:
-            loc = v["local"]
-            if loc not in cache_loc:
-                pos = core.geo_offline(loc)
-                if not pos and not core.local_generico(loc) and consultas < 5 and time.perf_counter() - inicio < 6:
-                    consultas += 1
-                    pos = core.geo_nominatim(loc)
-                cache_loc[loc] = pos
-            v["lat"], v["lon"] = cache_loc[loc] or (None, None)
-    else:
-        for v in unicas: v["lat"], v["lon"] = None, None
-
-    for v in unicas: v["analise"] = None
-
-    record_usage(sid)
-    if uso_slot is not None:
-        uso_slot.caption(f"Uso: **{usage_today(sid)} / {FREE_DAILY_LIMIT}** buscas gratuitas")
-        
-    st.session_state.update(vagas=unicas, resultados=resultados, tempo=time.perf_counter() - t0,
-                            resultado_id=time.time_ns(), mostrar_n=15, termo_busca=termo, nivel_busca=nivel)
-
-vagas_todas = st.session_state["vagas"]
-resultados = st.session_state.get("resultados", [])
-rid = st.session_state.get("resultado_id", 0)
-
-if resultados: st.markdown(chips_html(resultados), unsafe_allow_html=True)
-
-def banner_falhas(resultados):
-    falhas = [r for r in resultados if r.status in ("erro", "timeout")]
-    if len(falhas) < max(3, len(resultados) // 2): return
-    comuns = Counter((r.erro or "")[:90] for r in falhas).most_common(3)
-    st.error(f"{len(falhas)} fontes falharam. Causas principais:\n\n" + "\n".join(f"- **{n}×** `{msg}`" for msg, n in comuns))
-
-banner_falhas(resultados)
-
-filtradas = vagas_todas
-if vagas_todas:
-    f1, f2, f3, f4 = st.columns([2, 2, 2, 4])
-    periodo = f1.selectbox("Data de publicação", ["Qualquer data", "Últimos 3 dias", "Últimos 7 dias", "Últimos 15 dias", "Últimos 30 dias"], key=f"f_per_{rid}")
-    ordem = f2.selectbox("Classificação", ["Relevância", "Mais recentes"], key=f"f_ord_{rid}")
-    so_remoto = f3.toggle("Trabalho Remoto", key=f"f_rem_{rid}")
-    origens = sorted({v["origem"] for v in vagas_todas})
-    escolhidas = f4.multiselect("Filtrar por Fonte", origens, default=origens, key=f"f_ori_{rid}")
-    
-    dias_max = {"Últimos 3 dias": 3, "Últimos 7 dias": 7, "Últimos 15 dias": 15, "Últimos 30 dias": 30}.get(periodo)
-    filtradas = [v for v in vagas_todas
-                 if v["origem"] in escolhidas and (not so_remoto or core.eh_remoto(v))
-                 and (dias_max is None or (core.idade_dias(v.get("data")) is not None and core.idade_dias(v["data"]) <= dias_max))]
-    if ordem == "Mais recentes":
-        filtradas = sorted(filtradas, key=lambda v: v.get("data") or core.MIN_DATA, reverse=True)
-        
-    barra1, barra2 = st.columns([5, 3])
-    barra1.caption(f"{len(filtradas)} resultados processados em {st.session_state.get('tempo', 0):.1f}s")
-    if chave and filtradas and barra2.button("✨ Gerar Insights de Perfil (Gemini AI)", use_container_width=True):
-        try:
-            with st.spinner("Analisando competências..."):
-                analisar_com_gemini(filtradas[:12], st.session_state.get("termo_busca", ""), st.session_state.get("nivel_busca", "(qualquer)"), chave)
-        except Exception as e: st.warning(f"Erro na IA: {str(e)[:120]}")
-
-col_lista, col_mapa = st.columns([3, 2], gap="large")
-
-with col_lista:
-    painel = st.container(height=650)
-    if not vagas_todas and not resultados:
-        painel.markdown(bv.html_boas_vindas(len(fontes_ativas), FREE_DAILY_LIMIT), unsafe_allow_html=True)
-    elif not vagas_todas: painel.info("Utilize a barra superior para realizar uma nova pesquisa.")
-    elif not filtradas: painel.info("Nenhuma vaga atende aos filtros atuais.")
-    
-    n_mostrar = st.session_state.get("mostrar_n", 15)
-    for v in filtradas[:n_mostrar]:
-        dias = core.idade_dias(v.get("data"))
-        descricao = (v.get("analise") or v.get("resumo") or "")[:240]
-        link = v["link"] if core.eh_http(v.get("link")) else "#"
-        badge_cls = "badge-source badge-global" if v.get("grupo") in ("Global", "Empresas") else "badge-source"
-        tambem = f'<span class="badge-also">também via {esc(", ".join(v["tambem"]))}</span>' if v.get("tambem") else ""
-        
-        painel.markdown(
-            f'<div class="job-card">'
-            f'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'
-            f'<div style="flex:1;"><div class="job-title">{esc(v["titulo"])}</div>'
-            f'<div class="job-company">{esc(v["empresa"])} &middot; {esc(v["local"])}</div></div>'
-            f'<div class="{classe_idade(dias)}">{texto_idade(dias)}</div></div>'
-            f'<div style="font-size:13px;color:var(--text-secondary);margin:12px 0;line-height:1.5;">{esc(descricao)}...</div>'
-            f'<div style="display:flex;justify-content:space-between;align-items:center;">'
-            f'<div><span class="{badge_cls}">{esc(v["origem"])}</span>{tambem}</div>'
-            f'<a href="{esc(link)}" target="_blank" rel="noopener noreferrer" class="btn-apply">Candidatar-se</a>'
-            f'</div></div>', unsafe_allow_html=True)
-            
-    if len(filtradas) > n_mostrar:
-        if st.button(f"Carregar mais resultados ({len(filtradas) - n_mostrar})", use_container_width=True):
-            st.session_state.mostrar_n = n_mostrar + 15
-            st.rerun()
-
-with col_mapa:
-    com_pino = sum(1 for v in filtradas if v.get("lat"))
-    st.markdown(f"<div style='font-size:17px; font-weight:800; color:var(--elpis-primary); margin-bottom:10px;'>"
-                f"📍 Mapeamento Geoespacial ({com_pino} vagas)</div>", unsafe_allow_html=True)
-    chave_mapa = (tuple(v["link"] for v in filtradas), aproximar)
-    if st.session_state.get("_mapa_chave") != chave_mapa:
-        st.session_state["_mapa_chave"], st.session_state["_mapa"] = chave_mapa, montar_mapa(filtradas, aproximar)
-    st_folium(st.session_state["_mapa"], height=560, use_container_width=True, returned_objects=[], key="mapa")
-    st.markdown("<div style='text-align:center; font-size:12px; color:var(--text-secondary); margin-top:8px;'>"
-                "🟢 Recente (até 2 dias) &nbsp;&nbsp;|&nbsp;&nbsp; 🟠 Médio (até 10 dias) &nbsp;&nbsp;|&nbsp;&nbsp; ⚪ Antigo / S/Data</div>", unsafe_allow_html=True)
-
-rodape_inovhia()
+    for it in json.loads(texto.replace("```json", "").replace("
