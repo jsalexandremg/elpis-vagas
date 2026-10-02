@@ -23,75 +23,16 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.31-Ultimate-Badge-Killer"
+APP_VERSION = "2026-10-02-v24.32-Stable-Cloud"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
-# =========================================================
-# 1. WATCHDOG ANTI-BADGE (DOM PAI) E ANTITRADUÇÃO
-# =========================================================
-st.html("""<script>
-try {
-  const d = window.parent.document;
-  
-  // Impede tradução automática (Chrome)
-  d.documentElement.setAttribute('lang', 'pt-BR');
-  d.documentElement.setAttribute('translate', 'no');
-  d.documentElement.classList.add('notranslate');
-  if (!d.querySelector('meta[name="google"]')) {
-    const m = d.createElement('meta');
-    m.name = 'google'; m.content = 'notranslate';
-    d.head.appendChild(m);
-  }
-
-  // Watchdog agressivo: Oculta elementos sem deletá-los (evita que o React os recrie)
-  function hideStreamlitArtifacts() {
-    const selectors = [
-      '[data-testid="manage-app-button"]',
-      'div[class*="viewerBadge"]',
-      'div[class*="ProfileBadge"]',
-      'div[class*="profileBadge"]',
-      'img[src*="githubusercontent"]',
-      'img[src*="googleusercontent"]',
-      'a[href*="streamlit.io/cloud"]',
-      '[data-testid="stStatusWidget"]',
-      '#stDeployButton'
-    ];
-    
-    selectors.forEach(selector => {
-      d.querySelectorAll(selector).forEach(el => {
-        el.style.setProperty('display', 'none', 'important');
-        el.style.setProperty('opacity', '0', 'important');
-        el.style.setProperty('visibility', 'hidden', 'important');
-        el.style.setProperty('pointer-events', 'none', 'important');
-        el.style.setProperty('z-index', '-9999', 'important');
-        
-        // Se for uma imagem ou botão flutuante, esconde também o container pai
-        if(el.tagName === 'IMG' || el.tagName === 'A' || el.tagName === 'BUTTON') {
-            if(el.parentElement) {
-                el.parentElement.style.setProperty('display', 'none', 'important');
-            }
-        }
-      });
-    });
-  }
-
-  // Executa imediatamente e depois a cada 500ms para neutralizar re-renders do React
-  hideStreamlitArtifacts();
-  setInterval(hideStreamlitArtifacts, 500);
-
-} catch (e) {
-  console.log("Watchdog silencioso: Isolamento de iframe detectado.");
-}
-</script>""", unsafe_allow_javascript=True)
-
-
-# 2. Injeta CSS base
+# 1. Injeta CSS base do modulo de boas-vindas
 try:
     st.markdown(bv.CSS, unsafe_allow_html=True)
 except Exception:
     pass
 
-# 3. DESIGN SYSTEM CORPORATIVO ÉLPIS (Zero Outer Scroll & Blindagem Completa)
+# 2. DESIGN SYSTEM CORPORATIVO ÉLPIS E BLINDAGEM DO CLOUD
 st.markdown("""
 <style>
 :root {
@@ -123,25 +64,27 @@ st.markdown("""
 }
 
 /* =========================================================
-   BLINDAGEM CONTRA AVATAR E BADGES NATIVOS (NO IFRAME)
+   BLINDAGEM SEGURA CONTRA BADGES E AVATAR DA NUVEM
    ========================================================= */
-footer,
-header[data-testid="stHeader"],
-[data-testid="stSidebar"],
-[data-testid="stSidebarCollapsedControl"],
-[data-testid="collapsedControl"],
-[data-testid="stToolbar"],
-[data-testid="stDecoration"],
-#MainMenu {
+[data-testid="stStatusWidget"],
+[data-testid="manage-app-button"],
+[class*="viewerBadge_container"],
+[class*="viewerBadge_link"],
+[class*="ProfileBadge_container"],
+[class*="profileBadge"],
+a[href*="share.streamlit.io"],
+a[href*="streamlit.io/cloud"] {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
-    height: 0 !important;
-    width: 0 !important;
     pointer-events: none !important;
 }
 
-/* Oculta contentores invisíveis para cortar espaço branco no topo */
+/* Oculta cabeçalho nativo e barra lateral do Streamlit */
+header[data-testid="stHeader"], [data-testid="stSidebar"],
+[data-testid="stSidebarCollapsedControl"], [data-testid="collapsedControl"] {display: none !important;}
+
+/* Oculta contentores invisíveis para evitar espaçamento em branco */
 div[data-testid="stElementContainer"]:has(> style),
 div[data-testid="stElementContainer"]:has(> script),
 div[data-testid="stElementContainer"]:empty {
@@ -197,15 +140,9 @@ html, body, [data-testid="stAppViewContainer"] {
 }
 
 @keyframes elpis-glow {
-    0% {
-        filter: drop-shadow(0 1px 3px rgba(246, 160, 0, 0.35));
-    }
-    50% {
-        filter: drop-shadow(0 2px 8px rgba(246, 160, 0, 0.65));
-    }
-    100% {
-        filter: drop-shadow(0 2px 12px rgba(255, 209, 102, 0.85));
-    }
+    0% { filter: drop-shadow(0 1px 3px rgba(246, 160, 0, 0.35)); }
+    50% { filter: drop-shadow(0 2px 8px rgba(246, 160, 0, 0.65)); }
+    100% { filter: drop-shadow(0 2px 12px rgba(255, 209, 102, 0.85)); }
 }
 
 /* =========================================================
