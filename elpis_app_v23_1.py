@@ -21,7 +21,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v23.8-Micro-Sidebar"
+APP_VERSION = "2026-10-02-v23.9-Blue-Tags"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="expanded")
 
 # O Chrome oferece/aplica tradução automática e isso corrompe a interface
@@ -39,8 +39,10 @@ st.markdown("""
     .block-container { padding-top: 1.5rem; padding-bottom: 2rem; padding-left: 2rem; padding-right: 2rem; }
     
     /* ========================================================= */
-    /* MODO COMPACTO E NEUTRO DA BARRA LATERAL */
+    /* BARRA LATERAL: TEXTOS MENORES E TAGS AZUIS EXTREMAMENTE COMPACTAS */
     /* ========================================================= */
+    
+    /* 1. Reduz tamanho geral da fonte na sidebar */
     [data-testid="stSidebar"] p, 
     [data-testid="stSidebar"] label, 
     [data-testid="stSidebar"] span, 
@@ -48,27 +50,31 @@ st.markdown("""
         font-size: 0.80rem !important;
     }
     
-    /* Transformar os chips vermelhos/grandes em micro-chips cinzas e discretos */
-    [data-testid="stSidebar"] [data-baseweb="tag"] {
-        background-color: #F3F4F6 !important; /* Cinza claro */
-        border: 1px solid #D1D5DB !important;
+    /* 2. Forçar a cor AZUL e Tamanho Micro nas Tags do Multiselect (Base Web UI) */
+    span[data-baseweb="tag"] {
+        background-color: #1D4ED8 !important; /* Azul Executivo */
+        border: none !important;
         border-radius: 4px !important;
-        padding: 0px 4px !important;
-        margin: 2px 2px !important;
-        height: 20px !important;
+        padding: 0px 5px !important;
+        margin: 2px !important;
+        height: 22px !important; /* Altura super reduzida */
     }
-    [data-testid="stSidebar"] [data-baseweb="tag"] span {
-        color: #4B5563 !important; /* Texto escuro discreto */
-        font-size: 0.65rem !important;
+    span[data-baseweb="tag"] span {
+        color: #FFFFFF !important; /* Texto branco */
+        font-size: 0.65rem !important; /* Fonte minúscula */
         font-weight: 500 !important;
     }
-    [data-testid="stSidebar"] [data-baseweb="tag"] svg {
-        height: 10px !important;
-        width: 10px !important;
-        color: #9CA3AF !important; /* Ícone de X mais suave */
+    span[data-baseweb="tag"] svg {
+        color: #FFFFFF !important; /* X branco */
+        height: 12px !important;
+        width: 12px !important;
     }
-    
-    /* Reduzir os botões de conectar/desconectar na sidebar */
+    /* Muda a cor ao passar o rato no X */
+    span[data-baseweb="tag"] svg:hover {
+        color: #F87171 !important; 
+    }
+
+    /* 3. Reduzir tamanho dos botões na Sidebar para poupar espaço */
     [data-testid="stSidebar"] button {
         min-height: 28px !important;
         padding-top: 0px !important;
@@ -76,7 +82,7 @@ st.markdown("""
         font-size: 0.8rem !important;
     }
     
-    /* Ocultar margens verticais desnecessárias para economizar espaço */
+    /* 4. Comprimir as margens invisíveis entre componentes na Sidebar */
     [data-testid="stSidebar"] .element-container {
         margin-bottom: -12px !important;
     }
@@ -225,7 +231,7 @@ def cadastro_dialog():
             st.rerun()
 
 # ==========================================
-# PAINEL LATERAL (CLÁSSICO COMPACTADO E NEUTRO)
+# PAINEL LATERAL (CLÁSSICO COMPACTADO)
 # ==========================================
 sid = st.session_state.get("temporary_session_id")
 current_session = sessao_atual(sid)
@@ -246,6 +252,7 @@ with st.sidebar:
         
     st.markdown("---")
     
+    st.markdown("⚙️ **Configuração**")
     todas = core.disponiveis()
     fontes_ativas = st.multiselect("Motores ativos", todas, default=todas, help="Fontes marcadas como beta usam páginas sem API oficial.")
     prazo = st.slider("Tempo máximo da busca (s)", 8, 40, 20)
