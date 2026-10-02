@@ -21,7 +21,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.2-Design-Tokens"
+APP_VERSION = "2026-10-02-v24.3-Corporate-Fixed"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="expanded")
 
 # O Chrome oferece/aplica tradução automática e isso corrompe a interface
@@ -57,30 +57,21 @@ st.markdown("""
   --status-error: #EF4444;
   --status-error-bg: #FEE2E2;
 
-  /* SUPERFÍCIES */
+  /* SUPERFÍCIES E BORDAS */
   --background: #F8FAFC;
   --surface: #FFFFFF;
-  --map-background: #E8EFF8;
-
-  /* TIPOGRAFIA */
   --text-primary: #111827;
   --text-secondary: #64748B;
   --text-light: #FFFFFF;
-
-  /* BORDAS */
   --border: #E2E8F0;
   --border-dark: #CBD5E1;
 
-  /* SOMBRAS */
+  /* SOMBRAS E RADIUS */
   --shadow-sm: 0 2px 6px rgba(15, 23, 42, 0.06);
   --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
-  --shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.12);
-
-  /* RADIUS */
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 22px;
-  --radius-xl: 28px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
 }
 
 header[data-testid="stHeader"] {display: none;}
@@ -93,7 +84,7 @@ header[data-testid="stHeader"] {display: none;}
 }
 .stApp { background: var(--background); }
 
-/* ---------- SIDEBAR ---------- */
+/* ---------- SIDEBAR E RÓTULOS ---------- */
 [data-testid="stSidebar"] {
     background: var(--surface) !important;
     border-right: 1px solid var(--border) !important;
@@ -102,11 +93,33 @@ header[data-testid="stHeader"] {display: none;}
     font-size: 0.85rem !important;
     color: var(--text-secondary);
 }
-[data-testid="stSidebar"] hr {
-    border-color: var(--border) !important;
-    margin: 0.8rem 0 !important;
-}
+[data-testid="stSidebar"] hr { border-color: var(--border) !important; margin: 0.8rem 0 !important; }
 div[data-baseweb="select"] ul { max-height: 220px !important; }
+
+/* =========================================================
+   FORÇA BRUTA: TAGS AZUIS EM TODO O SISTEMA (ANTI-VERMELHO)
+   ========================================================= */
+span[data-baseweb="tag"], div[data-baseweb="tag"] {
+    background-color: var(--elpis-primary) !important;
+    border: none !important;
+    border-radius: 4px !important;
+    padding: 0px 6px !important;
+    margin: 2px !important;
+    min-height: 22px !important;
+}
+span[data-baseweb="tag"] span, div[data-baseweb="tag"] span {
+    color: var(--text-light) !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+}
+span[data-baseweb="tag"] svg, div[data-baseweb="tag"] svg {
+    color: var(--text-light) !important;
+    height: 10px !important;
+    width: 10px !important;
+}
+span[data-baseweb="tag"] svg:hover, div[data-baseweb="tag"] svg:hover {
+    color: var(--elpis-orange) !important;
+}
 
 /* ---------- HEADER / FORM DE BUSCA ---------- */
 [data-testid="stForm"] {
@@ -139,16 +152,14 @@ div[data-baseweb="select"] ul { max-height: 220px !important; }
 }
 .elpis-brand { color: var(--elpis-orange); font-weight: 800; font-size: 28px; line-height: 44px;}
 
-/* ---------- CHIPS SUPERIORES (FONTES) ---------- */
+/* ---------- CHIPS SUPERIORES (STATUS) ---------- */
 .pill-green, .pill-yellow, .pill-gray {
     border-radius: var(--radius-lg) !important;
     padding: 6px 14px !important;
     font-size: 12px !important;
     display: inline-block;
-    margin-right: 8px;
-    margin-bottom: 8px;
-    white-space: nowrap;
-    font-weight: 600;
+    margin-right: 8px; margin-bottom: 8px;
+    white-space: nowrap; font-weight: 600;
 }
 .pill-green { background: var(--status-success-bg); color: var(--status-success); border: 1px solid rgba(16, 185, 129, 0.2); }
 .pill-yellow { background: var(--status-warning-bg); color: var(--status-warning); border: 1px solid rgba(245, 158, 11, 0.2); }
@@ -156,33 +167,19 @@ div[data-baseweb="select"] ul { max-height: 220px !important; }
 
 /* ---------- CARTÕES DE RESULTADOS ---------- */
 .job-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 20px;
-    margin-bottom: 14px;
-    box-shadow: var(--shadow-sm);
-    transition: transform .15s ease, box-shadow .15s ease;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 20px; margin-bottom: 14px; box-shadow: var(--shadow-sm); transition: transform .15s ease, box-shadow .15s ease;
 }
-.job-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-}
+.job-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 .job-title { font-size: 17px; font-weight: 800; color: var(--elpis-primary); line-height: 1.3; }
 .job-company { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
 .badge-source { background: var(--status-info-bg); color: var(--elpis-primary); border-radius: var(--radius-lg); padding: 4px 10px; font-size: 11px; font-weight: 700;}
 .badge-also { font-size: 11px; color: var(--status-neutral); margin-left: 8px; }
 
 .btn-apply {
-    background: var(--elpis-orange);
-    color: var(--elpis-primary-dark) !important;
-    border-radius: var(--radius-sm);
-    padding: 8px 20px;
-    font-size: 13px;
-    font-weight: 800;
-    text-decoration: none !important;
-    display: inline-block;
-    transition: background .2s ease;
+    background: var(--elpis-orange); color: var(--elpis-primary-dark) !important; border-radius: var(--radius-sm);
+    padding: 8px 20px; font-size: 13px; font-weight: 800; text-decoration: none !important;
+    display: inline-block; transition: background .2s ease;
 }
 .btn-apply:hover { background: var(--elpis-orange-hover); color: var(--text-light) !important;}
 
@@ -193,16 +190,9 @@ iframe[title="streamlit_folium.st_folium"] {
 }
 
 .elpis-footer {
-    background-color: var(--elpis-primary-dark);
-    color: var(--border-dark);
-    padding: 16px 24px;
-    border-top: 3px solid var(--elpis-orange);
-    border-radius: var(--radius-sm);
-    margin-top: 30px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.8rem;
+    background-color: var(--elpis-primary-dark); color: var(--border-dark); padding: 16px 24px;
+    border-top: 3px solid var(--elpis-orange); border-radius: var(--radius-sm); margin-top: 30px;
+    display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;
 }
 .elpis-footer b { color: var(--text-light); }
 .elpis-footer a { color: var(--elpis-orange); text-decoration: none; font-weight: bold;}
@@ -423,7 +413,8 @@ def analisar_com_gemini(vagas, cargo, nivel, chave):
         if 0 <= idx < len(vagas): vagas[idx]["analise"] = it["analise"]
 
 def montar_mapa(vagas, aproximar):
-    m = folium.Map(location=[-15.7801, -47.9292], zoom_start=4, min_zoom=2, tiles="CartoDB positron", world_copy_jump=True, control_scale=False)
+    # Alterado para OpenStreetMap (100% Gratuito e Livre de API KEY)
+    m = folium.Map(location=[-15.7801, -47.9292], zoom_start=4, min_zoom=2, tiles="OpenStreetMap", world_copy_jump=True, control_scale=False)
     from folium.plugins import MarkerCluster
     grupo = MarkerCluster(options={"maxClusterRadius": 35}).add_to(m)
     pts = []
@@ -431,7 +422,7 @@ def montar_mapa(vagas, aproximar):
         if not v.get("lat"): continue
         pts.append([v["lat"], v["lon"]])
         d = core.idade_dias(v.get("data"))
-        cor = "#94A3B8" if d is None or d > 10 else ("#10B981" if d <= 2 else "#F59E0B")
+        cor = "#9CA3AF" if d is None or d > 10 else ("#10B981" if d <= 2 else "#F59E0B")
         folium.CircleMarker(location=[v["lat"], v["lon"]], radius=7, color="white", weight=1.5, fill=True,
                             fill_color=cor, fill_opacity=1, tooltip=f"{v['empresa']} | {v['titulo']}"[:120]).add_to(grupo)
     if pts and aproximar: m.fit_bounds(pts, max_zoom=6, padding=(40, 40))
