@@ -23,10 +23,10 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.29-Zero-Badge"
+APP_VERSION = "2026-10-02-v24.30-Zero-Avatar"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
-# 1. REMOVE TRADUÇÃO INDEVIDA E ELIMINA O BADGE "HOSTED WITH STREAMLIT" NO DOM PAI
+# 1. REMOVE TRADUÇÃO INDEVIDA, BADGE E FOTO DE PERFIL NO DOM PAI DO STREAMLIT CLOUD
 st.html("""<script>
 try {
   const d = window.parent.document;
@@ -39,25 +39,57 @@ try {
     d.head.appendChild(m);
   }
 
-  // Função para deletar o selo do Streamlit Community Cloud no pai
-  function killBadge() {
-    const selectors = [
+  // Elimina distintivos, badges e foto de perfil/avatar flutuante do Streamlit Cloud
+  function purgarElementosHost() {
+    const seletores = [
       '[data-testid="stStatusWidget"]',
       'div[class*="viewerBadge"]',
       'a[class*="viewerBadge"]',
       'div[class*="ProfileBadge"]',
-      'footer',
+      'div[class*="profileBadge"]',
+      '[data-testid="manage-app-button"]',
+      'button[kind="manageApp"]',
+      'div:has(> img[src*="githubusercontent"])',
+      'div:has(> img[src*="googleusercontent"])',
+      'img[src*="githubusercontent"]',
+      'img[src*="googleusercontent"]',
       'div[data-testid="stToolbar"]',
-      'div[data-testid="stDecoration"]'
+      'div[data-testid="stDecoration"]',
+      'footer'
     ];
-    selectors.forEach(sel => {
+    seletores.forEach(sel => {
       d.querySelectorAll(sel).forEach(el => el.remove());
     });
-  }
-  killBadge();
 
-  // Monitora e impede o Streamlit de recriar o selo no DOM
-  const obs = new MutationObserver(() => killBadge());
+    // Injeta estilo destrutivo diretamente no <head> do documento pai
+    if (!d.getElementById('elpis-parent-shield')) {
+      const estilo = d.createElement('style');
+      estilo.id = 'elpis-parent-shield';
+      estilo.innerHTML = `
+        [data-testid="stStatusWidget"],
+        [class*="viewerBadge"],
+        [class*="ProfileBadge"],
+        [class*="profileBadge"],
+        [data-testid="manage-app-button"],
+        button[kind="manageApp"],
+        img[src*="githubusercontent"],
+        img[src*="googleusercontent"],
+        div:has(> img[src*="githubusercontent"]),
+        footer {
+          display: none !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+          height: 0 !important;
+          width: 0 !important;
+          pointer-events: none !important;
+        }
+      `;
+      d.head.appendChild(estilo);
+    }
+  }
+
+  purgarElementosHost();
+  const obs = new MutationObserver(() => purgarElementosHost());
   obs.observe(d.body, { childList: true, subtree: true });
 } catch (e) {}
 </script>""", unsafe_allow_javascript=True)
@@ -100,11 +132,17 @@ st.markdown("""
 }
 
 /* =========================================================
-   BLINDAGEM CONTRA O BADGE "HOSTED WITH STREAMLIT" (CSS)
+   BLINDAGEM CONTRA AVATAR E BADGES DO STREAMLIT CLOUD (CSS)
    ========================================================= */
 [data-testid="stStatusWidget"],
 [class*="viewerBadge"],
 [class*="ProfileBadge"],
+[class*="profileBadge"],
+[data-testid="manage-app-button"],
+button[kind="manageApp"],
+img[src*="githubusercontent"],
+img[src*="googleusercontent"],
+div:has(> img[src*="githubusercontent"]),
 div:has(> [class*="viewerBadge"]),
 footer,
 header[data-testid="stHeader"],
@@ -1044,7 +1082,7 @@ with col_filtros:
             st.caption("Visitante.")
 
         # Opções de IA e Configuração Harmonizadas
-        with st.expander("⚙️ IA & Opções"):
+        with st.expander("⚙️️ IA & Opções"):
             prazo = st.slider("Timeout (s)", 8, 40, 20)
             st.session_state.setdefault("gemini_key", os.getenv("GEMINI_API_KEY", ""))
             st.session_state.setdefault("gemini_connected", False)
