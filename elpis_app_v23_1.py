@@ -21,10 +21,10 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-01-v23.3-Compact-UI"
-st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide")
+APP_VERSION = "2026-10-01-v23.5-Classic-Responsive"
+st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="expanded")
 
-# O Chrome oferece/aplica tradução automática (a página vem como lang="en") e isso corrompe a interface:
+# O Chrome oferece/aplica tradução automática e isso corrompe a interface
 st.html("""<script>
 try { const d = window.parent.document;
   d.documentElement.setAttribute('lang', 'pt-BR'); d.documentElement.setAttribute('translate', 'no');
@@ -38,20 +38,7 @@ st.markdown("""
     header[data-testid="stHeader"] {display: none;}
     .block-container { padding-top: 1.5rem; padding-bottom: 2rem; padding-left: 2rem; padding-right: 2rem; }
     
-    /* LARGURA E ESPAÇAMENTO DA BARRA LATERAL (SIDEBAR) */
-    [data-testid="stSidebar"] {
-        min-width: 290px !important;
-        max-width: 290px !important;
-    }
-    [data-testid="stSidebarUserContent"] {
-        padding-top: 1.2rem !important;
-        padding-bottom: 1rem !important;
-    }
-    /* Limitar a altura da caixa de seleção de motores para não empurrar a tela */
-    div[data-baseweb="select"] ul {
-        max-height: 180px !important;
-    }
-
+    /* FORMULÁRIO DE BUSCA - TEMA CORPORATIVO RESPONSIVO */
     [data-testid="stForm"] { background-color: #0F2A4A !important; border-radius: 12px; padding: 16px 24px; border: none;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
     [data-testid="stForm"] input, [data-testid="stForm"] div[data-baseweb="select"] > div {
@@ -62,6 +49,8 @@ st.markdown("""
     [data-testid="stForm"] button[kind="primary"] p, [data-testid="stForm"] button[kind="primaryFormSubmit"] p { color: #0F2A4A !important; }
     [data-testid="stForm"] button[kind="primary"]:hover, [data-testid="stForm"] button[kind="primaryFormSubmit"]:hover {
         background-color: #D97706 !important; }
+        
+    /* PÍLULAS E CARTÕES DE VAGAS */
     .pill-green, .pill-yellow, .pill-gray { border-radius: 9999px; padding: 4px 12px; font-size: 13px; display: inline-block;
         margin-right: 6px; margin-bottom: 6px; white-space: nowrap; font-weight: 500; }
     .pill-green { background: #D1FAE5; color: #065F46; }
@@ -79,6 +68,7 @@ st.markdown("""
         font-weight: bold; text-decoration: none !important; display: inline-block; text-align: center; transition: background 0.2s; }
     .btn-apply:hover { background: #D97706; color: #FFF !important; }
 
+    /* REGRAS CSS RESPONSIVAS PARA NOTEBOOKS E CELULARES */
     @media (max-width: 1200px) {
         .block-container { padding-left: 1rem; padding-right: 1rem; }
     }
@@ -175,7 +165,7 @@ def cadastro_dialog():
     email = st.text_input("E-mail (opcional)", placeholder="Não será confirmado nesta versão", key="dlg_email").strip()
     aceite = st.checkbox("Aceito os Termos de Uso e a Política de Privacidade para esta sessão.", key="dlg_aceite")
     st.caption("A sessão expira em 24 horas e os registos operacionais são apagados ao encerrar.")
-    if st.button("Continuar e buscar", type="primary", width="stretch"):
+    if st.button("Continuar e buscar", type="primary", use_container_width=True):
         if not nome or not aceite:
             st.warning("Informe o seu nome e aceite a Política de Privacidade.")
         else:
@@ -183,29 +173,86 @@ def cadastro_dialog():
             st.session_state.busca_pendente = st.session_state.pop("busca_aguardando", None)
             st.rerun()
 
-def sidebar_sessao():
-    sid = st.session_state.get("temporary_session_id")
-    session = sessao_atual(sid)
-    uso_slot = None
-    with st.sidebar:
-        if session:
-            st.markdown(f"**👤 {session['nome']}**")
-            uso_slot = st.empty()
-            uso_slot.caption(f"Plano gratuito · {usage_today(sid)}/{FREE_DAILY_LIMIT} buscas")
-            if st.button("Encerrar sessão", width="stretch"):
-                apagar_sessao(sid)
-                st.session_state.pop("temporary_session_id", None)
-                st.session_state.vagas, st.session_state.resultados = [], []
-                st.rerun()
-        else:
-            st.caption("Sessão não iniciada.")
-        st.markdown("---")
-    return sid, session, uso_slot
+# ==========================================
+# PAINEL LATERAL (CLÁSSICO)
+# ==========================================
+sid = st.session_state.get("temporary_session_id")
+current_session = sessao_atual(sid)
 
-current_sid, current_session, uso_slot = sidebar_sessao()
+with st.sidebar:
+    if current_session:
+        st.caption(f"Sessão: {current_session['nome']}")
+        uso_slot = st.empty()
+        uso_slot.caption(f"Plano gratuito · {usage_today(sid)}/{FREE_DAILY_LIMIT} buscas realizadas")
+        if st.button("Encerrar e apagar sessão", use_container_width=True):
+            apagar_sessao(sid)
+            st.session_state.pop("temporary_session_id", None)
+            st.session_state.vagas, st.session_state.resultados = [], []
+            st.rerun()
+    else:
+        uso_slot = None
+        st.caption("Sessão não iniciada: o cadastro rápido aparece na sua primeira busca.")
+        
+    st.caption(f"Desenvolvido por {CREDITO_EMPRESA}")
+    st.markdown("---")
+    
+    st.header("⚙️ Configuração")
+    todas = core.disponiveis()
+    fontes_ativas = st.multiselect("Motores ativos", todas, default=todas, help="Fontes marcadas como beta usam páginas sem API oficial; veja o diagnóstico.")
+    prazo = st.slider("Tempo máximo da busca (s)", 8, 40, 20, help="Fontes que não responderem a tempo são descartadas; as demais aparecem.")
+    
+    st.session_state.setdefault("gemini_key", os.getenv("GEMINI_API_KEY", ""))
+    st.session_state.setdefault("gemini_connected", False)
+    st.session_state.setdefault("gemini_status", "")
+    
+    chave_digitada = st.text_input("Chave de API Gemini (opcional)", type="password", value=st.session_state["gemini_key"], help="A chave fica somente nesta sessão e não é gravada no SQLite.")
+    
+    col_con, col_des = st.columns(2)
+    if col_con.button("Conectar", use_container_width=True):
+        chave_t = (chave_digitada or "").strip()
+        if not chave_t:
+            st.session_state["gemini_status"] = "Informe uma chave Gemini."
+            st.session_state["gemini_connected"] = False
+        else:
+            try:
+                from google import genai
+                cliente = genai.Client(api_key=chave_t)
+                modelos = list(cliente.models.list())
+                if modelos:
+                    st.session_state["gemini_key"] = chave_t
+                    st.session_state["gemini_connected"] = True
+                    st.session_state["gemini_status"] = "Gemini conectado com sucesso."
+            except Exception as exc:
+                st.session_state["gemini_connected"] = False
+                st.session_state["gemini_status"] = "Chave recusada ou indisponível."
+
+    if col_des.button("Desconectar", use_container_width=True):
+        st.session_state["gemini_key"], st.session_state["gemini_connected"] = "", False
+        st.session_state["gemini_status"] = "Chave Gemini desconectada nesta sessão."
+        
+    if st.session_state["gemini_connected"]: st.success(st.session_state["gemini_status"])
+    elif st.session_state["gemini_status"]: st.warning(st.session_state["gemini_status"])
+    
+    chave = st.session_state["gemini_key"] if st.session_state["gemini_connected"] else ""
+    
+    aproximar = st.checkbox("Aproximar mapa das vagas", value=True)
+    parciais = st.checkbox("Incluir correspondências parciais", value=False, help="Por padrão, se houver 5 ou mais vagas com o cargo completo, as parciais são ocultadas.")
+    
+    faltam = core.indisponiveis()
+    if faltam:
+        st.caption("Disponíveis com chave de API (variável de ambiente): " + "; ".join(f"{n} ({', '.join(k)})" for n, k in faltam.items()))
+
+    st.markdown("---")
+    with st.expander("👨‍💻 Sobre o Desenvolvedor"):
+        st.markdown(
+            "**Jeferson Alexandre**\n\n"
+            "Especialista em Auditoria, GRC e Engenharia de Dados Aplicada a Controles Internos.\n\n"
+            "Formado em **Ciências Contábeis** e **Análise e Desenvolvimento de Sistemas**, com **MBA em Gestão Estratégica de Projetos**. "
+            "Combina a profundidade analítica de Compliance com a agilidade da Tecnologia."
+        )
 
 # ==========================================
-# FORMATAÇÃO
+# FUNÇÕES DE FORMATAÇÃO E IA
 # ==========================================
 def esc(t): return html.escape(str(t or ""), quote=True)
 
@@ -233,28 +280,6 @@ def chips_html(resultados):
         dica = esc((r.erro + " | " if r.erro else "") + " | ".join(r.notas))
         partes.append(f'<span class="{classe}" title="{dica}">{esc(txt)}</span>')
     return f'<div style="margin:5px 0 16px 0;">{"".join(partes)}</div>'
-
-def testar_chave_gemini(chave):
-    chave = (chave or "").strip()
-    if not chave: return False, "Informe uma chave Gemini."
-    try:
-        from google import genai
-        cliente = genai.Client(api_key=chave)
-        modelos = list(cliente.models.list())
-        compativeis = [m for m in modelos if "generateContent" in str(getattr(m, "supported_actions", ""))
-                       or "generate_content" in str(getattr(m, "supported_generation_methods", ""))
-                       or "gemini" in str(getattr(m, "name", "")).lower()]
-        if not compativeis: return False, "A chave foi aceita, mas não há modelo compatível."
-        return True, f"Gemini conectado — {len(compativeis)} modelo(s)."
-    except ImportError:
-        try:
-            import google.generativeai as legado
-            legado.configure(api_key=chave)
-            modelos = [m for m in legado.list_models() if "generateContent" in m.supported_generation_methods]
-            if not modelos: return False, "A chave foi aceita, mas não há modelo compatível."
-            return True, f"Gemini conectado — {len(modelos)} modelo(s)."
-        except Exception as exc: return False, f"Chave recusada: {str(exc)[:160]}"
-    except Exception as exc: return False, f"Chave recusada: {str(exc)[:160]}"
 
 def analisar_com_gemini(vagas, cargo, nivel, chave):
     base = [{"i": i, "titulo": v["titulo"], "empresa": v["empresa"], "local": v["local"]} for i, v in enumerate(vagas)]
@@ -290,62 +315,18 @@ def montar_mapa(vagas, aproximar):
     return m
 
 # ==========================================
-# SIDEBAR REFINADA (AGRUPAMENTO E LARGURA)
+# HEADER DE BUSCA PRINCIPAL RESPONSIVO
 # ==========================================
-with st.sidebar:
-    st.header("⚙️ Configuração")
-    todas = core.disponiveis()
-    fontes_ativas = st.multiselect("Motores ativos", todas, default=todas)
-    prazo = st.slider("Tempo máximo da busca (s)", 8, 40, 20)
-
-    # Agrupamento para economia de espaço vertical
-    with st.expander("🤖 IA & Preferências de Busca", expanded=False):
-        st.session_state.setdefault("gemini_key", os.getenv("GEMINI_API_KEY", ""))
-        st.session_state.setdefault("gemini_connected", False)
-        st.session_state.setdefault("gemini_status", "")
-        
-        chave_digitada = st.text_input("Chave Gemini (opcional)", type="password", value=st.session_state["gemini_key"])
-        
-        col_con, col_des = st.columns(2)
-        if col_con.button("Conectar", width="stretch"):
-            ok, mensagem = testar_chave_gemini(chave_digitada)
-            st.session_state["gemini_status"] = mensagem
-            if ok:
-                st.session_state["gemini_key"] = chave_digitada.strip()
-                st.session_state["gemini_connected"] = True
-            else:
-                st.session_state["gemini_connected"] = False
-        if col_des.button("Desconectar", width="stretch"):
-            st.session_state["gemini_key"], st.session_state["gemini_connected"] = "", False
-            st.session_state["gemini_status"] = "Desconectado."
-            
-        if st.session_state["gemini_connected"]: st.success("Conectado.")
-        elif st.session_state["gemini_status"]: st.caption(st.session_state["gemini_status"])
-        
-        st.markdown("---")
-        aproximar = st.checkbox("Aproximar mapa das vagas", value=True)
-        parciais = st.checkbox("Incluir correspondências parciais", value=False)
-        
-    chave = st.session_state["gemini_key"] if st.session_state["gemini_connected"] else ""
-
-    with st.expander("👨‍💻 Sobre o Desenvolvedor"):
-        st.markdown(
-            "**Jeferson Alexandre**\n\n"
-            "Especialista em Auditoria, GRC e Engenharia de Dados.\n\n"
-            "Formado em **Ciências Contábeis** e **Sistemas**, com **MBA em Gestão Estratégica**. "
-            "Combina a profundidade analítica de Compliance com a agilidade da Tecnologia."
-        )
-
 with st.form("search_form"):
     c0, c1, c2, c3, c4 = st.columns([1.2, 3.8, 3, 2, 2])
     with c0: st.markdown("<h3 style='color: #F59E0B; margin-top: 5px;'>Élpis</h3>", unsafe_allow_html=True)
     with c1: cargo = st.text_input("Cargo / Função", placeholder="🏢 Cargo / Função (ex: Auditor Interno, Controller)", label_visibility="collapsed")
     with c2: local = st.text_input("Localidade", placeholder="📍 Localidade (ex: Belo Horizonte, Brasil)", label_visibility="collapsed")
     with c3: nivel = st.selectbox("Nível / Senioridade", ["(qualquer)", "Analista", "Especialista", "Coordenador", "Gerente", "Diretor", "VP"], label_visibility="collapsed")
-    with c4: buscar = st.form_submit_button("Buscar", type="primary", width="stretch")
+    with c4: buscar = st.form_submit_button("Buscar", type="primary", use_container_width=True)
 
 # ==========================================
-# BUSCA E RENDERIZAÇÃO 
+# MOTOR DE EXECUÇÃO E RENDENRIZAÇÃO
 # ==========================================
 params = None
 if buscar and not cargo.strip(): st.warning("Informe o Cargo / Função para buscar.")
@@ -361,8 +342,8 @@ if params is None and current_session is not None:
 
 if params:
     termo, local, nivel = params["cargo"], params["local"], params["nivel"]
-    if usage_today(current_sid) >= FREE_DAILY_LIMIT:
-        st.error(f"Limite gratuito diário de {FREE_DAILY_LIMIT} buscas atingido.")
+    if usage_today(sid) >= FREE_DAILY_LIMIT:
+        st.error(f"Limite gratuito diário atingido.")
         st.stop()
     if not fontes_ativas:
         st.warning("Selecione ao menos um motor na barra lateral.")
@@ -399,9 +380,10 @@ if params:
 
     for v in unicas: v["analise"] = None
 
-    record_usage(current_sid)
+    record_usage(sid)
     if uso_slot is not None:
-        uso_slot.caption(f"Plano gratuito · {usage_today(current_sid)}/{FREE_DAILY_LIMIT} buscas")
+        uso_slot.caption(f"Plano gratuito · {usage_today(sid)}/{FREE_DAILY_LIMIT} buscas realizadas")
+        
     st.session_state.update(vagas=unicas, resultados=resultados, tempo=time.perf_counter() - t0,
                             resultado_id=time.time_ns(), mostrar_n=15, termo_busca=termo, nivel_busca=nivel)
 
@@ -428,20 +410,22 @@ if vagas_todas:
     ordem = f2.selectbox("Ordenar por", ["Relevância", "Mais recentes"], key=f"f_ord_{rid}")
     so_remoto = f3.toggle("Somente remotas", key=f"f_rem_{rid}")
     origens = sorted({v["origem"] for v in vagas_todas})
-    escolhidas = f4.multiselect("Fontes", origens, default=origens, key=f"f_ori_{rid}")
+    escolhidas = f4.multiselect("Fontes da Busca Atual", origens, default=origens, key=f"f_ori_{rid}")
+    
     dias_max = {"Últimos 3 dias": 3, "Últimos 7 dias": 7, "Últimos 15 dias": 15, "Últimos 30 dias": 30}.get(periodo)
     filtradas = [v for v in vagas_todas
                  if v["origem"] in escolhidas and (not so_remoto or core.eh_remoto(v))
                  and (dias_max is None or (core.idade_dias(v.get("data")) is not None and core.idade_dias(v["data"]) <= dias_max))]
     if ordem == "Mais recentes":
         filtradas = sorted(filtradas, key=lambda v: v.get("data") or core.MIN_DATA, reverse=True)
+        
     barra1, barra2 = st.columns([5, 3])
-    barra1.caption(f"{len(filtradas)} de {len(vagas_todas)} vagas · busca em {st.session_state.get('tempo', 0):.1f}s")
-    if chave and filtradas and barra2.button("✨ Analisar as 12 primeiras com IA", width="stretch"):
+    barra1.caption(f"{len(filtradas)} de {len(vagas_todas)} vagas · processado em {st.session_state.get('tempo', 0):.1f}s")
+    if chave and filtradas and barra2.button("✨ Analisar as 12 primeiras com IA", use_container_width=True):
         try:
-            with st.spinner("Analisando com IA…"):
+            with st.spinner("Processando Inteligência Analítica..."):
                 analisar_com_gemini(filtradas[:12], st.session_state.get("termo_busca", ""), st.session_state.get("nivel_busca", "(qualquer)"), chave)
-        except Exception as e: st.warning(f"Erro IA: {str(e)[:120]}")
+        except Exception as e: st.warning(f"Erro na API de IA: {str(e)[:120]}")
 
 col_lista, col_mapa = st.columns([3, 2], gap="large")
 
@@ -450,7 +434,7 @@ with col_lista:
     if not vagas_todas and not resultados:
         painel.markdown(bv.html_boas_vindas(len(fontes_ativas), FREE_DAILY_LIMIT), unsafe_allow_html=True)
     elif not vagas_todas: painel.info("Informe o Cargo / Função desejada e clique em Buscar.")
-    elif not filtradas: painel.info("Nenhuma vaga com os filtros atuais.")
+    elif not filtradas: painel.info("Nenhuma vaga com os filtros aplicados.")
     
     n_mostrar = st.session_state.get("mostrar_n", 15)
     for v in filtradas[:n_mostrar]:
@@ -471,7 +455,7 @@ with col_lista:
             f'<a href="{esc(link)}" target="_blank" rel="noopener noreferrer" class="btn-apply">Candidatar-se</a>'
             f'</div></div>', unsafe_allow_html=True)
     if len(filtradas) > n_mostrar:
-        if st.button(f"Mostrar mais ({len(filtradas) - n_mostrar} restantes)", width="stretch"):
+        if st.button(f"Mostrar mais ({len(filtradas) - n_mostrar} restantes)", use_container_width=True):
             st.session_state.mostrar_n = n_mostrar + 15
             st.rerun()
 with col_mapa:
