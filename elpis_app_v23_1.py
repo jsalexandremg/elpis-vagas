@@ -2,8 +2,8 @@
 # © 2026 INOVHIA Desenvolvimento Tecnológico. Todos os direitos reservados.
 # Contato: Jeferson Alexandre — +55 31 99484-8343
 # É proibida a reprodução, total ou parcial, sem autorização prévia da INOVHIA.
-# Instale dependências com: python -m pip install -r requirements_elpis_v23.txt
-# Execute com:              python -m streamlit run elpis_app_v23.py
+# Instale dependências com: python -m pip install -r requirements.txt
+# Execute com:              python -m streamlit run elpis_app_v23_1.py
 from collections import Counter
 import html
 import json
@@ -21,7 +21,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-01-v23.1"
+APP_VERSION = "2026-10-01-v23.2-Responsive"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide")
 
 # O Chrome oferece/aplica tradução automática (a página vem como lang="en") e isso corrompe a interface:
@@ -37,7 +37,7 @@ try { const d = window.parent.document;
 st.markdown("""
 <style>
     header[data-testid="stHeader"] {display: none;}
-    .block-container { padding-top: 1.5rem; padding-bottom: 2rem; }
+    .block-container { padding-top: 1.5rem; padding-bottom: 2rem; padding-left: 2rem; padding-right: 2rem; }
     [data-testid="stForm"] { background-color: #0F2A4A !important; border-radius: 12px; padding: 16px 24px; border: none;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
     [data-testid="stForm"] input, [data-testid="stForm"] div[data-baseweb="select"] > div {
@@ -64,6 +64,14 @@ st.markdown("""
     .btn-apply { background: #F59E0B; color: #0F2A4A !important; border-radius: 8px; padding: 6px 16px; font-size: 13px;
         font-weight: bold; text-decoration: none !important; display: inline-block; text-align: center; transition: background 0.2s; }
     .btn-apply:hover { background: #D97706; color: #FFF !important; }
+
+    /* REGRAS DE MEDIA QUERY PARA NOTEBOOKS E SMARTPHONES */
+    @media (max-width: 1200px) {
+        .block-container { padding-left: 1rem; padding-right: 1rem; }
+    }
+    @media (max-width: 768px) {
+        [data-testid="stForm"] { padding: 12px; }
+    }
 </style>
 """, unsafe_allow_html=True)
 st.markdown(bv.CSS, unsafe_allow_html=True)
@@ -241,12 +249,10 @@ def chips_html(resultados):
 
 
 def testar_chave_gemini(chave):
-    """Valida a chave Gemini sem gerar conteúdo nem consumir análise de vaga."""
     chave = (chave or "").strip()
     if not chave:
         return False, "Informe uma chave Gemini."
     try:
-        # SDK novo: apenas lista modelos para confirmar autenticação.
         from google import genai
         cliente = genai.Client(api_key=chave)
         modelos = list(cliente.models.list())
@@ -271,7 +277,6 @@ def testar_chave_gemini(chave):
 
 
 def analisar_com_gemini(vagas, cargo, nivel, chave):
-    """Analisa só o topo da lista (rápido). Usa google-genai; cai para o SDK legado se necessário."""
     base = [{"i": i, "titulo": v["titulo"], "empresa": v["empresa"], "local": v["local"]} for i, v in enumerate(vagas)]
     prompt = (f"Busca: {cargo} ({nivel}). Para cada vaga REAL abaixo, escreva 1 frase sobre aderência ao perfil "
               "usando SOMENTE título/empresa/local fornecidos, sem inventar requisitos. Responda APENAS array JSON "
@@ -347,7 +352,6 @@ with st.sidebar:
         st.success(st.session_state["gemini_status"] or "Gemini conectado.")
     elif st.session_state["gemini_status"]:
         st.warning(st.session_state["gemini_status"])
-    # O restante da estrutura usa 'chave' normalmente; só fica disponível conectada.
     chave = st.session_state["gemini_key"] if st.session_state["gemini_connected"] else ""
     aproximar = st.checkbox("Aproximar mapa das vagas", value=True)
     parciais = st.checkbox("Incluir correspondências parciais", value=False,
@@ -357,7 +361,7 @@ with st.sidebar:
     if faltam:
         st.caption("Disponíveis com chave de API (variável de ambiente): " +
                    "; ".join(f"{n} ({', '.join(k)})" for n, k in faltam.items()))
-                   
+
     st.markdown("---")
     with st.expander("👨‍💻 Sobre o Desenvolvedor"):
         st.markdown(
@@ -369,7 +373,8 @@ with st.sidebar:
         )
 
 with st.form("search_form"):
-    c0, c1, c2, c3, c4 = st.columns([1, 4, 3, 2, 2])
+    # Proporção ajustada para o título não quebrar em telas menores
+    c0, c1, c2, c3, c4 = st.columns([1.2, 3.8, 3, 2, 2])
     with c0:
         st.markdown("<h3 style='color: #F59E0B; margin-top: 5px;'>Élpis</h3>", unsafe_allow_html=True)
     with c1:
@@ -465,7 +470,6 @@ def banner_falhas(resultados):
                    ".  Se “Internet” falhar, é rede/VPN/proxy/firewall nesta máquina; se der HTTP 200 e as "
                    "fontes seguem em erro, abra o diagnóstico abaixo e envie a mensagem.")
 
-
 banner_falhas(resultados)
 
 filtradas = vagas_todas
@@ -532,7 +536,7 @@ with col_mapa:
     st.caption("Verde: até 2 dias · Âmbar: até 10 dias · Cinza: mais antiga ou sem data. "
                "Vagas remotas ou com local genérico não recebem pino.")
     chave_mapa = (tuple(v["link"] for v in filtradas), aproximar)
-    if st.session_state.get("_mapa_chave") != chave_mapa:  # só reconstrói quando a lista muda
+    if st.session_state.get("_mapa_chave") != chave_mapa:
         st.session_state["_mapa_chave"], st.session_state["_mapa"] = chave_mapa, montar_mapa(filtradas, aproximar)
     st_folium(st.session_state["_mapa"], height=550, use_container_width=True, returned_objects=[], key="mapa")
 
