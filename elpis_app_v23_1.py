@@ -21,7 +21,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v23.12-Ultra-Blue-Tags"
+APP_VERSION = "2026-10-02-v24.0-Elpis-Corporate-Layout"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="expanded")
 
 # O Chrome oferece/aplica tradução automática e isso corrompe a interface
@@ -35,112 +35,257 @@ try { const d = window.parent.document;
 
 st.markdown("""
 <style>
-    /* O Header NÃO está oculto para garantir que o botão de abrir/fechar a sidebar funcione sempre */
-    .block-container { padding-top: 1.5rem; padding-bottom: 2rem; padding-left: 2rem; padding-right: 2rem; }
-    
-    /* ========================================================= */
-    /* 1. MÚLTIPLA ESCOLHA (MULTISELECT) - AZUL FORÇADO ABSOLUTO */
-    /* ========================================================= */
-    
-    /* Regras agressivas para sobrepor a injeção nativa de cor do Streamlit */
-    .stMultiSelect [data-baseweb="tag"], 
-    div[data-testid="stMultiSelect"] span[data-baseweb="tag"],
-    div[data-testid="stMultiSelect"] div[data-baseweb="tag"] {
-        background-color: #1D4ED8 !important; /* Azul Executivo */
-        border: none !important;
-        border-radius: 3px !important;
-        padding: 0px 6px !important;
-        margin: 2px !important;
-        min-height: 20px !important;
-        max-height: 22px !important;
-    }
-    .stMultiSelect [data-baseweb="tag"] span,
-    div[data-testid="stMultiSelect"] span[data-baseweb="tag"] span,
-    div[data-testid="stMultiSelect"] div[data-baseweb="tag"] span {
-        color: #FFFFFF !important; /* Texto branco */
-        font-size: 11px !important; /* Fonte minúscula */
-        font-weight: 600 !important;
-        line-height: 1.2 !important;
-    }
-    .stMultiSelect [data-baseweb="tag"] svg,
-    div[data-testid="stMultiSelect"] span[data-baseweb="tag"] svg {
-        color: #FFFFFF !important; /* X branco */
-        height: 10px !important;
-        width: 10px !important;
-    }
-    .stMultiSelect [data-baseweb="tag"] svg:hover {
-        color: #F87171 !important; 
-    }
+/* =========================================================
+   ELPIS V24 — DESIGN SYSTEM CORPORATIVO
+   Layout: sidebar + busca + fontes + resultados + mapa
+   Regra: somente apresentação; lógica funcional preservada.
+   ========================================================= */
+:root {
+    --elpis-navy: #142F50;
+    --elpis-navy-dark: #0D223A;
+    --elpis-orange: #F6A000;
+    --elpis-orange-hover: #D98900;
+    --elpis-green: #10B981;
+    --elpis-green-bg: #D2F7EF;
+    --elpis-blue-bg: #DCE9FA;
+    --elpis-map: #E8EFF8;
+    --elpis-warning: #F59E0B;
+    --elpis-warning-bg: #FFF2C7;
+    --elpis-gray: #94A3B8;
+    --elpis-gray-bg: #E5E7EB;
+    --elpis-red: #EF4444;
+    --elpis-bg: #F8FAFC;
+    --elpis-text: #111827;
+    --elpis-muted: #64748B;
+    --elpis-border: #E2E8F0;
+}
 
-    /* ========================================================= */
-    /* 2. PÍLULAS DE DIAGNÓSTICO E CARTÕES                      */
-    /* ========================================================= */
-    .pill-green, .pill-yellow, .pill-gray { 
-        border-radius: 4px !important;
-        padding: 2px 6px !important;
-        font-size: 11px !important;
-        display: inline-block;
-        margin-right: 4px; 
-        margin-bottom: 4px; 
-        white-space: nowrap; 
-        font-weight: 600; 
-        border: 1px solid transparent;
-    }
-    .pill-green { background: #ECFDF5; color: #065F46; border-color: #A7F3D0; }
-    .pill-yellow { background: #FFFBEB; color: #92400E; border-color: #FDE68A; }
-    .pill-gray { background: #F3F4F6; color: #374151; border-color: #D1D5DB; }
+/* ---------- BASE ---------- */
+.block-container {
+    padding-top: 1.25rem !important;
+    padding-bottom: 2rem !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+    max-width: 100% !important;
+}
+.stApp { background: var(--elpis-bg); }
 
-    .job-card { background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 14px; margin-bottom: 10px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: transform 0.1s, box-shadow 0.1s; }
-    .job-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .job-title { font-size: 15px; font-weight: bold; color: #0F2A4A; line-height: 1.2; }
-    .job-company { font-size: 12px; color: #6B7280; margin-top: 4px; }
-    
-    .badge-source { 
-        background: #EFF6FF; color: #1D4ED8; border-radius: 4px; padding: 2px 6px; 
-        font-size: 10px !important; font-weight: 600; border: 1px solid #BFDBFE;
-    }
-    .badge-global { background: #F0FDFA; color: #0F766E; border-color: #99F6E4; }
-    .badge-also { font-size: 10px; color: #6B7280; margin-left: 8px; }
-    
-    .btn-apply { background: #F59E0B; color: #0F2A4A !important; border-radius: 6px; padding: 4px 14px; font-size: 12px;
-        font-weight: bold; text-decoration: none !important; display: inline-block; text-align: center; transition: background 0.2s; }
-    .btn-apply:hover { background: #D97706; color: #FFF !important; }
+/* ---------- SIDEBAR: preservada e visualmente integrada ---------- */
+[data-testid="stSidebar"] {
+    background: #EEF2F7 !important;
+    border-right: 1px solid #D9E2EC !important;
+}
+[data-testid="stSidebar"] > div:first-child {
+    background: #EEF2F7 !important;
+}
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"] { gap: 0.45rem; }
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] span,
+[data-testid="stSidebar"] div.stMarkdown {
+    font-size: 0.82rem !important;
+    color: #334155;
+}
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3 {
+    color: var(--elpis-navy) !important;
+}
+[data-testid="stSidebar"] button {
+    min-height: 32px !important;
+    padding: 2px 10px !important;
+    font-size: 0.8rem !important;
+    border-radius: 8px !important;
+}
+[data-testid="stSidebar"] hr {
+    border-color: #CBD5E1 !important;
+    margin: 0.5rem 0 !important;
+}
+[data-testid="stSidebar"] input,
+[data-testid="stSidebar"] textarea,
+[data-testid="stSidebar"] [data-baseweb="select"] > div {
+    background: #FFFFFF !important;
+    border-color: #D7DEE8 !important;
+    border-radius: 8px !important;
+}
+[data-testid="stSidebar"] [data-testid="stMultiSelect"] [data-baseweb="tag"] {
+    background: var(--elpis-orange) !important;
+    border: none !important;
+    border-radius: 7px !important;
+    min-height: 25px !important;
+    max-height: 28px !important;
+    padding: 2px 7px !important;
+}
+[data-testid="stSidebar"] [data-testid="stMultiSelect"] [data-baseweb="tag"] span {
+    color: #172A3F !important;
+    font-weight: 700 !important;
+    font-size: 11px !important;
+}
+[data-testid="stSidebar"] [data-testid="stMultiSelect"] [data-baseweb="tag"] svg {
+    color: #172A3F !important;
+}
 
-    /* ========================================================= */
-    /* 3. REDUÇÃO DE ESPAÇOS NA BARRA LATERAL                    */
-    /* ========================================================= */
-    [data-testid="stSidebar"] p, 
-    [data-testid="stSidebar"] label, 
-    [data-testid="stSidebar"] span, 
-    [data-testid="stSidebar"] div.stMarkdown {
-        font-size: 0.80rem !important;
-    }
-    [data-testid="stSidebar"] button {
-        min-height: 28px !important;
-        padding-top: 0px !important;
-        padding-bottom: 0px !important;
-        font-size: 0.8rem !important;
-    }
-    [data-testid="stSidebar"] .element-container { margin-bottom: -14px !important; }
-    [data-testid="stSidebarUserContent"] { padding-top: 0.5rem !important; }
-    hr { margin-top: 0.4rem !important; margin-bottom: 0.4rem !important; }
+/* ---------- HEADER / FORM DE BUSCA ---------- */
+[data-testid="stForm"] {
+    background: var(--elpis-navy) !important;
+    border: 0 !important;
+    border-radius: 18px !important;
+    padding: 22px 26px !important;
+    box-shadow: 0 8px 22px rgba(20,47,80,.12) !important;
+    margin-bottom: 1rem !important;
+}
+[data-testid="stForm"] input,
+[data-testid="stForm"] div[data-baseweb="select"] > div {
+    background: #FFFFFF !important;
+    color: var(--elpis-text) !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 12px !important;
+    min-height: 52px !important;
+}
+[data-testid="stForm"] input::placeholder { color: #7B8491 !important; opacity: 1; }
+[data-testid="stForm"] [data-baseweb="select"] span { color: #334155 !important; }
+[data-testid="stForm"] button[kind="primary"],
+[data-testid="stForm"] button[kind="primaryFormSubmit"] {
+    background: var(--elpis-orange) !important;
+    color: var(--elpis-navy-dark) !important;
+    border: 0 !important;
+    border-radius: 12px !important;
+    min-height: 52px !important;
+    font-weight: 800 !important;
+    box-shadow: none !important;
+}
+[data-testid="stForm"] button[kind="primary"] p,
+[data-testid="stForm"] button[kind="primaryFormSubmit"] p { color: var(--elpis-navy-dark) !important; }
+[data-testid="stForm"] button[kind="primary"]:hover,
+[data-testid="stForm"] button[kind="primaryFormSubmit"]:hover {
+    background: var(--elpis-orange-hover) !important;
+}
 
-    /* FORMULÁRIO DE BUSCA - TEMA CORPORATIVO RESPONSIVO */
-    [data-testid="stForm"] { background-color: #0F2A4A !important; border-radius: 12px; padding: 16px 24px; border: none;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    [data-testid="stForm"] input, [data-testid="stForm"] div[data-baseweb="select"] > div {
-        background-color: #FFFFFF !important; color: #111827 !important; border-radius: 8px !important; border: none !important; }
-    [data-testid="stForm"] button[kind="primary"], [data-testid="stForm"] button[kind="primaryFormSubmit"] {
-        background-color: #F59E0B !important; color: #0F2A4A !important; border: none !important; font-weight: bold !important;
-        border-radius: 8px !important; height: 100%; transition: background 0.2s ease; }
-    [data-testid="stForm"] button[kind="primary"] p, [data-testid="stForm"] button[kind="primaryFormSubmit"] p { color: #0F2A4A !important; }
-    [data-testid="stForm"] button[kind="primary"]:hover, [data-testid="stForm"] button[kind="primaryFormSubmit"]:hover {
-        background-color: #D97706 !important; }
+/* ---------- MARCA DO HEADER ---------- */
+.elpis-brand { color: var(--elpis-orange); font-weight: 700; font-size: 30px; }
 
-    /* REGRAS CSS RESPONSIVAS PARA NOTEBOOKS E CELULARES */
-    @media (max-width: 1200px) { .block-container { padding-left: 1rem; padding-right: 1rem; } }
-    @media (max-width: 768px) { [data-testid="stForm"] { padding: 12px; } }
+/* ---------- CHIPS DE FONTES ---------- */
+.pill-green, .pill-yellow, .pill-gray {
+    border-radius: 9px !important;
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+    display: inline-block;
+    margin-right: 5px;
+    margin-bottom: 6px;
+    white-space: nowrap;
+    font-weight: 700;
+    border: 1px solid transparent;
+    line-height: 1.1;
+}
+.pill-green { background: var(--elpis-green-bg); color: #087F68; border-color: #B5EDE2; }
+.pill-yellow { background: var(--elpis-warning-bg); color: #9A5800; border-color: #F6D98A; }
+.pill-gray { background: var(--elpis-gray-bg); color: #475569; border-color: #D4DAE2; }
+
+/* ---------- FILTROS ---------- */
+[data-testid="stSelectbox"] [data-baseweb="select"] > div,
+[data-testid="stMultiSelect"] [data-baseweb="select"] > div {
+    border-radius: 11px !important;
+    border-color: var(--elpis-border) !important;
+    background: #FFFFFF !important;
+}
+[data-testid="stToggle"] label span { color: #334155 !important; }
+
+/* ---------- TAGS DO MULTISELECT PRINCIPAL ---------- */
+[data-testid="stMultiSelect"] [data-baseweb="tag"] {
+    background: var(--elpis-blue-bg) !important;
+    border: 1px solid #C7DAF5 !important;
+    border-radius: 7px !important;
+    padding: 2px 7px !important;
+}
+[data-testid="stMultiSelect"] [data-baseweb="tag"] span {
+    color: #214A7A !important;
+    font-weight: 650 !important;
+    font-size: 11px !important;
+}
+[data-testid="stMultiSelect"] [data-baseweb="tag"] svg { color: #214A7A !important; }
+
+/* ---------- RESULTADOS ---------- */
+.job-card {
+    background: #FFFFFF;
+    border: 1px solid var(--elpis-border);
+    border-radius: 18px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(15,23,42,.045);
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.job-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(15,23,42,.08);
+    border-color: #CBD8E8;
+}
+.job-title {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--elpis-navy);
+    line-height: 1.28;
+}
+.job-company {
+    font-size: 13px;
+    color: #64748B;
+    margin-top: 5px;
+}
+.badge-source {
+    background: var(--elpis-blue-bg);
+    color: #214A7A;
+    border-radius: 8px;
+    padding: 5px 9px;
+    font-size: 11px !important;
+    font-weight: 750;
+    border: 1px solid #C7DAF5;
+}
+.badge-global { background: var(--elpis-green-bg); color: #087F68; border-color: #B5EDE2; }
+.badge-also { font-size: 10px; color: #64748B; margin-left: 8px; }
+.btn-apply {
+    background: var(--elpis-orange);
+    color: var(--elpis-navy-dark) !important;
+    border-radius: 10px;
+    padding: 8px 18px;
+    font-size: 12px;
+    font-weight: 800;
+    text-decoration: none !important;
+    display: inline-block;
+    text-align: center;
+    transition: background .2s ease, transform .2s ease;
+}
+.btn-apply:hover { background: var(--elpis-orange-hover); color: #FFFFFF !important; transform: translateY(-1px); }
+
+/* ---------- MAPA ---------- */
+[data-testid="stVerticalBlockBorderWrapper"] {
+    border-radius: 18px !important;
+}
+/* Container do mapa continua sendo Folium; esta regra só dá acabamento à área. */
+iframe[title="streamlit_folium.st_folium"] {
+    border-radius: 18px !important;
+    overflow: hidden !important;
+    border: 1px solid #D9E2EC !important;
+}
+
+/* ---------- CONTAINERS / DIAGNÓSTICO ---------- */
+[data-testid="stExpander"] {
+    border: 1px solid var(--elpis-border) !important;
+    border-radius: 14px !important;
+    background: #FFFFFF !important;
+}
+
+/* ---------- RESPONSIVIDADE ---------- */
+@media (max-width: 1200px) {
+    .block-container { padding-left: 1rem !important; padding-right: 1rem !important; }
+    [data-testid="stForm"] { padding: 18px !important; }
+}
+@media (max-width: 900px) {
+    [data-testid="stForm"] { padding: 14px !important; }
+    .job-title { font-size: 15px; }
+}
+@media (max-width: 768px) {
+    .block-container { padding-left: .75rem !important; padding-right: .75rem !important; }
+    [data-testid="stForm"] { border-radius: 14px !important; }
+}
 </style>
 """, unsafe_allow_html=True)
 st.markdown(bv.CSS, unsafe_allow_html=True)
@@ -381,7 +526,7 @@ def montar_mapa(vagas, aproximar):
 # ==========================================
 with st.form("search_form"):
     c0, c1, c2, c3, c4 = st.columns([1.2, 3.8, 3, 2, 2])
-    with c0: st.markdown("<h3 style='color: #F59E0B; margin-top: 5px;'>Élpis</h3>", unsafe_allow_html=True)
+    with c0: st.markdown("<div class='elpis-brand'>Élpis</div>", unsafe_allow_html=True)
     with c1: cargo = st.text_input("Cargo / Função", placeholder="🏢 Cargo / Função (ex: Auditor Interno, Controller)", label_visibility="collapsed")
     with c2: local = st.text_input("Localidade", placeholder="📍 Localidade (ex: Belo Horizonte, Brasil)", label_visibility="collapsed")
     with c3: nivel = st.selectbox("Nível / Senioridade", ["(qualquer)", "Analista", "Especialista", "Coordenador", "Gerente", "Diretor", "VP"], label_visibility="collapsed")
@@ -522,7 +667,6 @@ with col_lista:
         if st.button(f"Mostrar mais ({len(filtradas) - n_mostrar} restantes)", use_container_width=True):
             st.session_state.mostrar_n = n_mostrar + 15
             st.rerun()
-
 with col_mapa:
     com_pino = sum(1 for v in filtradas if v.get("lat"))
     st.markdown(f"<div style='font-size:16px; font-weight:600; color:#0F2A4A; margin-bottom:4px;'>"
