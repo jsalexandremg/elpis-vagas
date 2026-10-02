@@ -23,7 +23,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.27-Logo-Highlight-Animated"
+APP_VERSION = "2026-10-02-v24.28-Clean-Cloud-Badge"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
 # Previne tradução automática indevida do Chrome
@@ -41,7 +41,7 @@ try:
 except Exception:
     pass
 
-# 2. DESIGN SYSTEM CORPORATIVO ÉLPIS (Zero Outer Scroll & Tipografia Harmonizada)
+# 2. DESIGN SYSTEM CORPORATIVO ÉLPIS (Zero Outer Scroll & Ocultação de Badges)
 st.markdown("""
 <style>
 :root {
@@ -70,6 +70,28 @@ st.markdown("""
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
+}
+
+/* =========================================================
+   OCULTAR CRÉDITOS DE HOSPEDAGEM (STREAMLIT COMMUNITY CLOUD)
+   ========================================================= */
+[data-testid="stStatusWidget"],
+.viewerBadge_container__1QSob,
+.viewerBadge_link__1S137,
+div[class*="viewerBadge_container"],
+footer {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    pointer-events: none !important;
+}
+
+div:has(> a[href*="streamlit.io/cloud"]),
+div:has(> a[href*="share.streamlit.io"]),
+a[href*="streamlit.io/cloud"],
+button[title*="View app in Streamlit Community Cloud"] {
+    display: none !important;
 }
 
 /* Oculta cabeçalho nativo e barra lateral do Streamlit */
@@ -925,7 +947,6 @@ def limpar_filtros():
 # 1) HEADER DE BUSCA COM LOGO DESTACADO E ANIMADO
 # ==========================================
 with st.form("search_form"):
-    # c0 recebe 1.3 de proporção para acomodar com folga a logo de 32px e o efeito de glow
     c0, c1, c2, c3, c4 = st.columns([1.3, 3.7, 2.7, 1.7, 1.4], vertical_alignment="center")
     with c0:
         st.markdown(
@@ -1144,7 +1165,6 @@ with filtros_pos:
             if ordem == "Mais recentes":
                 filtradas = sorted(filtradas, key=lambda v: v.get("data") or core.MIN_DATA, reverse=True)
 
-            # Botão Conversar com a IA padronizado em 11px / 28px
             if st.button("✨ Conversar com a IA", use_container_width=True, key="btn_chat_ia"):
                 if not chave:
                     st.warning("Conecte a chave Gemini em 'IA & Opções' abaixo.")
