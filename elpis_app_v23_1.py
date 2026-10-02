@@ -22,7 +22,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.18-Modalidade-Fixed"
+APP_VERSION = "2026-10-02-v24.19-Expander-Harmonized"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
 # Previne tradução automática indevida do Chrome
@@ -40,7 +40,7 @@ try:
 except Exception:
     pass
 
-# 2. DESIGN SYSTEM CORPORATIVO ÉLPIS (Zero Outer Scroll & Tipografia Nítida)
+# 2. DESIGN SYSTEM CORPORATIVO ÉLPIS (Zero Outer Scroll & Tipografia Harmonizada)
 st.markdown("""
 <style>
 :root {
@@ -100,13 +100,16 @@ html, body, [data-testid="stAppViewContainer"] {
 .stApp {background: var(--background) !important;}
 div[data-baseweb="select"] ul {max-height: 180px !important;}
 
-/* ---------- CHECKBOXES NO AZUL CORPORATIVO (ANTI-VERMELHO) ---------- */
+/* =========================================================
+   BLINDAGEM GERAL DE CHECKBOXES (AZUL CORPORATIVO ÉLPIS)
+   ========================================================= */
 [data-testid="stCheckbox"] div[role="checkbox"][aria-checked="true"],
 [data-testid="stCheckbox"] span[aria-checked="true"],
 [data-testid="stCheckbox"] div[aria-checked="true"],
 div[data-baseweb="checkbox"] span[aria-checked="true"],
 div[data-baseweb="checkbox"] div[aria-checked="true"],
-[data-testid="stCheckbox"] input:checked + div {
+[data-testid="stCheckbox"] input:checked + div,
+[data-testid="stCheckbox"] label div:has(svg) {
     background-color: var(--elpis-primary) !important;
     border-color: var(--elpis-primary) !important;
 }
@@ -114,7 +117,92 @@ div[data-baseweb="checkbox"] div[aria-checked="true"],
     fill: #FFFFFF !important;
 }
 
-/* ---------- CORREÇÃO COMPLETA DA SEÇÃO MODALIDADE (SEM FATIAMENTO) ---------- */
+/* =========================================================
+   HARMONIZAÇÃO TOTAL DO EXPANDER (IA & OPÇÕES)
+   ========================================================= */
+[data-testid="stExpander"] {
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-sm) !important;
+    background: var(--surface) !important;
+    margin-top: 4px !important;
+    margin-bottom: 4px !important;
+}
+[data-testid="stExpander"] details summary {
+    padding: 3px 6px !important;
+}
+[data-testid="stExpander"] details summary p,
+[data-testid="stExpander"] details summary span {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: var(--elpis-primary) !important;
+}
+[data-testid="stExpander"] details div[data-testid="stExpanderDetails"] {
+    padding: 4px 6px !important;
+}
+/* Labels do Expander */
+[data-testid="stExpander"] label p,
+[data-testid="stExpander"] label span,
+[data-testid="stExpander"] [data-testid="stWidgetLabel"] p {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: var(--elpis-primary) !important;
+    margin-bottom: 1px !important;
+}
+/* Slider (cor do número, trilha e botão) */
+[data-testid="stExpander"] [data-testid="stSlider"] div[data-testid="stMarkdownContainer"] p,
+[data-testid="stExpander"] [data-testid="stSlider"] div:has(> p) {
+    color: var(--elpis-primary) !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+}
+[data-testid="stExpander"] [data-testid="stSlider"] div[role="slider"] {
+    background-color: var(--elpis-primary) !important;
+    border-color: var(--elpis-primary) !important;
+    box-shadow: none !important;
+}
+[data-testid="stExpander"] [data-testid="stSlider"] div[data-baseweb="slider"] > div > div:first-child {
+    background-color: var(--elpis-primary) !important;
+}
+/* Input de chave dentro do Expander */
+[data-testid="stExpander"] input {
+    min-height: 28px !important;
+    height: 28px !important;
+    font-size: 11px !important;
+    padding: 2px 8px !important;
+    border-radius: var(--radius-sm) !important;
+}
+/* Botões Conectar / Remover dentro do Expander */
+[data-testid="stExpander"] button {
+    min-height: 26px !important;
+    height: 26px !important;
+    font-size: 11px !important;
+    padding: 1px 6px !important;
+    border-radius: var(--radius-sm) !important;
+    font-weight: 600 !important;
+}
+[data-testid="stExpander"] button p {
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+}
+/* Checkboxes dentro do Expander */
+[data-testid="stExpander"] [data-testid="stCheckbox"] label {
+    gap: 4px !important;
+    min-height: 20px !important;
+    align-items: center !important;
+}
+[data-testid="stExpander"] [data-testid="stCheckbox"] label div:first-child {
+    width: 14px !important;
+    height: 14px !important;
+}
+[data-testid="stExpander"] [data-testid="stCheckbox"] label p {
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    color: var(--text-primary) !important;
+    line-height: 1.2 !important;
+    margin: 0 !important;
+}
+
+/* ---------- COMPACTAÇÃO DA SEÇÃO MODALIDADE ---------- */
 .st-key-sec_modalidade [data-testid="column"] {
     padding: 0 1px !important;
     min-width: 0 !important;
@@ -502,7 +590,6 @@ with st.form("search_form"):
 # ==========================================
 # 2) ESTRUTURA HORIZONTAL CALIBRADA (VIEWPORT)
 # ==========================================
-# Proporção 1.38 para 4.62 garante largura ideal para a coluna esquerda sem comprimir o painel central
 col_filtros, col_main = st.columns([1.38, 4.62], gap="small")
 with col_main:
     status_slot = st.container()
@@ -534,7 +621,6 @@ with col_filtros:
                 badge_slots[nome].markdown(badge_fonte(nome, mapa_prev, False), unsafe_allow_html=True)
 
         st.markdown("<div class='f-sec'>🎛️ Modalidade</div>", unsafe_allow_html=True)
-        # Distribuição proporcional: 'Presencial' recebe mais espaço para exibição limpa
         with st.container(key="sec_modalidade"):
             c_pres, c_rem, c_hib = st.columns([1.35, 1.0, 1.0], gap="small")
             mod_cols = [c_pres, c_rem, c_hib]
@@ -563,7 +649,7 @@ with col_filtros:
             uso_slot = None
             st.caption("Visitante.")
 
-        # Opções de IA e Configuração recolhidas
+        # Opções de IA e Configuração Harmonizadas
         with st.expander("⚙️ IA & Opções"):
             prazo = st.slider("Timeout (s)", 8, 40, 20)
             st.session_state.setdefault("gemini_key", os.getenv("GEMINI_API_KEY", ""))
