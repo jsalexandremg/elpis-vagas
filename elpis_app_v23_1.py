@@ -357,6 +357,16 @@ with st.sidebar:
     if faltam:
         st.caption("Disponíveis com chave de API (variável de ambiente): " +
                    "; ".join(f"{n} ({', '.join(k)})" for n, k in faltam.items()))
+                   
+    st.markdown("---")
+    with st.expander("👨‍💻 Sobre o Desenvolvedor"):
+        st.markdown(
+            "**Jeferson Alexandre**\n\n"
+            "Especialista em Auditoria, GRC e Engenharia de Dados Aplicada a Controles Internos.\n\n"
+            "Formado em **Ciências Contábeis** e **Análise e Desenvolvimento de Sistemas**, com **MBA em Gestão Estratégica de Projetos**. "
+            "Combina a profundidade analítica de Compliance com a agilidade da Tecnologia para mitigar riscos, "
+            "automatizar processos e elevar a governança corporativa."
+        )
 
 with st.form("search_form"):
     c0, c1, c2, c3, c4 = st.columns([1, 4, 3, 2, 2])
