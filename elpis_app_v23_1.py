@@ -21,7 +21,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v23.7-Compact-Sidebar"
+APP_VERSION = "2026-10-02-v23.8-Micro-Sidebar"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="expanded")
 
 # O Chrome oferece/aplica tradução automática e isso corrompe a interface
@@ -39,43 +39,53 @@ st.markdown("""
     .block-container { padding-top: 1.5rem; padding-bottom: 2rem; padding-left: 2rem; padding-right: 2rem; }
     
     /* ========================================================= */
-    /* MODO COMPACTO DA BARRA LATERAL (SEM PRECISAR ROLAR A TELA)*/
+    /* MODO COMPACTO E NEUTRO DA BARRA LATERAL */
     /* ========================================================= */
     [data-testid="stSidebar"] p, 
     [data-testid="stSidebar"] label, 
     [data-testid="stSidebar"] span, 
     [data-testid="stSidebar"] div.stMarkdown {
-        font-size: 0.85rem !important;
+        font-size: 0.80rem !important;
     }
     
-    /* Reduzir o tamanho das "pílulas" vermelhas no multiselect */
+    /* Transformar os chips vermelhos/grandes em micro-chips cinzas e discretos */
     [data-testid="stSidebar"] [data-baseweb="tag"] {
-        font-size: 0.70rem !important;
-        padding-top: 0px !important;
-        padding-bottom: 0px !important;
-        padding-left: 4px !important;
-        padding-right: 4px !important;
-        margin: 2px !important;
-        height: 24px !important;
+        background-color: #F3F4F6 !important; /* Cinza claro */
+        border: 1px solid #D1D5DB !important;
+        border-radius: 4px !important;
+        padding: 0px 4px !important;
+        margin: 2px 2px !important;
+        height: 20px !important;
+    }
+    [data-testid="stSidebar"] [data-baseweb="tag"] span {
+        color: #4B5563 !important; /* Texto escuro discreto */
+        font-size: 0.65rem !important;
+        font-weight: 500 !important;
+    }
+    [data-testid="stSidebar"] [data-baseweb="tag"] svg {
+        height: 10px !important;
+        width: 10px !important;
+        color: #9CA3AF !important; /* Ícone de X mais suave */
     }
     
     /* Reduzir os botões de conectar/desconectar na sidebar */
     [data-testid="stSidebar"] button {
-        min-height: 32px !important;
+        min-height: 28px !important;
         padding-top: 0px !important;
         padding-bottom: 0px !important;
+        font-size: 0.8rem !important;
     }
     
     /* Ocultar margens verticais desnecessárias para economizar espaço */
     [data-testid="stSidebar"] .element-container {
-        margin-bottom: -10px !important;
+        margin-bottom: -12px !important;
     }
     [data-testid="stSidebarUserContent"] {
         padding-top: 1rem !important;
     }
     hr {
-        margin-top: 0.5rem !important;
-        margin-bottom: 0.5rem !important;
+        margin-top: 0.4rem !important;
+        margin-bottom: 0.4rem !important;
     }
     /* ========================================================= */
 
@@ -170,7 +180,6 @@ def hash_email(email):
 def criar_sessao(nome, email):
     con = db(); limpar_sessoes_expiradas(con)
     sid, now = uuid.uuid4().hex, agora()
-    # SQL Parameters previnem injeção
     con.execute("insert into active_sessions values (?, ?, ?, ?, ?, 0)",
                 (sid, nome, hash_email(email), now.isoformat(), (now + timedelta(hours=SESSION_HOURS)).isoformat()))
     con.execute("insert into access_metrics(event, created_at) values (?, ?)", ("entrada", now.isoformat()))
@@ -216,7 +225,7 @@ def cadastro_dialog():
             st.rerun()
 
 # ==========================================
-# PAINEL LATERAL (CLÁSSICO COMPACTADO)
+# PAINEL LATERAL (CLÁSSICO COMPACTADO E NEUTRO)
 # ==========================================
 sid = st.session_state.get("temporary_session_id")
 current_session = sessao_atual(sid)
