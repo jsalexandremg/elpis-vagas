@@ -1,4 +1,4 @@
-# Élpis — Buscador de Vagas com IA (Brasil & Internacional) — v24 (layout painel limpo)
+# Élpis — Buscador de Vagas com IA (Brasil & Internacional) — v24 (Painel Responsivo Viewport)
 # © 2026 INOVHIA Desenvolvimento Tecnológico. Todos os direitos reservados.
 # Contato: Jeferson Alexandre — +55 31 99484-8343
 # É proibida a reprodução, total ou parcial, sem autorização prévia da INOVHIA.
@@ -22,10 +22,10 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.13-Clean-Corporate"
+APP_VERSION = "2026-10-02-v24.14-Viewport-Responsive"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
-# O Chrome oferece/aplica tradução automática e isso corrompe a interface
+# Previne tradução automática indevida do Chrome
 st.html("""<script>
 try { const d = window.parent.document;
   d.documentElement.setAttribute('lang', 'pt-BR'); d.documentElement.setAttribute('translate', 'no');
@@ -34,13 +34,13 @@ try { const d = window.parent.document;
     m.name = 'google'; m.content = 'notranslate'; d.head.appendChild(m); } } catch (e) {}
 </script>""", unsafe_allow_javascript=True)
 
-# 1. CSS padrão da tela de boas-vindas
+# 1. Injeta CSS base
 try:
     st.markdown(bv.CSS, unsafe_allow_html=True)
 except Exception:
     pass
 
-# 2. DESIGN SYSTEM CORPORATIVO ÉLPIS
+# 2. DESIGN SYSTEM CORPORATIVO ÉLPIS (Zero Outer Scroll & Viewport Lock)
 st.markdown("""
 <style>
 :root {
@@ -64,122 +64,137 @@ st.markdown("""
   --text-light: #FFFFFF;
   --border: #E2E8F0;
   --border-dark: #CBD5E1;
-  --shadow-sm: 0 2px 6px rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 20px;
+  --shadow-sm: 0 1px 4px rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.08);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
 }
 
+/* Oculta cabeçalho nativo e sidebar */
 header[data-testid="stHeader"], [data-testid="stSidebar"],
 [data-testid="stSidebarCollapsedControl"], [data-testid="collapsedControl"] {display: none !important;}
-.block-container {padding: 1rem 1.5rem 0 1.5rem !important; max-width: 100% !important;}
+
+/* Trava de tela para evitar scroll externo da janela */
+html, body, [data-testid="stAppViewContainer"] {
+    overflow-x: hidden !important;
+}
+.block-container {
+    padding-top: 0.6rem !important;
+    padding-bottom: 0.4rem !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    max-width: 100% !important;
+}
 .stApp {background: var(--background) !important;}
-div[data-baseweb="select"] ul {max-height: 220px !important;}
+div[data-baseweb="select"] ul {max-height: 180px !important;}
 
-/* ---------- TAGS DO MULTISELECT (FORÇAR AZUL) ---------- */
-div[data-testid="stMultiSelect"] span[data-baseweb="tag"],
-div[data-baseweb="select"] span[data-baseweb="tag"],
-div[data-baseweb="tag"], .stMultiSelect [data-baseweb="tag"] {
-    background-color: var(--elpis-primary) !important; border: none !important; border-radius: 6px !important;
-    padding: 2px 8px !important; margin: 2px !important; min-height: 24px !important;
+/* ---------- CHECKBOXES NO AZUL CORPORATIVO ---------- */
+[data-testid="stCheckbox"] input:checked + div {
+    background-color: var(--elpis-primary) !important;
+    border-color: var(--elpis-primary) !important;
 }
-div[data-testid="stMultiSelect"] span[data-baseweb="tag"] span,
-div[data-baseweb="select"] span[data-baseweb="tag"] span,
-div[data-baseweb="tag"] span, .stMultiSelect [data-baseweb="tag"] span {
-    color: var(--text-light) !important; font-size: 11px !important; font-weight: 700 !important;
+[data-testid="stCheckbox"] span {
+    font-size: 12px !important;
 }
-div[data-testid="stMultiSelect"] span[data-baseweb="tag"] svg,
-div[data-baseweb="select"] span[data-baseweb="tag"] svg,
-div[data-baseweb="tag"] svg {color: var(--text-light) !important; height: 12px !important; width: 12px !important;}
 
-/* ---------- HEADER / FORM DE BUSCA ---------- */
+/* ---------- HEADER / FORMULÁRIO COMPACTO ---------- */
 [data-testid="stForm"] {
     background: var(--elpis-primary) !important; border: 0 !important;
-    border-radius: var(--radius-md) !important; padding: 14px 22px !important;
-    box-shadow: var(--shadow-md) !important; margin-bottom: 1rem !important;
+    border-radius: var(--radius-md) !important; padding: 8px 16px !important;
+    box-shadow: var(--shadow-md) !important; margin-bottom: 0.5rem !important;
 }
 [data-testid="stForm"] input, [data-testid="stForm"] div[data-baseweb="select"] > div {
     background: var(--surface) !important; color: var(--text-primary) !important;
-    border: none !important; border-radius: var(--radius-sm) !important; min-height: 48px !important;
+    border: none !important; border-radius: var(--radius-sm) !important;
+    min-height: 38px !important; height: 38px !important; font-size: 13px !important;
 }
 [data-testid="stForm"] button[kind="primary"], [data-testid="stForm"] button[kind="primaryFormSubmit"] {
     background: var(--elpis-orange) !important; color: var(--elpis-primary-dark) !important;
     border: 0 !important; border-radius: var(--radius-sm) !important;
-    min-height: 48px !important; font-weight: 800 !important; transition: background .2s ease;
+    min-height: 38px !important; height: 38px !important; font-weight: 800 !important;
+    font-size: 14px !important; transition: background .2s ease;
 }
 [data-testid="stForm"] button[kind="primary"] p, [data-testid="stForm"] button[kind="primaryFormSubmit"] p {
-    color: var(--elpis-primary-dark) !important; font-size: 16px !important;
+    color: var(--elpis-primary-dark) !important; font-size: 14px !important;
 }
 [data-testid="stForm"] button[kind="primary"]:hover, [data-testid="stForm"] button[kind="primaryFormSubmit"]:hover {
     background: var(--elpis-orange-hover) !important;
 }
-.elpis-brand {color: var(--elpis-orange); font-weight: 800; font-size: 34px; line-height: 48px;}
+.elpis-brand {color: var(--elpis-orange); font-weight: 800; font-size: 26px; line-height: 38px;}
 
 /* ---------- PAINEL DE FILTROS (ESQUERDA) ---------- */
-.f-title {font-weight: 700; font-size: 15px; color: var(--elpis-primary); padding-top: 6px;}
-.f-sec {font-weight: 700; font-size: 13px; color: var(--elpis-primary); margin: 14px 0 6px 0;}
-.f-sec .help {display:inline-block; width:16px; height:16px; line-height:16px; text-align:center; border:1px solid var(--border-dark);
-    border-radius:50%; font-size:10px; color:var(--text-secondary); margin-left:6px; cursor:help;}
-.sb {display:inline-block; border-radius: 12px; padding: 3px 9px; font-size: 11px; font-weight: 600; white-space: nowrap;}
+.f-title {font-weight: 700; font-size: 14px; color: var(--elpis-primary); padding-top: 2px;}
+.f-sec {font-weight: 700; font-size: 12px; color: var(--elpis-primary); margin: 8px 0 4px 0;}
+.f-sec .help {display:inline-block; width:14px; height:14px; line-height:14px; text-align:center;
+    border:1px solid var(--border-dark); border-radius:50%; font-size:9px; color:var(--text-secondary);
+    margin-left:4px; cursor:help;}
+.sb {display:inline-block; border-radius: 10px; padding: 2px 7px; font-size: 10px; font-weight: 600; white-space: nowrap;}
 .sb-ok {background: var(--status-success-bg); color: #087F68;}
 .sb-wait {background: var(--status-warning-bg); color: #9A5800;}
 .sb-off {background: var(--status-neutral-bg); color: #475569;}
-.info-box {display:flex; gap:12px; align-items:center; background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius-md); padding: 14px; margin: 16px 0; font-size: 12px; color: var(--text-secondary);}
-.info-box b {display:block; color: var(--elpis-primary); font-size: 13px;}
-.st-key-painel_filtros [data-testid="stCheckbox"] p {font-size: 13px !important; color: var(--text-primary) !important;}
+
+.info-box {display:flex; gap:8px; align-items:center; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 8px 10px; margin: 10px 0; font-size: 11px; color: var(--text-secondary);}
+.info-box b {display:block; color: var(--elpis-primary); font-size: 11px;}
+
+.st-key-painel_filtros [data-testid="stCheckbox"] p {font-size: 12px !important; color: var(--text-primary) !important;}
 .st-key-limpar button {background: transparent !important; border: 0 !important; box-shadow: none !important;
-    color: var(--status-info) !important; font-size: 12px !important; min-height: 0 !important; padding: 0 !important; float: right;}
-.st-key-limpar button p {color: var(--status-info) !important; font-size: 12px !important;}
+    color: var(--status-info) !important; font-size: 11px !important; min-height: 0 !important; padding: 0 !important; float: right;}
+.st-key-limpar button p {color: var(--status-info) !important; font-size: 11px !important;}
 
 /* ---------- CARTÕES DE VAGAS ---------- */
 .job-card {
     background: var(--surface) !important; border: 1px solid var(--border) !important;
-    border-radius: var(--radius-md) !important; padding: 18px 20px !important;
-    margin-bottom: 14px !important; box-shadow: var(--shadow-sm) !important;
+    border-radius: var(--radius-sm) !important; padding: 14px 16px !important;
+    margin-bottom: 10px !important; box-shadow: var(--shadow-sm) !important;
     transition: box-shadow .15s ease;
 }
 .job-card:hover {box-shadow: var(--shadow-md) !important;}
-.job-top {display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
-.job-title {font-size: 18px; font-weight: 800; color: var(--elpis-primary); line-height: 1.3;}
-.job-company {font-size: 14px; color: var(--text-secondary); margin-top: 2px;}
-.job-desc {font-size: 13px; color: var(--text-secondary); margin: 10px 0 0 0; line-height: 1.5;}
-.job-bottom {display:flex; justify-content:space-between; align-items:center; margin-top: 12px; gap: 10px;}
-.age {font-size: 12px !important; margin: 0 !important; padding: 6px 12px !important;}
-.badge-source {background: var(--status-info-bg); color: var(--elpis-primary); border-radius: 10px; padding: 6px 12px; font-size: 13px; font-weight: 600;}
+.job-top {display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
+.job-title {font-size: 16px; font-weight: 800; color: var(--elpis-primary); line-height: 1.25;}
+.job-company {font-size: 13px; color: var(--text-secondary); margin-top: 2px;}
+.job-desc {font-size: 12px; color: var(--text-secondary); margin: 8px 0 0 0; line-height: 1.4;}
+.job-bottom {display:flex; justify-content:space-between; align-items:center; margin-top: 10px; gap: 8px;}
+.age {font-size: 11px !important; margin: 0 !important; padding: 4px 8px !important; border-radius: 4px; font-weight: 600;}
+.pill-green {background: var(--status-success-bg) !important; color: #087F68 !important;}
+.pill-yellow {background: var(--status-warning-bg) !important; color: #9A5800 !important;}
+.pill-gray {background: var(--status-neutral-bg) !important; color: #475569 !important;}
+
+.badge-source {background: var(--status-info-bg); color: var(--elpis-primary); border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 600;}
 .badge-global {background: var(--status-success-bg); color: #087F68;}
-.badge-also {font-size: 11px; color: var(--status-neutral); margin-left: 8px;}
+.badge-also {font-size: 10px; color: var(--status-neutral); margin-left: 6px;}
+
 .btn-apply {
     background: var(--elpis-orange) !important; color: var(--elpis-primary-dark) !important;
-    border-radius: var(--radius-sm) !important; padding: 10px 0 !important; width: 190px; text-align: center;
-    font-size: 14px !important; font-weight: 800 !important; text-decoration: none !important;
+    border-radius: var(--radius-sm) !important; padding: 6px 0 !important; width: 150px; text-align: center;
+    font-size: 12px !important; font-weight: 800 !important; text-decoration: none !important;
     display: inline-block; transition: background .2s ease;
 }
 .btn-apply:hover {background: var(--elpis-orange-hover) !important; color: var(--text-light) !important;}
 
 /* ---------- MAPA ---------- */
-.st-key-mapa_card {background: #E8F0FB; border-radius: var(--radius-md); padding: 16px;}
-.map-head {font-size: 17px; font-weight: 800; color: var(--elpis-primary); margin-bottom: 10px;}
-.legend {background: var(--surface); border-radius: var(--radius-md); padding: 10px 16px; margin-top: 10px;
-    display:flex; justify-content:space-around; flex-wrap:wrap; gap:8px; font-size: 12px; color: var(--text-secondary);}
-.dot {display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:6px; vertical-align:middle;}
+.st-key-mapa_card {background: #E8F0FB; border-radius: var(--radius-md); padding: 12px;}
+.map-head {font-size: 15px; font-weight: 800; color: var(--elpis-primary); margin-bottom: 6px;}
+.legend {background: var(--surface); border-radius: var(--radius-sm); padding: 6px 10px; margin-top: 6px;
+    display:flex; justify-content:space-around; flex-wrap:wrap; gap:6px; font-size: 11px; color: var(--text-secondary);}
+.dot {display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:4px; vertical-align:middle;}
 iframe[title="streamlit_folium.st_folium"] {border-radius: var(--radius-sm) !important;}
 
-/* ---------- RODAPÉ ---------- */
+/* ---------- RODAPÉ SLIM ---------- */
 .elpis-footer {
     background-color: var(--elpis-primary-dark); color: var(--border-dark);
-    padding: 14px 24px; border-radius: var(--radius-sm); margin-top: 24px;
-    display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;
+    padding: 8px 18px; border-radius: var(--radius-sm); margin-top: 10px;
+    display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem;
 }
 .elpis-footer b {color: var(--text-light);}
-.elpis-footer .brand {color: var(--elpis-orange); font-weight: 800; font-size: 22px; margin-right: 14px;}
+.elpis-footer .brand {color: var(--elpis-orange); font-weight: 800; font-size: 18px; margin-right: 10px;}
 .elpis-footer a {color: var(--elpis-orange); text-decoration: underline; font-weight: bold;}
 
 @media (max-width: 900px) {
-    .elpis-footer {flex-direction: column; text-align: center; gap: 10px;}
-    [data-testid="stForm"] {padding: 12px !important;}
-    .btn-apply {width: 140px;}
+    .elpis-footer {flex-direction: column; text-align: center; gap: 6px;}
+    [data-testid="stForm"] {padding: 8px !important;}
+    .btn-apply {width: 120px;}
 }
 </style>
 """, unsafe_allow_html=True)
@@ -194,8 +209,8 @@ def rodape_inovhia():
     st.markdown(
         f"<div class='elpis-footer'>"
         f"<div><span class='brand'>Élpis</span>Conectando talentos a grandes oportunidades</div>"
-        f"<div style='text-align:right'>Desenvolvido por <b>{html.escape(CREDITO_EMPRESA)}</b><br>"
-        f"{html.escape(CREDITO_CONTATO)} · Contato: <a href='tel:{CREDITO_TEL_LINK}'>{html.escape(CREDITO_TELEFONE)}</a></div>"
+        f"<div style='text-align:right'>Desenvolvido por <b>{html.escape(CREDITO_EMPRESA)}</b> | "
+        f"{html.escape(CREDITO_CONTATO)} · <a href='tel:{CREDITO_TEL_LINK}'>{html.escape(CREDITO_TELEFONE)}</a></div>"
         f"</div>",
         unsafe_allow_html=True)
 
@@ -308,7 +323,7 @@ def classe_idade(dias):
 
 
 def texto_idade(dias):
-    if dias is None or dias > 365: return "data não informada"
+    if dias is None or dias > 365: return "sem data"
     return "hoje" if dias == 0 else ("há 1 dia" if dias == 1 else f"há {dias} dias")
 
 
@@ -321,13 +336,13 @@ def modalidade(v):
 def badge_fonte(nome, mapa, rodando):
     r = mapa.get(nome)
     if r is None:
-        return '<span class="sb sb-wait">carregando…</span>' if rodando else ""
+        return '<span class="sb sb-wait">…</span>' if rodando else ""
     if r.status == "ok":
         cache = any("cache" in x for x in r.notas)
-        t = "cache" if cache else f"{r.ms / 1000:.1f}".replace(".", ",") + " s"
+        t = "cache" if cache else f"{r.ms / 1000:.1f}s"
         return f'<span class="sb sb-ok">{len(r.itens)} · {t}</span>'
-    if r.status == "vazio": return '<span class="sb sb-wait">0 vagas</span>'
-    if r.status == "timeout": return '<span class="sb sb-off">tempo esgotado</span>'
+    if r.status == "vazio": return '<span class="sb sb-wait">0</span>'
+    if r.status == "timeout": return '<span class="sb sb-off">timeout</span>'
     return '<span class="sb sb-off">erro</span>'
 
 
@@ -361,14 +376,13 @@ def montar_mapa(vagas, aproximar):
         pts.append([v["lat"], v["lon"]])
         d = core.idade_dias(v.get("data"))
         cor = "#94A3B8" if d is None or d > 10 else ("#10B981" if d <= 2 else "#F59E0B")
-        folium.CircleMarker(location=[v["lat"], v["lon"]], radius=7, color="white", weight=1.5, fill=True,
+        folium.CircleMarker(location=[v["lat"], v["lon"]], radius=6, color="white", weight=1.5, fill=True,
                             fill_color=cor, fill_opacity=1, tooltip=f"{v['empresa']} | {v['titulo']}"[:120]).add_to(grupo)
-    if pts and aproximar: m.fit_bounds(pts, max_zoom=6, padding=(40, 40))
+    if pts and aproximar: m.fit_bounds(pts, max_zoom=6, padding=(30, 30))
     return m
 
 
 def limpar_filtros():
-    """Botão 'Limpar tudo': reativa todas as fontes e zera os filtros de resultado."""
     for n in core.disponiveis(): st.session_state[f"fonte_{n}"] = True
     for m in MODALIDADES: st.session_state[f"mod_{m}"] = False
     rid_ = st.session_state.get("resultado_id", 0)
@@ -376,10 +390,10 @@ def limpar_filtros():
 
 
 # ==========================================
-# 1) HEADER DE BUSCA (faixa azul superior)
+# 1) HEADER DE BUSCA ULTRA-COMPACTO
 # ==========================================
 with st.form("search_form"):
-    c0, c1, c2, c3, c4 = st.columns([1.2, 3.6, 2.6, 1.9, 1.6], vertical_alignment="center")
+    c0, c1, c2, c3, c4 = st.columns([1.1, 3.8, 2.7, 1.8, 1.4], vertical_alignment="center")
     with c0: st.markdown("<div class='elpis-brand'>Élpis</div>", unsafe_allow_html=True)
     with c1: cargo = st.text_input("Cargo / Função", placeholder="💼  Cargo / Função", label_visibility="collapsed")
     with c2: local = st.text_input("Localidade", placeholder="📍  Localidade (ex: Belo Horizonte)", label_visibility="collapsed")
@@ -387,16 +401,16 @@ with st.form("search_form"):
     with c4: buscar = st.form_submit_button("🔍  Buscar", type="primary", use_container_width=True)
 
 # ==========================================
-# 2) ESTRUTURA PRINCIPAL: [FILTROS À ESQUERDA] | [PAINEL CENTRAL]
+# 2) ESTRUTURA HORIZONTAL CALIBRADA (VIEWPORT)
 # ==========================================
-col_filtros, col_main = st.columns([1.35, 6.2], gap="medium")
+col_filtros, col_main = st.columns([1.15, 4.85], gap="small")
 with col_main:
     status_slot = st.container()
     aviso_slot = st.container()
-    col_lista, col_mapa = st.columns([3, 2], gap="medium")
+    col_lista, col_mapa = st.columns([1.45, 1.15], gap="small")
 
 # ==========================================
-# 3) PAINEL DE FILTROS LIMPO (Sem repetições)
+# 3) PAINEL DE FILTROS COMPACTO (ESQUERDA)
 # ==========================================
 mapa_prev = {r.nome: r for r in st.session_state.get("resultados", [])}
 todas = core.disponiveis()
@@ -406,12 +420,13 @@ with col_filtros:
     with st.container(key="painel_filtros"):
         h1, h2 = st.columns(2, vertical_alignment="center")
         h1.markdown("<div class='f-title'>🎚️ Filtros</div>", unsafe_allow_html=True)
-        h2.button("Limpar tudo", key="limpar", on_click=limpar_filtros)
+        h2.button("Limpar", key="limpar", on_click=limpar_filtros)
 
         st.markdown("<div class='f-sec'>🗂️ Fontes de vagas "
-                    "<span class='help' title='Selecione os motores ativos. O filtro atualiza os resultados automaticamente.'>?</span></div>",
+                    "<span class='help' title='Motores consultados'>?</span></div>",
                     unsafe_allow_html=True)
-        with st.container(height=280, key="lista_fontes"):
+        # Altura reduzida para 190px: cabe em qualquer monitor sem expandir a página
+        with st.container(height=190, key="lista_fontes"):
             for nome in todas:
                 st.session_state.setdefault(f"fonte_{nome}", True)
                 ca, cb = st.columns([5, 4], vertical_alignment="center", gap="small")
@@ -423,38 +438,37 @@ with col_filtros:
         mod_cols = st.columns(3, gap="small")
         mods = [m for m, c in zip(MODALIDADES, mod_cols) if c.checkbox(m, key=f"mod_{m}")]
 
-        filtros_pos = st.container()  # Selectboxes de data e ordem
+        filtros_pos = st.container()
 
         st.markdown(
-            "<div class='info-box'><svg width='30' height='30' viewBox='0 0 24 24' fill='none' stroke='#142F50' "
+            "<div class='info-box'><svg width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='#142F50' "
             "stroke-width='1.8'><path d='M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z'/><path d='M9 12l2 2 4-4'/></svg>"
-            "<div><b>Vagas atualizadas em tempo real</b>Com filtros inteligentes e IA opcional</div></div>",
+            "<div><b>Tempo Real</b>Filtros e IA ativos</div></div>",
             unsafe_allow_html=True)
 
-        # ---- Sessão e Conta ----
+        # Sessão
         if current_session:
-            st.markdown(f"<div style='color:var(--elpis-primary);font-weight:700;font-size:14px;'>👤 {esc(current_session['nome'])}</div>",
+            st.markdown(f"<div style='color:var(--elpis-primary);font-weight:700;font-size:12px;'>👤 {esc(current_session['nome'])}</div>",
                         unsafe_allow_html=True)
             uso_slot = st.empty()
-            uso_slot.caption(f"Uso: **{usage_today(sid)} / {FREE_DAILY_LIMIT}** buscas gratuitas")
-            if st.button("Encerrar sessão", use_container_width=True):
+            uso_slot.caption(f"Uso: **{usage_today(sid)} / {FREE_DAILY_LIMIT}** gratuitas")
+            if st.button("Sair", use_container_width=True):
                 apagar_sessao(sid)
                 st.session_state.pop("temporary_session_id", None)
                 st.session_state.vagas, st.session_state.resultados = [], []
                 st.rerun()
         else:
             uso_slot = None
-            st.caption("Acesso visitante.")
+            st.caption("Visitante.")
 
-        # ---- Configurações Opcionais ----
-        with st.expander("⚙️ Configurações & IA"):
-            prazo = st.slider("Timeout da busca (segundos)", 8, 40, 20)
-            st.markdown("**🧠 Inteligência Artificial**")
+        # Opções de IA e Configuração recolhidas
+        with st.expander("⚙️ IA & Opções"):
+            prazo = st.slider("Timeout (s)", 8, 40, 20)
             st.session_state.setdefault("gemini_key", os.getenv("GEMINI_API_KEY", ""))
             st.session_state.setdefault("gemini_connected", False)
             st.session_state.setdefault("gemini_status", "")
             chave_digitada = st.text_input("Chave Gemini API", type="password", value=st.session_state["gemini_key"],
-                                           placeholder="Insira a chave (opcional)")
+                                           placeholder="Chave opcional")
             col_con, col_des = st.columns(2)
             if col_con.button("Conectar", use_container_width=True):
                 chave_t = (chave_digitada or "").strip()
@@ -471,16 +485,15 @@ with col_filtros:
                             st.session_state["gemini_status"] = "Conectado."
                     except Exception:
                         st.session_state["gemini_connected"] = False
-                        st.session_state["gemini_status"] = "Falha na conexão."
+                        st.session_state["gemini_status"] = "Falha."
             if col_des.button("Remover", use_container_width=True):
                 st.session_state["gemini_key"], st.session_state["gemini_connected"] = "", False
                 st.session_state["gemini_status"] = "Desconectado."
             if st.session_state["gemini_connected"]: st.success(st.session_state["gemini_status"])
-            elif st.session_state["gemini_status"]: st.warning(st.session_state["gemini_status"])
+            elif st.session_state["gemini_status"]: st.caption(st.session_state["gemini_status"])
             chave = st.session_state["gemini_key"] if st.session_state["gemini_connected"] else ""
-            st.markdown("---")
-            aproximar = st.checkbox("Aproximar mapa automaticamente", value=True)
-            parciais = st.checkbox("Exibir correspondências parciais", value=False)
+            aproximar = st.checkbox("Aproximar mapa", value=True)
+            parciais = st.checkbox("Correspondências parciais", value=False)
 
 # ==========================================
 # 4) MOTOR DE EXECUÇÃO
@@ -525,7 +538,7 @@ def executar_busca(params):
 
     record_usage(sid)
     if uso_slot is not None:
-        uso_slot.caption(f"Uso: **{usage_today(sid)} / {FREE_DAILY_LIMIT}** buscas gratuitas")
+        uso_slot.caption(f"Uso: **{usage_today(sid)} / {FREE_DAILY_LIMIT}** gratuitas")
 
     st.session_state.update(vagas=unicas, resultados=resultados, tempo=time.perf_counter() - t0,
                             resultado_id=time.time_ns(), mostrar_n=15, termo_busca=termo,
@@ -563,7 +576,7 @@ def banner_falhas(resultados):
     falhas = [r for r in resultados if r.status in ("erro", "timeout")]
     if len(falhas) < max(3, len(resultados) // 2): return
     comuns = Counter((r.erro or "")[:90] for r in falhas).most_common(3)
-    st.error(f"{len(falhas)} fontes falharam. Causas principais:\n\n" + "\n".join(f"- **{n}×** `{msg}`" for msg, n in comuns))
+    st.error(f"{len(falhas)} fontes falharam: " + " · ".join(f"**{n}×** `{msg}`" for msg, n in comuns))
 
 
 with aviso_slot:
@@ -575,51 +588,54 @@ with aviso_slot:
 filtradas = vagas_todas
 with filtros_pos:
     if vagas_todas:
-        st.markdown("<div class='f-sec'>🗓️ Publicação e ordem</div>", unsafe_allow_html=True)
-        periodo = st.selectbox("Data de publicação", ["Qualquer data", "Últimos 3 dias", "Últimos 7 dias", "Últimos 15 dias", "Últimos 30 dias"],
-                               key=f"f_per_{rid}")
-        ordem = st.selectbox("Classificação", ["Relevância", "Mais recentes"], key=f"f_ord_{rid}")
+        st.markdown("<div class='f-sec'>🗓️ Ordem & Publicação</div>", unsafe_allow_html=True)
+        col_ord, col_per = st.columns(2, gap="small")
+        with col_ord:
+            ordem = st.selectbox("Classificação", ["Relevância", "Recentes"], key=f"f_ord_{rid}", label_visibility="collapsed")
+        with col_per:
+            periodo = st.selectbox("Período", ["Qualquer", "3 dias", "7 dias", "15 dias", "30 dias"], key=f"f_per_{rid}", label_visibility="collapsed")
 
-        dias_max = {"Últimos 3 dias": 3, "Últimos 7 dias": 7, "Últimos 15 dias": 15, "Últimos 30 dias": 30}.get(periodo)
+        dias_max = {"3 dias": 3, "7 dias": 7, "15 dias": 15, "30 dias": 30}.get(periodo)
         
-        # Filtra diretamente usando as fontes ativas no topo
         filtradas = [v for v in vagas_todas
                      if v["origem"] in fontes_ativas and (not mods or modalidade(v) in mods)
                      and (dias_max is None or (core.idade_dias(v.get("data")) is not None and core.idade_dias(v["data"]) <= dias_max))]
-        if ordem == "Mais recentes":
+        if ordem == "Recentes":
             filtradas = sorted(filtradas, key=lambda v: v.get("data") or core.MIN_DATA, reverse=True)
 
-        if chave and filtradas and st.button("✨ Gerar Insights (Gemini AI)", use_container_width=True):
+        if chave and filtradas and st.button("✨ Insights IA (Gemini)", use_container_width=True):
             try:
                 with st.spinner("Analisando competências..."):
                     analisar_com_gemini(filtradas[:12], st.session_state.get("termo_busca", ""),
                                         st.session_state.get("nivel_busca", "(qualquer)"), chave)
             except Exception as e:
-                st.warning(f"Erro na IA: {str(e)[:120]}")
+                st.caption(f"Erro IA: {str(e)[:80]}")
 
 # ==========================================
-# 6) LISTA DE VAGAS (centro)
+# 6) LISTA DE VAGAS (CENTRO - 500px Viewport)
 # ==========================================
 with col_lista:
     if vagas_todas:
-        st.caption(f"{len(filtradas)} resultados processados em {st.session_state.get('tempo', 0):.1f}s")
-    painel = st.container(height=680)
+        st.caption(f"**{len(filtradas)}** vagas encontradas · processado em {st.session_state.get('tempo', 0):.1f}s")
+    
+    # Altura calibrada para travar a tela sem scroll global
+    painel = st.container(height=500)
     if not vagas_todas and not resultados:
         painel.markdown(bv.html_boas_vindas(len(fontes_ativas), FREE_DAILY_LIMIT), unsafe_allow_html=True)
     elif not vagas_todas:
-        painel.info("Utilize a barra superior para realizar uma nova pesquisa.")
+        painel.info("Utilize a barra superior para realizar uma pesquisa.")
     elif not filtradas:
         painel.info("Nenhuma vaga atende aos filtros atuais.")
 
     n_mostrar = st.session_state.get("mostrar_n", 15)
     for v in filtradas[:n_mostrar]:
         dias = core.idade_dias(v.get("data"))
-        descricao = (v.get("analise") or v.get("resumo") or "")[:240]
+        descricao = (v.get("analise") or v.get("resumo") or "")[:200]
         link = v["link"] if core.eh_http(v.get("link")) else "#"
         badge_cls = "badge-source badge-global" if v.get("grupo") in ("Global", "Empresas") else "badge-source"
         origem_txt = f'{v["origem"]} · {v["grupo"]}' if v.get("grupo") else v["origem"]
-        tambem = f'<span class="badge-also">também via {esc(", ".join(v["tambem"]))}</span>' if v.get("tambem") else ""
-        desc_html = f'<div class="job-desc">{esc(descricao)}{"…" if len(descricao) >= 240 else ""}</div>' if descricao else ""
+        tambem = f'<span class="badge-also">também em {esc(", ".join(v["tambem"]))}</span>' if v.get("tambem") else ""
+        desc_html = f'<div class="job-desc">{esc(descricao)}{"…" if len(descricao) >= 200 else ""}</div>' if descricao else ""
 
         painel.markdown(
             f'<div class="job-card">'
@@ -632,12 +648,12 @@ with col_lista:
             f'</div></div>', unsafe_allow_html=True)
 
     if len(filtradas) > n_mostrar:
-        if st.button(f"Carregar mais resultados ({len(filtradas) - n_mostrar})", use_container_width=True):
+        if st.button(f"Carregar mais ({len(filtradas) - n_mostrar})", use_container_width=True):
             st.session_state.mostrar_n = n_mostrar + 15
             st.rerun()
 
 # ==========================================
-# 7) MAPA (direita)
+# 7) MAPA GEOESPACIAL (DIREITA - 430px Viewport)
 # ==========================================
 with col_mapa:
     with st.container(key="mapa_card"):
@@ -646,12 +662,14 @@ with col_mapa:
         chave_mapa = (tuple(v["link"] for v in filtradas), aproximar)
         if st.session_state.get("_mapa_chave") != chave_mapa:
             st.session_state["_mapa_chave"], st.session_state["_mapa"] = chave_mapa, montar_mapa(filtradas, aproximar)
-        st_folium(st.session_state["_mapa"], height=560, use_container_width=True, returned_objects=[], key="mapa")
+        
+        # Altura calibrada para se nivelar perfeitamente com a lista de vagas
+        st_folium(st.session_state["_mapa"], height=430, use_container_width=True, returned_objects=[], key="mapa")
         st.markdown(
             "<div class='legend'>"
-            "<span><i class='dot' style='background:#10B981'></i>verde recente</span>"
-            "<span><i class='dot' style='background:#F59E0B'></i>âmbar médio</span>"
-            "<span><i class='dot' style='background:#94A3B8'></i>cinza antigo</span></div>",
+            "<span><i class='dot' style='background:#10B981'></i>recente</span>"
+            "<span><i class='dot' style='background:#F59E0B'></i>médio</span>"
+            "<span><i class='dot' style='background:#94A3B8'></i>antigo</span></div>",
             unsafe_allow_html=True)
 
 rodape_inovhia()
