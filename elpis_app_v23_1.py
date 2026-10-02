@@ -21,7 +21,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v23.6-Secure-Classic"
+APP_VERSION = "2026-10-02-v23.7-Compact-Sidebar"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="expanded")
 
 # O Chrome oferece/aplica tradução automática e isso corrompe a interface
@@ -35,9 +35,50 @@ try { const d = window.parent.document;
 
 st.markdown("""
 <style>
-    /* O Header NÃO está mais oculto para garantir que o botão de abrir/fechar a sidebar funcione sempre */
+    /* O Header NÃO está oculto para garantir que o botão de abrir/fechar a sidebar funcione sempre */
     .block-container { padding-top: 1.5rem; padding-bottom: 2rem; padding-left: 2rem; padding-right: 2rem; }
     
+    /* ========================================================= */
+    /* MODO COMPACTO DA BARRA LATERAL (SEM PRECISAR ROLAR A TELA)*/
+    /* ========================================================= */
+    [data-testid="stSidebar"] p, 
+    [data-testid="stSidebar"] label, 
+    [data-testid="stSidebar"] span, 
+    [data-testid="stSidebar"] div.stMarkdown {
+        font-size: 0.85rem !important;
+    }
+    
+    /* Reduzir o tamanho das "pílulas" vermelhas no multiselect */
+    [data-testid="stSidebar"] [data-baseweb="tag"] {
+        font-size: 0.70rem !important;
+        padding-top: 0px !important;
+        padding-bottom: 0px !important;
+        padding-left: 4px !important;
+        padding-right: 4px !important;
+        margin: 2px !important;
+        height: 24px !important;
+    }
+    
+    /* Reduzir os botões de conectar/desconectar na sidebar */
+    [data-testid="stSidebar"] button {
+        min-height: 32px !important;
+        padding-top: 0px !important;
+        padding-bottom: 0px !important;
+    }
+    
+    /* Ocultar margens verticais desnecessárias para economizar espaço */
+    [data-testid="stSidebar"] .element-container {
+        margin-bottom: -10px !important;
+    }
+    [data-testid="stSidebarUserContent"] {
+        padding-top: 1rem !important;
+    }
+    hr {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    /* ========================================================= */
+
     /* FORMULÁRIO DE BUSCA - TEMA CORPORATIVO RESPONSIVO */
     [data-testid="stForm"] { background-color: #0F2A4A !important; border-radius: 12px; padding: 16px 24px; border: none;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -50,7 +91,7 @@ st.markdown("""
     [data-testid="stForm"] button[kind="primary"]:hover, [data-testid="stForm"] button[kind="primaryFormSubmit"]:hover {
         background-color: #D97706 !important; }
         
-    /* PÍLULAS E CARTÕES DE VAGAS (Protegidos via html.escape) */
+    /* PÍLULAS E CARTÕES DE VAGAS */
     .pill-green, .pill-yellow, .pill-gray { border-radius: 9999px; padding: 4px 12px; font-size: 13px; display: inline-block;
         margin-right: 6px; margin-bottom: 6px; white-space: nowrap; font-weight: 500; }
     .pill-green { background: #D1FAE5; color: #065F46; }
@@ -175,7 +216,7 @@ def cadastro_dialog():
             st.rerun()
 
 # ==========================================
-# PAINEL LATERAL (CLÁSSICO)
+# PAINEL LATERAL (CLÁSSICO COMPACTADO)
 # ==========================================
 sid = st.session_state.get("temporary_session_id")
 current_session = sessao_atual(sid)
@@ -192,21 +233,19 @@ with st.sidebar:
             st.rerun()
     else:
         uso_slot = None
-        st.caption("Sessão não iniciada: o cadastro rápido aparece na sua primeira busca.")
+        st.caption("Sessão não iniciada.")
         
-    st.caption(f"Desenvolvido por {CREDITO_EMPRESA}")
     st.markdown("---")
     
-    st.header("⚙️ Configuração")
     todas = core.disponiveis()
-    fontes_ativas = st.multiselect("Motores ativos", todas, default=todas, help="Fontes marcadas como beta usam páginas sem API oficial; veja o diagnóstico.")
-    prazo = st.slider("Tempo máximo da busca (s)", 8, 40, 20, help="Fontes que não responderem a tempo são descartadas; as demais aparecem.")
+    fontes_ativas = st.multiselect("Motores ativos", todas, default=todas, help="Fontes marcadas como beta usam páginas sem API oficial.")
+    prazo = st.slider("Tempo máximo da busca (s)", 8, 40, 20)
     
     st.session_state.setdefault("gemini_key", os.getenv("GEMINI_API_KEY", ""))
     st.session_state.setdefault("gemini_connected", False)
     st.session_state.setdefault("gemini_status", "")
     
-    chave_digitada = st.text_input("Chave de API Gemini (opcional)", type="password", value=st.session_state["gemini_key"], help="A chave fica somente nesta sessão e não é gravada no SQLite.")
+    chave_digitada = st.text_input("Chave de API Gemini (opcional)", type="password", value=st.session_state["gemini_key"])
     
     col_con, col_des = st.columns(2)
     if col_con.button("Conectar", use_container_width=True):
@@ -237,18 +276,18 @@ with st.sidebar:
     chave = st.session_state["gemini_key"] if st.session_state["gemini_connected"] else ""
     
     aproximar = st.checkbox("Aproximar mapa das vagas", value=True)
-    parciais = st.checkbox("Incluir correspondências parciais", value=False, help="Por padrão, se houver 5 ou mais vagas com o cargo completo, as parciais são ocultadas.")
+    parciais = st.checkbox("Incluir correspondências parciais", value=False)
     
     faltam = core.indisponiveis()
     if faltam:
-        st.caption("Disponíveis com chave de API (variável de ambiente): " + "; ".join(f"{n} ({', '.join(k)})" for n, k in faltam.items()))
+        st.caption("Disponíveis com chave de API: " + "; ".join(f"{n} ({', '.join(k)})" for n, k in faltam.items()))
 
     st.markdown("---")
     with st.expander("👨‍💻 Sobre o Desenvolvedor"):
         st.markdown(
             "**Jeferson Alexandre**\n\n"
             "Especialista em Auditoria, GRC e Engenharia de Dados Aplicada a Controles Internos.\n\n"
-            "Formado em **Ciências Contábeis** e **Análise e Desenvolvimento de Sistemas**, com **MBA em Gestão Estratégica de Projetos**. "
+            "Formado em **Ciências Contábeis** e **Sistemas**, com **MBA em Gestão Estratégica**. "
             "Combina a profundidade analítica de Compliance com a agilidade da Tecnologia."
         )
 
