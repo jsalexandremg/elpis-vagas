@@ -21,11 +21,10 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-01-v23.2-Responsive"
+APP_VERSION = "2026-10-01-v23.3-Compact-UI"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide")
 
 # O Chrome oferece/aplica tradução automática (a página vem como lang="en") e isso corrompe a interface:
-# "Indeed" → "De fato", "vagas" → "garotas", "We Work Remotely" → "Trabalhamos remotamente", e pode quebrar widgets.
 st.html("""<script>
 try { const d = window.parent.document;
   d.documentElement.setAttribute('lang', 'pt-BR'); d.documentElement.setAttribute('translate', 'no');
@@ -38,6 +37,21 @@ st.markdown("""
 <style>
     header[data-testid="stHeader"] {display: none;}
     .block-container { padding-top: 1.5rem; padding-bottom: 2rem; padding-left: 2rem; padding-right: 2rem; }
+    
+    /* LARGURA E ESPAÇAMENTO DA BARRA LATERAL (SIDEBAR) */
+    [data-testid="stSidebar"] {
+        min-width: 290px !important;
+        max-width: 290px !important;
+    }
+    [data-testid="stSidebarUserContent"] {
+        padding-top: 1.2rem !important;
+        padding-bottom: 1rem !important;
+    }
+    /* Limitar a altura da caixa de seleção de motores para não empurrar a tela */
+    div[data-baseweb="select"] ul {
+        max-height: 180px !important;
+    }
+
     [data-testid="stForm"] { background-color: #0F2A4A !important; border-radius: 12px; padding: 16px 24px; border: none;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
     [data-testid="stForm"] input, [data-testid="stForm"] div[data-baseweb="select"] > div {
@@ -65,7 +79,6 @@ st.markdown("""
         font-weight: bold; text-decoration: none !important; display: inline-block; text-align: center; transition: background 0.2s; }
     .btn-apply:hover { background: #D97706; color: #FFF !important; }
 
-    /* REGRAS DE MEDIA QUERY PARA NOTEBOOKS E SMARTPHONES */
     @media (max-width: 1200px) {
         .block-container { padding-left: 1rem; padding-right: 1rem; }
     }
@@ -81,7 +94,6 @@ CREDITO_CONTATO = "Jeferson Alexandre"
 CREDITO_TELEFONE = "+55 31 99484-8343"
 CREDITO_TEL_LINK = "+5531994848343"
 
-
 def rodape_inovhia():
     st.markdown("---")
     st.markdown(
@@ -89,10 +101,8 @@ def rodape_inovhia():
         f"Desenvolvido por <b>{html.escape(CREDITO_EMPRESA)}</b><br>"
         f"Contato: {html.escape(CREDITO_CONTATO)} · "
         f"<a href='tel:{CREDITO_TEL_LINK}'>{html.escape(CREDITO_TELEFONE)}</a><br>"
-        f"© {datetime.now().year} {html.escape(CREDITO_EMPRESA)}. Todos os direitos reservados.<br>"
-        f"<b>É proibida a reprodução, total ou parcial, sem autorização prévia.</b></div>",
+        f"© {datetime.now().year} {html.escape(CREDITO_EMPRESA)}. Todos os direitos reservados.</div>",
         unsafe_allow_html=True)
-
 
 st.session_state.setdefault("vagas", [])
 st.session_state.setdefault("resultados", [])
@@ -105,7 +115,6 @@ SESSION_HOURS = 24
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "elpis_sessoes.sqlite3")
 _HMAC_KEY = os.getenv("ELPIS_HASH_SALT", "elpis-troque-este-segredo")
 
-
 def db():
     con = sqlite3.connect(DB_PATH, timeout=10)
     con.row_factory = sqlite3.Row
@@ -117,20 +126,15 @@ def db():
     con.commit()
     return con
 
-
-def agora():
-    return datetime.now(timezone.utc)
-
+def agora(): return datetime.now(timezone.utc)
 
 def limpar_sessoes_expiradas(con):
     con.execute("delete from active_sessions where expires_at < ?", (agora().isoformat(),))
     con.commit()
 
-
 def hash_email(email):
     email = (email or "").strip().lower()
     return sha256((_HMAC_KEY + email).encode("utf-8")).hexdigest() if email else None
-
 
 def criar_sessao(nome, email):
     con = db(); limpar_sessoes_expiradas(con)
@@ -141,40 +145,32 @@ def criar_sessao(nome, email):
     con.commit(); con.close()
     return sid
 
-
 def sessao_atual(sid):
-    if not sid:
-        return None
+    if not sid: return None
     con = db(); limpar_sessoes_expiradas(con)
     row = con.execute("select * from active_sessions where session_id = ?", (sid,)).fetchone()
     con.close()
     return dict(row) if row else None
 
-
 def apagar_sessao(sid):
-    if not sid:
-        return
+    if not sid: return
     con = db()
     con.execute("delete from active_sessions where session_id = ?", (sid,))
     con.execute("insert into access_metrics(event, created_at) values (?, ?)", ("saida", agora().isoformat()))
     con.commit(); con.close()
 
-
 def usage_today(sid):
     row = sessao_atual(sid)
     return int(row["searches"]) if row else 0
-
 
 def record_usage(sid):
     con = db()
     con.execute("update active_sessions set searches = searches + 1 where session_id = ?", (sid,))
     con.commit(); con.close()
 
-
 @st.dialog("Antes de buscar")
 def cadastro_dialog():
-    st.markdown("Para iniciar a sua sessão gratuita, diga como deseja ser identificado. "
-                "**Sem senha e sem e-mail de confirmação.**")
+    st.markdown("Para iniciar a sua sessão gratuita, diga como deseja ser identificado. **Sem senha e sem e-mail.**")
     nome = st.text_input("Nome completo ou profissional", placeholder="Como deseja ser identificado?", key="dlg_nome").strip()
     email = st.text_input("E-mail (opcional)", placeholder="Não será confirmado nesta versão", key="dlg_email").strip()
     aceite = st.checkbox("Aceito os Termos de Uso e a Política de Privacidade para esta sessão.", key="dlg_aceite")
@@ -187,48 +183,39 @@ def cadastro_dialog():
             st.session_state.busca_pendente = st.session_state.pop("busca_aguardando", None)
             st.rerun()
 
-
 def sidebar_sessao():
     sid = st.session_state.get("temporary_session_id")
     session = sessao_atual(sid)
     uso_slot = None
     with st.sidebar:
         if session:
-            st.caption(f"Sessão: {session['nome']}")
+            st.markdown(f"**👤 {session['nome']}**")
             uso_slot = st.empty()
-            uso_slot.caption(f"Plano gratuito · {usage_today(sid)}/{FREE_DAILY_LIMIT} buscas realizadas")
-            if st.button("Encerrar e apagar sessão", width="stretch"):
+            uso_slot.caption(f"Plano gratuito · {usage_today(sid)}/{FREE_DAILY_LIMIT} buscas")
+            if st.button("Encerrar sessão", width="stretch"):
                 apagar_sessao(sid)
                 st.session_state.pop("temporary_session_id", None)
                 st.session_state.vagas, st.session_state.resultados = [], []
                 st.rerun()
         else:
-            st.caption("Sessão não iniciada: o cadastro rápido aparece na sua primeira busca.")
-        st.caption(f"Desenvolvido por {CREDITO_EMPRESA}")
+            st.caption("Sessão não iniciada.")
+        st.markdown("---")
     return sid, session, uso_slot
 
-
 current_sid, current_session, uso_slot = sidebar_sessao()
-
 
 # ==========================================
 # FORMATAÇÃO
 # ==========================================
-def esc(t):
-    return html.escape(str(t or ""), quote=True)
-
+def esc(t): return html.escape(str(t or ""), quote=True)
 
 def classe_idade(dias):
-    if dias is None or dias > 10:
-        return "pill-gray"
+    if dias is None or dias > 10: return "pill-gray"
     return "pill-green" if dias <= 2 else "pill-yellow"
 
-
 def texto_idade(dias):
-    if dias is None or dias > 365:
-        return "Data não informada"
+    if dias is None or dias > 365: return "Data não informada"
     return "Hoje" if dias == 0 else ("Há 1 dia" if dias == 1 else f"Há {dias} dias")
-
 
 def chips_html(resultados):
     partes = []
@@ -247,11 +234,9 @@ def chips_html(resultados):
         partes.append(f'<span class="{classe}" title="{dica}">{esc(txt)}</span>')
     return f'<div style="margin:5px 0 16px 0;">{"".join(partes)}</div>'
 
-
 def testar_chave_gemini(chave):
     chave = (chave or "").strip()
-    if not chave:
-        return False, "Informe uma chave Gemini."
+    if not chave: return False, "Informe uma chave Gemini."
     try:
         from google import genai
         cliente = genai.Client(api_key=chave)
@@ -259,22 +244,17 @@ def testar_chave_gemini(chave):
         compativeis = [m for m in modelos if "generateContent" in str(getattr(m, "supported_actions", ""))
                        or "generate_content" in str(getattr(m, "supported_generation_methods", ""))
                        or "gemini" in str(getattr(m, "name", "")).lower()]
-        if not compativeis:
-            return False, "A chave foi aceita, mas não há modelo Gemini compatível disponível."
-        return True, f"Gemini conectado — {len(compativeis)} modelo(s) disponível(is)."
+        if not compativeis: return False, "A chave foi aceita, mas não há modelo compatível."
+        return True, f"Gemini conectado — {len(compativeis)} modelo(s)."
     except ImportError:
         try:
             import google.generativeai as legado
             legado.configure(api_key=chave)
             modelos = [m for m in legado.list_models() if "generateContent" in m.supported_generation_methods]
-            if not modelos:
-                return False, "A chave foi aceita, mas não há modelo compatível disponível."
-            return True, f"Gemini conectado — {len(modelos)} modelo(s) disponível(is)."
-        except Exception as exc:
-            return False, f"Chave recusada ou indisponível: {str(exc)[:160]}"
-    except Exception as exc:
-        return False, f"Chave recusada ou indisponível: {str(exc)[:160]}"
-
+            if not modelos: return False, "A chave foi aceita, mas não há modelo compatível."
+            return True, f"Gemini conectado — {len(modelos)} modelo(s)."
+        except Exception as exc: return False, f"Chave recusada: {str(exc)[:160]}"
+    except Exception as exc: return False, f"Chave recusada: {str(exc)[:160]}"
 
 def analisar_com_gemini(vagas, cargo, nivel, chave):
     base = [{"i": i, "titulo": v["titulo"], "empresa": v["empresa"], "local": v["local"]} for i, v in enumerate(vagas)]
@@ -292,125 +272,102 @@ def analisar_com_gemini(vagas, cargo, nivel, chave):
         texto = legado.GenerativeModel(modelo).generate_content(prompt).text
     for it in json.loads(texto.replace("```json", "").replace("```", "").strip()):
         idx = int(it["i"])
-        if 0 <= idx < len(vagas):
-            vagas[idx]["analise"] = it["analise"]
-
+        if 0 <= idx < len(vagas): vagas[idx]["analise"] = it["analise"]
 
 def montar_mapa(vagas, aproximar):
-    m = folium.Map(location=[-15.7801, -47.9292], zoom_start=4, min_zoom=2, tiles="OpenStreetMap",
-                   world_copy_jump=True, control_scale=False)
+    m = folium.Map(location=[-15.7801, -47.9292], zoom_start=4, min_zoom=2, tiles="OpenStreetMap", world_copy_jump=True, control_scale=False)
     from folium.plugins import MarkerCluster
     grupo = MarkerCluster(options={"maxClusterRadius": 35}).add_to(m)
     pts = []
     for v in vagas:
-        if not v.get("lat"):
-            continue
+        if not v.get("lat"): continue
         pts.append([v["lat"], v["lon"]])
         d = core.idade_dias(v.get("data"))
         cor = "#9CA3AF" if d is None or d > 10 else ("#10B981" if d <= 2 else "#F59E0B")
         folium.CircleMarker(location=[v["lat"], v["lon"]], radius=7, color="white", weight=1.5, fill=True,
-                            fill_color=cor, fill_opacity=1,
-                            tooltip=f"{v['empresa']} | {v['titulo']}"[:120]).add_to(grupo)
-    if pts and aproximar:
-        m.fit_bounds(pts, max_zoom=6, padding=(40, 40))
+                            fill_color=cor, fill_opacity=1, tooltip=f"{v['empresa']} | {v['titulo']}"[:120]).add_to(grupo)
+    if pts and aproximar: m.fit_bounds(pts, max_zoom=6, padding=(40, 40))
     return m
 
-
 # ==========================================
-# SIDEBAR + FORMULÁRIO
+# SIDEBAR REFINADA (AGRUPAMENTO E LARGURA)
 # ==========================================
 with st.sidebar:
     st.header("⚙️ Configuração")
     todas = core.disponiveis()
-    fontes_ativas = st.multiselect("Motores ativos", todas, default=todas,
-                                   help="Fontes marcadas como beta usam páginas sem API oficial; veja o diagnóstico.")
-    prazo = st.slider("Tempo máximo da busca (s)", 8, 40, 20,
-                      help="Fontes que não responderem a tempo são descartadas; as demais aparecem.")
-    st.session_state.setdefault("gemini_key", os.getenv("GEMINI_API_KEY", ""))
-    st.session_state.setdefault("gemini_connected", False)
-    st.session_state.setdefault("gemini_status", "")
-    chave_digitada = st.text_input(
-        "Chave de API Gemini (opcional)",
-        type="password",
-        value=st.session_state["gemini_key"],
-        help="A chave fica somente nesta sessão e não é gravada no SQLite.",
-    )
-    col_con, col_des = st.columns(2)
-    if col_con.button("Conectar", width="stretch"):
-        ok, mensagem = testar_chave_gemini(chave_digitada)
-        st.session_state["gemini_status"] = mensagem
-        if ok:
-            st.session_state["gemini_key"] = chave_digitada.strip()
-            st.session_state["gemini_connected"] = True
-        else:
-            st.session_state["gemini_connected"] = False
-    if col_des.button("Desconectar", width="stretch"):
-        st.session_state["gemini_key"] = ""
-        st.session_state["gemini_connected"] = False
-        st.session_state["gemini_status"] = "Chave Gemini desconectada nesta sessão."
-    if st.session_state["gemini_connected"]:
-        st.success(st.session_state["gemini_status"] or "Gemini conectado.")
-    elif st.session_state["gemini_status"]:
-        st.warning(st.session_state["gemini_status"])
-    chave = st.session_state["gemini_key"] if st.session_state["gemini_connected"] else ""
-    aproximar = st.checkbox("Aproximar mapa das vagas", value=True)
-    parciais = st.checkbox("Incluir correspondências parciais", value=False,
-                           help="Por padrão, se houver 5 ou mais vagas com o cargo completo, as parciais "
-                                "(ex.: só 'Auditor' ou só 'Interno') são ocultadas.")
-    faltam = core.indisponiveis()
-    if faltam:
-        st.caption("Disponíveis com chave de API (variável de ambiente): " +
-                   "; ".join(f"{n} ({', '.join(k)})" for n, k in faltam.items()))
+    fontes_ativas = st.multiselect("Motores ativos", todas, default=todas)
+    prazo = st.slider("Tempo máximo da busca (s)", 8, 40, 20)
 
-    st.markdown("---")
+    # Agrupamento para economia de espaço vertical
+    with st.expander("🤖 IA & Preferências de Busca", expanded=False):
+        st.session_state.setdefault("gemini_key", os.getenv("GEMINI_API_KEY", ""))
+        st.session_state.setdefault("gemini_connected", False)
+        st.session_state.setdefault("gemini_status", "")
+        
+        chave_digitada = st.text_input("Chave Gemini (opcional)", type="password", value=st.session_state["gemini_key"])
+        
+        col_con, col_des = st.columns(2)
+        if col_con.button("Conectar", width="stretch"):
+            ok, mensagem = testar_chave_gemini(chave_digitada)
+            st.session_state["gemini_status"] = mensagem
+            if ok:
+                st.session_state["gemini_key"] = chave_digitada.strip()
+                st.session_state["gemini_connected"] = True
+            else:
+                st.session_state["gemini_connected"] = False
+        if col_des.button("Desconectar", width="stretch"):
+            st.session_state["gemini_key"], st.session_state["gemini_connected"] = "", False
+            st.session_state["gemini_status"] = "Desconectado."
+            
+        if st.session_state["gemini_connected"]: st.success("Conectado.")
+        elif st.session_state["gemini_status"]: st.caption(st.session_state["gemini_status"])
+        
+        st.markdown("---")
+        aproximar = st.checkbox("Aproximar mapa das vagas", value=True)
+        parciais = st.checkbox("Incluir correspondências parciais", value=False)
+        
+    chave = st.session_state["gemini_key"] if st.session_state["gemini_connected"] else ""
+
     with st.expander("👨‍💻 Sobre o Desenvolvedor"):
         st.markdown(
             "**Jeferson Alexandre**\n\n"
-            "Especialista em Auditoria, GRC e Engenharia de Dados Aplicada a Controles Internos.\n\n"
-            "Formado em **Ciências Contábeis** e **Análise e Desenvolvimento de Sistemas**, com **MBA em Gestão Estratégica de Projetos**. "
-            "Combina a profundidade analítica de Compliance com a agilidade da Tecnologia para mitigar riscos, "
-            "automatizar processos e elevar a governança corporativa."
+            "Especialista em Auditoria, GRC e Engenharia de Dados.\n\n"
+            "Formado em **Ciências Contábeis** e **Sistemas**, com **MBA em Gestão Estratégica**. "
+            "Combina a profundidade analítica de Compliance com a agilidade da Tecnologia."
         )
 
 with st.form("search_form"):
-    # Proporção ajustada para o título não quebrar em telas menores
     c0, c1, c2, c3, c4 = st.columns([1.2, 3.8, 3, 2, 2])
-    with c0:
-        st.markdown("<h3 style='color: #F59E0B; margin-top: 5px;'>Élpis</h3>", unsafe_allow_html=True)
-    with c1:
-        cargo = st.text_input("Cargo / Função", placeholder="🏢 Cargo / Função (ex: Auditor Interno, Controller)", label_visibility="collapsed")
-    with c2:
-        local = st.text_input("Localidade", placeholder="📍 Localidade (ex: Belo Horizonte, Brasil)", label_visibility="collapsed")
-    with c3:
-        nivel = st.selectbox("Nível / Senioridade", ["(qualquer)", "Analista", "Especialista", "Coordenador", "Gerente", "Diretor", "VP"], label_visibility="collapsed")
-    with c4:
-        buscar = st.form_submit_button("Buscar", type="primary", width="stretch")
+    with c0: st.markdown("<h3 style='color: #F59E0B; margin-top: 5px;'>Élpis</h3>", unsafe_allow_html=True)
+    with c1: cargo = st.text_input("Cargo / Função", placeholder="🏢 Cargo / Função (ex: Auditor Interno, Controller)", label_visibility="collapsed")
+    with c2: local = st.text_input("Localidade", placeholder="📍 Localidade (ex: Belo Horizonte, Brasil)", label_visibility="collapsed")
+    with c3: nivel = st.selectbox("Nível / Senioridade", ["(qualquer)", "Analista", "Especialista", "Coordenador", "Gerente", "Diretor", "VP"], label_visibility="collapsed")
+    with c4: buscar = st.form_submit_button("Buscar", type="primary", width="stretch")
 
 # ==========================================
-# BUSCA
+# BUSCA E RENDERIZAÇÃO 
 # ==========================================
 params = None
-if buscar and not cargo.strip():
-    st.warning("Informe o Cargo / Função para buscar.")
+if buscar and not cargo.strip(): st.warning("Informe o Cargo / Função para buscar.")
 elif buscar:
     pedido = {"cargo": cargo.strip(), "local": local, "nivel": nivel}
     if current_session is None:
         st.session_state.busca_aguardando = pedido
-        cadastro_dialog()  # abre o pop-up; ao confirmar, a busca roda sozinha
-    else:
-        params = pedido
+        cadastro_dialog()
+    else: params = pedido
+
 if params is None and current_session is not None:
     params = st.session_state.pop("busca_pendente", None)
 
 if params:
     termo, local, nivel = params["cargo"], params["local"], params["nivel"]
     if usage_today(current_sid) >= FREE_DAILY_LIMIT:
-        st.error(f"Limite gratuito diário de {FREE_DAILY_LIMIT} buscas atingido. Retorne amanhã.")
+        st.error(f"Limite gratuito diário de {FREE_DAILY_LIMIT} buscas atingido.")
         st.stop()
     if not fontes_ativas:
         st.warning("Selecione ao menos um motor na barra lateral.")
         st.stop()
-    st.markdown(bv.ESCONDER, unsafe_allow_html=True)  # esconde as boas-vindas assim que a busca começa
+    st.markdown(bv.ESCONDER, unsafe_allow_html=True) 
     brutas, resultados, t0 = [], [], time.perf_counter()
 
     with st.status("Consultando fontes em paralelo…", expanded=True) as box:
@@ -426,7 +383,7 @@ if params:
     st.session_state.rede = core.verificar_rede() if len(falhas) >= max(3, len(resultados) // 2) else None
     unicas = core.consolidar(brutas, nivel, limite=60, min_exatas=999 if parciais else 5)
 
-    if aproximar and unicas:  # tabela offline primeiro; Nominatim só para o que sobrar (máx. 5 locais / 6 s)
+    if aproximar and unicas: 
         cache_loc, inicio, consultas = {}, time.perf_counter(), 0
         for v in unicas:
             loc = v["local"]
@@ -438,15 +395,13 @@ if params:
                 cache_loc[loc] = pos
             v["lat"], v["lon"] = cache_loc[loc] or (None, None)
     else:
-        for v in unicas:
-            v["lat"], v["lon"] = None, None
+        for v in unicas: v["lat"], v["lon"] = None, None
 
-    for v in unicas:
-        v["analise"] = None
+    for v in unicas: v["analise"] = None
 
     record_usage(current_sid)
     if uso_slot is not None:
-        uso_slot.caption(f"Plano gratuito · {usage_today(current_sid)}/{FREE_DAILY_LIMIT} buscas realizadas")
+        uso_slot.caption(f"Plano gratuito · {usage_today(current_sid)}/{FREE_DAILY_LIMIT} buscas")
     st.session_state.update(vagas=unicas, resultados=resultados, tempo=time.perf_counter() - t0,
                             resultado_id=time.time_ns(), mostrar_n=15, termo_busca=termo, nivel_busca=nivel)
 
@@ -454,29 +409,22 @@ vagas_todas = st.session_state["vagas"]
 resultados = st.session_state.get("resultados", [])
 rid = st.session_state.get("resultado_id", 0)
 
-if resultados:
-    st.markdown(chips_html(resultados), unsafe_allow_html=True)
+if resultados: st.markdown(chips_html(resultados), unsafe_allow_html=True)
 
 def banner_falhas(resultados):
     falhas = [r for r in resultados if r.status in ("erro", "timeout")]
-    if len(falhas) < max(3, len(resultados) // 2):
-        return
+    if len(falhas) < max(3, len(resultados) // 2): return
     comuns = Counter((r.erro or "")[:90] for r in falhas).most_common(3)
-    st.error(f"{len(falhas)} de {len(resultados)} fontes falharam nesta busca. Causas mais frequentes:\n\n" +
-             "\n".join(f"- **{n}×** `{msg}`" for msg, n in comuns))
-    rede = st.session_state.get("rede")
-    if rede:
-        st.warning("Teste de rede agora: " + " · ".join(f"{k}: {v}" for k, v in rede.items()) +
-                   ".  Se “Internet” falhar, é rede/VPN/proxy/firewall nesta máquina; se der HTTP 200 e as "
-                   "fontes seguem em erro, abra o diagnóstico abaixo e envie a mensagem.")
+    st.error(f"{len(falhas)} de {len(resultados)} fontes falharam. Causas:\n\n" + "\n".join(f"- **{n}×** `{msg}`" for msg, n in comuns))
+    if st.session_state.get("rede"):
+        st.warning("Teste de rede: " + " · ".join(f"{k}: {v}" for k, v in st.session_state["rede"].items()))
 
 banner_falhas(resultados)
 
 filtradas = vagas_todas
 if vagas_todas:
     f1, f2, f3, f4 = st.columns([2, 2, 2, 4])
-    periodo = f1.selectbox("Período", ["Qualquer data", "Últimos 3 dias", "Últimos 7 dias", "Últimos 15 dias", "Últimos 30 dias"],
-                           key=f"f_per_{rid}", help="Com período ativo, vagas sem data informada ficam ocultas.")
+    periodo = f1.selectbox("Período", ["Qualquer data", "Últimos 3 dias", "Últimos 7 dias", "Últimos 15 dias", "Últimos 30 dias"], key=f"f_per_{rid}")
     ordem = f2.selectbox("Ordenar por", ["Relevância", "Mais recentes"], key=f"f_ord_{rid}")
     so_remoto = f3.toggle("Somente remotas", key=f"f_rem_{rid}")
     origens = sorted({v["origem"] for v in vagas_todas})
@@ -492,10 +440,8 @@ if vagas_todas:
     if chave and filtradas and barra2.button("✨ Analisar as 12 primeiras com IA", width="stretch"):
         try:
             with st.spinner("Analisando com IA…"):
-                analisar_com_gemini(filtradas[:12], st.session_state.get("termo_busca", ""),
-                                    st.session_state.get("nivel_busca", "(qualquer)"), chave)
-        except Exception as e:
-            st.warning(f"Análise por IA indisponível: {type(e).__name__}: {str(e)[:120]}")
+                analisar_com_gemini(filtradas[:12], st.session_state.get("termo_busca", ""), st.session_state.get("nivel_busca", "(qualquer)"), chave)
+        except Exception as e: st.warning(f"Erro IA: {str(e)[:120]}")
 
 col_lista, col_mapa = st.columns([3, 2], gap="large")
 
@@ -503,10 +449,9 @@ with col_lista:
     painel = st.container(height=600)
     if not vagas_todas and not resultados:
         painel.markdown(bv.html_boas_vindas(len(fontes_ativas), FREE_DAILY_LIMIT), unsafe_allow_html=True)
-    elif not vagas_todas:
-        painel.info("Informe o Cargo / Função desejada e clique em Buscar.")
-    elif not filtradas:
-        painel.info("Nenhuma vaga com os filtros atuais. Ajuste período, fontes ou remova “Somente remotas”.")
+    elif not vagas_todas: painel.info("Informe o Cargo / Função desejada e clique em Buscar.")
+    elif not filtradas: painel.info("Nenhuma vaga com os filtros atuais.")
+    
     n_mostrar = st.session_state.get("mostrar_n", 15)
     for v in filtradas[:n_mostrar]:
         dias = core.idade_dias(v.get("data"))
@@ -533,8 +478,7 @@ with col_mapa:
     com_pino = sum(1 for v in filtradas if v.get("lat"))
     st.markdown(f"<div style='font-size:16px; font-weight:600; color:#0F2A4A; margin-bottom:4px;'>"
                 f"Mapa &middot; {com_pino} de {len(filtradas)} vagas localizadas</div>", unsafe_allow_html=True)
-    st.caption("Verde: até 2 dias · Âmbar: até 10 dias · Cinza: mais antiga ou sem data. "
-               "Vagas remotas ou com local genérico não recebem pino.")
+    st.caption("Verde: até 2 dias · Âmbar: até 10 dias · Cinza: mais antiga ou sem data.")
     chave_mapa = (tuple(v["link"] for v in filtradas), aproximar)
     if st.session_state.get("_mapa_chave") != chave_mapa:
         st.session_state["_mapa_chave"], st.session_state["_mapa"] = chave_mapa, montar_mapa(filtradas, aproximar)
@@ -544,15 +488,8 @@ if resultados:
     muitas = sum(r.status in ("erro", "timeout") for r in resultados) >= max(3, len(resultados) // 2)
     with st.expander("🔎 Diagnóstico das fontes (o que cada motor respondeu)", expanded=muitas):
         st.dataframe([{
-            "Fonte": r.nome, "Grupo": r.grupo, "Situação": {"ok": "OK", "vazio": "Sem vagas", "erro": "Erro",
-                                                          "timeout": "Tempo esgotado"}[r.status],
-            "Vagas": len(r.itens), "Tempo (s)": round(r.ms / 1000, 1),
-            "Detalhe": (r.erro + " | " if r.erro else "") + " | ".join(r.notas),
+            "Fonte": r.nome, "Grupo": r.grupo, "Situação": {"ok": "OK", "vazio": "Sem vagas", "erro": "Erro", "timeout": "Tempo esgotado"}[r.status],
+            "Vagas": len(r.itens), "Tempo (s)": round(r.ms / 1000, 1), "Detalhe": (r.erro + " | " if r.erro else "") + " | ".join(r.notas),
         } for r in resultados], hide_index=True, width="stretch")
-        st.code("\n".join(
-            f"[{r.status.upper()}] {r.nome} | {len(r.itens)} vagas | {round(r.ms / 1000, 1)}s | "
-            + (r.erro or "") + " | " + " | ".join(r.notas)
-            for r in resultados
-        ), language="text")
 
 rodape_inovhia()
