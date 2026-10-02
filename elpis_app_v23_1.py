@@ -22,7 +22,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.9-Corporate-Master-Fix"
+APP_VERSION = "2026-10-02-v24.10-Enterprise-Perfect"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="expanded")
 
 # O Chrome oferece/aplica tradução automática e isso corrompe a interface
@@ -40,26 +40,23 @@ try:
 except Exception:
     pass
 
-# 2. INJETA O DESIGN SYSTEM CORPORATIVO ÉLPIS POR ÚLTIMO (Sobrescreve o padrão do Streamlit)
+# 2. DESIGN SYSTEM CORPORATIVO ÉLPIS (Sobrescreve o padrão do Streamlit com especificidade total)
 st.markdown("""
 <style>
-/* =========================================================
-   SISTEMA DE DESIGN ÉLPIS (Design Tokens & Streamlit Overrides)
-   ========================================================= */
 :root {
-  --primary-color: #142F50 !important; /* Força a cor primária nativa do Streamlit para Azul */
+  --primary-color: #142F50 !important;
   --elpis-primary: #142F50;
-  --elpis-primary-dark: #0D223A;
+  --elpis-primary-dark: #0A192F;
   --elpis-orange: #F6A000;
   --elpis-orange-hover: #D98900;
   --status-success: #10B981;
   --status-success-bg: #D2F7EF;
   --status-info: #3B82F6;
-  --status-info-bg: #DCE9FA;
+  --status-info-bg: #E0E7FF;
   --status-warning: #F59E0B;
   --status-warning-bg: #FFF2C7;
   --status-neutral: #94A3B8;
-  --status-neutral-bg: #E5E7EB;
+  --status-neutral-bg: #F1F5F9;
   --background: #F8FAFC;
   --surface: #FFFFFF;
   --text-primary: #111827;
@@ -84,7 +81,7 @@ header[data-testid="stHeader"] {display: none;}
 }
 .stApp { background: var(--background) !important; }
 
-/* ---------- SIDEBAR ---------- */
+/* ---------- SIDEBAR CORPORATIVA ---------- */
 [data-testid="stSidebar"] {
     background: var(--surface) !important;
     border-right: 1px solid var(--border) !important;
@@ -97,39 +94,41 @@ header[data-testid="stHeader"] {display: none;}
     border-color: var(--border) !important;
     margin: 0.8rem 0 !important;
 }
-
-/* Ocultar barra rolável desnecessária no multiselect */
 div[data-baseweb="select"] ul { max-height: 220px !important; }
 
 /* =========================================================
-   BLINDAGEM CSS: GARANTIR TAGS AZUIS EM TODOS OS MULTISELECTS
+   BLINDAGEM ABSOLUTA: FORÇAR AZUL CORPORATIVO NAS TAGS
    ========================================================= */
 div[data-testid="stMultiSelect"] span[data-baseweb="tag"],
 div[data-baseweb="select"] span[data-baseweb="tag"],
-div[data-baseweb="tag"] {
+div[data-baseweb="tag"],
+.stMultiSelect [data-baseweb="tag"] {
     background-color: var(--elpis-primary) !important;
     border: none !important;
-    border-radius: 4px !important;
-    padding: 0px 6px !important;
+    border-radius: 6px !important;
+    padding: 2px 8px !important;
     margin: 2px !important;
-    min-height: 22px !important;
+    min-height: 24px !important;
 }
 div[data-testid="stMultiSelect"] span[data-baseweb="tag"] span,
 div[data-baseweb="select"] span[data-baseweb="tag"] span,
-div[data-baseweb="tag"] span {
+div[data-baseweb="tag"] span,
+.stMultiSelect [data-baseweb="tag"] span {
     color: var(--text-light) !important;
     font-size: 11px !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
 }
 div[data-testid="stMultiSelect"] span[data-baseweb="tag"] svg,
 div[data-baseweb="select"] span[data-baseweb="tag"] svg,
-div[data-baseweb="tag"] svg {
+div[data-baseweb="tag"] svg,
+.stMultiSelect [data-baseweb="tag"] svg {
     color: var(--text-light) !important;
-    height: 10px !important;
-    width: 10px !important;
+    height: 12px !important;
+    width: 12px !important;
 }
 div[data-testid="stMultiSelect"] span[data-baseweb="tag"] svg:hover,
-div[data-baseweb="select"] span[data-baseweb="tag"] svg:hover {
+div[data-baseweb="select"] span[data-baseweb="tag"] svg:hover,
+div[data-baseweb="tag"] svg:hover {
     color: var(--elpis-orange) !important;
 }
 
