@@ -22,7 +22,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.20-Expander-Fixed"
+APP_VERSION = "2026-10-02-v24.21-Map-Reactive-Fix"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
 # Previne tradução automática indevida do Chrome
@@ -75,7 +75,7 @@ st.markdown("""
 header[data-testid="stHeader"], [data-testid="stSidebar"],
 [data-testid="stSidebarCollapsedControl"], [data-testid="collapsedControl"] {display: none !important;}
 
-/* Oculta containers invisíveis para cortar o espaço branco no topo */
+/* Oculta contentores invisíveis para cortar o espaço branco no topo */
 div[data-testid="stElementContainer"]:has(> style),
 div[data-testid="stElementContainer"]:has(> script),
 div[data-testid="stElementContainer"]:empty {
@@ -119,8 +119,11 @@ div[data-baseweb="select"] ul {max-height: 180px !important;}
     height: 16px !important;
 }
 [data-testid="stCheckbox"] input:checked + div,
+[data-testid="stCheckbox"] input:checked ~ div,
 [data-testid="stCheckbox"] div[role="checkbox"][aria-checked="true"],
-[data-testid="stCheckbox"] div[aria-checked="true"] {
+[data-testid="stCheckbox"] div[aria-checked="true"],
+div[data-baseweb="checkbox"] span[aria-checked="true"],
+div[data-baseweb="checkbox"] div[aria-checked="true"] {
     background-color: var(--elpis-primary) !important;
     border-color: var(--elpis-primary) !important;
 }
@@ -158,8 +161,6 @@ div[data-baseweb="select"] ul {max-height: 180px !important;}
 [data-testid="stExpander"] details div[data-testid="stExpanderDetails"] {
     padding: 6px 8px !important;
 }
-
-/* Labels internas do Expander */
 [data-testid="stExpander"] label p,
 [data-testid="stExpander"] label span,
 [data-testid="stExpander"] [data-testid="stWidgetLabel"] p {
@@ -169,7 +170,7 @@ div[data-baseweb="select"] ul {max-height: 180px !important;}
     margin-bottom: 2px !important;
 }
 
-/* Slider: Azul Corporativo total (Substitui o vermelho) */
+/* Slider: Azul Corporativo total */
 [data-testid="stExpander"] [data-testid="stSlider"] div[role="slider"] {
     background-color: var(--elpis-primary) !important;
     border: 2px solid #FFFFFF !important;
@@ -203,8 +204,6 @@ div[data-baseweb="select"] ul {max-height: 180px !important;}
 [data-testid="stExpander"] button p {
     font-size: 11px !important;
 }
-
-/* Checkboxes dentro do Expander (Legíveis e com espaçamento) */
 [data-testid="stExpander"] [data-testid="stCheckbox"] {
     margin-top: 6px !important;
     margin-bottom: 4px !important;
@@ -535,6 +534,9 @@ def analisar_com_gemini(vagas, cargo, nivel, chave):
         if 0 <= idx < len(vagas): vagas[idx]["analise"] = it["analise"]
 
 
+# ==========================================
+# MOTOR GEOESPACIAL ROBUSTO (SEM CRASH NO LEAFLET)
+# ==========================================
 def montar_mapa(vagas, aproximar):
     m = folium.Map(location=[-15.7801, -47.9292], zoom_start=4, min_zoom=2, tiles="OpenStreetMap",
                    world_copy_jump=True, control_scale=False)
@@ -542,13 +544,41 @@ def montar_mapa(vagas, aproximar):
     grupo = MarkerCluster(options={"maxClusterRadius": 35}).add_to(m)
     pts = []
     for v in vagas:
-        if not v.get("lat"): continue
-        pts.append([v["lat"], v["lon"]])
+        lat, lon = v.get("lat"), v.get("lon")
+        if lat is None or lon is None:
+            continue
+        try:
+            lat, lon = float(lat), float(lon)
+        except (ValueError, TypeError):
+            continue
+
+        pts.append([lat, lon])
         d = core.idade_dias(v.get("data"))
         cor = "#94A3B8" if d is None or d > 10 else ("#10B981" if d <= 2 else "#F59E0B")
-        folium.CircleMarker(location=[v["lat"], v["lon"]], radius=6, color="white", weight=1.5, fill=True,
-                            fill_color=cor, fill_opacity=1, tooltip=f"{v['empresa']} | {v['titulo']}"[:120]).add_to(grupo)
-    if pts and aproximar: m.fit_bounds(pts, max_zoom=6, padding=(25, 25))
+
+        # Higienização de strings para blindar contra syntax error no JS do Folium
+        empresa_limpa = str(v.get('empresa', '')).replace('"', "'").replace('\n', ' ').strip()
+        titulo_limpo = str(v.get('titulo', '')).replace('"', "'").replace('\n', ' ').strip()
+        tt_texto = f"{empresa_limpa} | {titulo_limpo}"[:120]
+
+        folium.CircleMarker(
+            location=[lat, lon],
+            radius=6,
+            color="white",
+            weight=1.5,
+            fill=True,
+            fill_color=cor,
+            fill_opacity=1,
+            tooltip=tt_texto
+        ).add_to(grupo)
+
+    if pts and aproximar:
+        unique_pts = set((p[0], p[1]) for p in pts)
+        if len(unique_pts) == 1:
+            m.location = pts[0]
+            m.zoom_start = 6
+        else:
+            m.fit_bounds(pts, max_zoom=6, padding=(25, 25))
     return m
 
 
@@ -754,9 +784,12 @@ with aviso_slot:
     banner_falhas(resultados)
 
 # ==========================================
-# 5) FILTROS DE RESULTADO (Data e Ordem)
+# 5) FILTROS DE RESULTADO (Data e Ordem Empilhados e Legíveis)
 # ==========================================
 filtradas = vagas_todas
+periodo = "Qualquer data"
+ordem = "Relevância"
+
 with filtros_pos:
     if vagas_todas:
         st.markdown("<div class='f-sec'>🗓️ Ordem & Publicação</div>", unsafe_allow_html=True)
@@ -821,17 +854,20 @@ with col_lista:
                 st.rerun()
 
 # ==========================================
-# 7) MAPA GEOESPACIAL (DIREITA - 450px)
+# 7) MAPA GEOESPACIAL REATIVO (DIREITA - 450px)
 # ==========================================
 with col_mapa:
     with st.container(key="mapa_card"):
         com_pino = sum(1 for v in filtradas if v.get("lat"))
         st.markdown(f"<div class='map-head'>📍 Mapa · {com_pino} vagas</div>", unsafe_allow_html=True)
-        chave_mapa = (tuple(v["link"] for v in filtradas), aproximar)
-        if st.session_state.get("_mapa_chave") != chave_mapa:
-            st.session_state["_mapa_chave"], st.session_state["_mapa"] = chave_mapa, montar_mapa(filtradas, aproximar)
-        
-        st_folium(st.session_state["_mapa"], height=440, use_container_width=True, returned_objects=[], key="mapa")
+
+        # Montagem fresca e direta (sem cache corruptor em session_state)
+        mapa_obj = montar_mapa(filtradas, aproximar)
+
+        # Chave dinâmica e reativa: força o React a recriar o iframe do Leaflet ao mudar filtros
+        map_key = f"mapa_{rid}_{len(filtradas)}_{periodo}_{ordem}_{com_pino}"
+        st_folium(mapa_obj, height=440, use_container_width=True, returned_objects=[], key=map_key)
+
         st.markdown(
             "<div class='legend'>"
             "<span><i class='dot' style='background:#10B981'></i>recente</span>"
