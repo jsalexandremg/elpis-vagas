@@ -23,7 +23,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.25-Select-Style-Fixed"
+APP_VERSION = "2026-10-02-v24.26-Unified-Standard"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
 # Previne tradução automática indevida do Chrome
@@ -198,48 +198,105 @@ label[data-baseweb="checkbox"]:has(input:checked) div,
 .sb-off {background: var(--status-neutral-bg); color: #475569;}
 
 /* =========================================================
-   SELETORES DA BARRA LATERAL: 11PX, 28PX DE ALTURA & SEM BORDA VERMELHA
+   BLOCO "ORDEM & PUBLICAÇÃO": HARMONIZADO CONFORME IMAGEM 2 (11px, 28px)
    ========================================================= */
-div[data-testid="column"]:first-child [data-testid="stSelectbox"] {
-    margin-bottom: 3px !important;
+.st-key-sec_filtros_pos [data-testid="stSelectbox"],
+.st-key-painel_filtros [data-testid="stSelectbox"],
+[data-testid="stSelectbox"]:not([data-testid="stForm"] [data-testid="stSelectbox"]) {
+    margin-bottom: 4px !important;
     margin-top: 1px !important;
 }
-div[data-testid="column"]:first-child [data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+
+/* Caixa fechada do selectbox */
+.st-key-sec_filtros_pos [data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+[data-testid="stSelectbox"]:not([data-testid="stForm"] [data-testid="stSelectbox"]) div[data-baseweb="select"] > div {
     min-height: 28px !important;
     height: 28px !important;
     max-height: 28px !important;
-    padding: 0 6px !important;
+    padding: 0 8px !important;
     border-radius: var(--radius-sm) !important;
     border: 1px solid var(--border) !important;
     background-color: var(--surface) !important;
     box-shadow: none !important;
     outline: none !important;
+    display: flex !important;
+    align-items: center !important;
 }
-/* Elimina a borda vermelha nativa no foco/clique */
-div[data-testid="column"]:first-child [data-testid="stSelectbox"] div[data-baseweb="select"] > div:hover,
-div[data-testid="column"]:first-child [data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus,
-div[data-testid="column"]:first-child [data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus-within,
-div[data-testid="column"]:first-child [data-testid="stSelectbox"] div[data-baseweb="select"]:focus-within > div,
-div[data-testid="column"]:first-child [data-testid="stSelectbox"] div[data-baseweb="select"] [aria-expanded="true"] {
+
+/* Sem borda vermelha no foco/clique */
+.st-key-sec_filtros_pos [data-testid="stSelectbox"] div[data-baseweb="select"] > div:hover,
+.st-key-sec_filtros_pos [data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus,
+.st-key-sec_filtros_pos [data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus-within,
+.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] > div:hover,
+.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus,
+.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus-within,
+[data-testid="stSelectbox"]:not([data-testid="stForm"] [data-testid="stSelectbox"]) div[data-baseweb="select"] > div:hover,
+[data-testid="stSelectbox"]:not([data-testid="stForm"] [data-testid="stSelectbox"]) div[data-baseweb="select"] > div:focus,
+[data-testid="stSelectbox"]:not([data-testid="stForm"] [data-testid="stSelectbox"]) div[data-baseweb="select"] > div:focus-within {
     border-color: var(--elpis-primary) !important;
     box-shadow: 0 0 0 1px var(--elpis-primary) !important;
     outline: none !important;
 }
-/* Tipografia interna idêntica ao padrão da barra */
-div[data-testid="column"]:first-child [data-testid="stSelectbox"] div[data-baseweb="select"] * {
+
+/* Tipografia unificada em 11px em todos os textos do selectbox */
+.st-key-sec_filtros_pos [data-testid="stSelectbox"] div[data-baseweb="select"] *,
+.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] *,
+[data-testid="stSelectbox"]:not([data-testid="stForm"] [data-testid="stSelectbox"]) div[data-baseweb="select"] * {
     font-size: 11px !important;
     font-weight: 500 !important;
     color: var(--text-primary) !important;
     line-height: 26px !important;
 }
-div[data-testid="column"]:first-child [data-testid="stSelectbox"] svg {
+
+.st-key-sec_filtros_pos [data-testid="stSelectbox"] svg,
+.st-key-painel_filtros [data-testid="stSelectbox"] svg,
+[data-testid="stSelectbox"]:not([data-testid="stForm"] [data-testid="stSelectbox"]) svg {
     width: 14px !important;
     height: 14px !important;
     color: var(--text-secondary) !important;
 }
 
 /* =========================================================
-   POPOVER DO MENU SUSPENSO (LISTA DE OPÇÕES: 11PX COMPACTA)
+   BOTÃO "CONVERSAR COM A IA" E BOTÕES DA BARRA: 11PX & 28PX
+   ========================================================= */
+.st-key-sec_filtros_pos button,
+.st-key-btn_chat_ia button,
+.st-key-painel_filtros button:not([kind="primaryFormSubmit"]) {
+    min-height: 28px !important;
+    height: 28px !important;
+    padding: 2px 8px !important;
+    border-radius: var(--radius-sm) !important;
+    border: 1px solid var(--border) !important;
+    background-color: var(--surface) !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: var(--elpis-primary) !important;
+    margin-top: 3px !important;
+    margin-bottom: 3px !important;
+    transition: all .15s ease !important;
+}
+.st-key-sec_filtros_pos button p,
+.st-key-btn_chat_ia button p,
+.st-key-painel_filtros button:not([kind="primaryFormSubmit"]) p {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: var(--elpis-primary) !important;
+    line-height: 22px !important;
+}
+.st-key-sec_filtros_pos button:hover,
+.st-key-btn_chat_ia button:hover {
+    border-color: var(--elpis-orange) !important;
+    color: var(--elpis-orange) !important;
+    background-color: #FFFDF8 !important;
+}
+.st-key-sec_filtros_pos button:hover p,
+.st-key-btn_chat_ia button:hover p {
+    color: var(--elpis-orange) !important;
+}
+
+/* =========================================================
+   POPOVER DO MENU SUSPENSO (LISTA ABERTA: 11PX COMPACTA)
    ========================================================= */
 div[data-baseweb="popover"],
 div[data-baseweb="popover"] > div,
@@ -262,7 +319,7 @@ li[role="option"] {
     padding: 2px 8px !important;
     min-height: 24px !important;
     height: 25px !important;
-    line-height: 24px !important;
+    line-height: 22px !important;
     border-radius: 4px !important;
     margin: 1px 0 !important;
 }
@@ -271,7 +328,7 @@ div[data-baseweb="menu"] li *,
 ul[role="listbox"] li *,
 li[role="option"] * {
     font-size: 11px !important;
-    line-height: 24px !important;
+    line-height: 22px !important;
 }
 div[data-baseweb="popover"] li[aria-selected="true"],
 ul[role="listbox"] li[aria-selected="true"],
@@ -350,18 +407,24 @@ li[role="option"]:hover {
     color: var(--elpis-primary) !important;
     margin-bottom: 2px !important;
 }
-[data-testid="stExpander"] [data-testid="stSlider"] div[role="slider"] {
+
+/* Slider: 100% Azul Corporativo (Sem Vermelho) */
+[data-testid="stSlider"] div[role="slider"] {
     background-color: var(--elpis-primary) !important;
     border: 2px solid #FFFFFF !important;
+    box-shadow: 0 0 0 1px var(--elpis-primary) !important;
 }
-[data-testid="stExpander"] [data-testid="stSlider"] div[data-baseweb="slider"] div[style*="background-color"] {
+[data-testid="stSlider"] div[data-baseweb="slider"] div[style*="background-color"] {
     background-color: var(--elpis-primary) !important;
 }
-[data-testid="stExpander"] [data-testid="stSlider"] div[data-testid="stMarkdownContainer"] p {
+[data-testid="stSlider"] [data-testid="stMarkdownContainer"] p,
+[data-testid="stSlider"] div[data-testid="stTickBar"] + div,
+[data-testid="stSlider"] div:has(> p) {
     color: var(--elpis-primary) !important;
     font-weight: 700 !important;
-    font-size: 10.5px !important;
+    font-size: 11px !important;
 }
+
 [data-testid="stExpander"] input {
     min-height: 26px !important;
     height: 26px !important;
@@ -634,7 +697,6 @@ def chamar_gemini(prompt, chave):
         "generationConfig": {"temperature": 0.4}
     }
 
-    # Modelos prioritários (suporte direto a chaves novas e legadas)
     modelos = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
     ultimo_erro = None
 
@@ -684,7 +746,6 @@ def popup_conversar_ia(vagas, termo, nivel, chave):
 
     st.session_state.setdefault("chat_ia_msgs", [])
 
-    # Botões de atalho rápido no topo do modal
     b1, b2, b3, b4 = st.columns([1.2, 1.2, 1.3, 0.8])
     with b1:
         if st.button("📊 Analisar Vagas", use_container_width=True):
@@ -739,7 +800,6 @@ def popup_conversar_ia(vagas, termo, nivel, chave):
             st.session_state.chat_ia_msgs = []
             st.rerun()
 
-    # Painel rolável com o histórico da conversa
     caixa_chat = st.container(height=340)
     with caixa_chat:
         if not st.session_state.chat_ia_msgs:
@@ -748,7 +808,6 @@ def popup_conversar_ia(vagas, termo, nivel, chave):
             with st.chat_message(m["role"]):
                 st.markdown(m["content"])
 
-    # Entrada de texto para o usuário conversar
     pergunta_usuario = st.chat_input("Pergunte sobre requisitos, salários, dicas de abordagem...")
     if pergunta_usuario:
         st.session_state.chat_ia_msgs.append({"role": "user", "content": pergunta_usuario})
@@ -1020,7 +1079,7 @@ with aviso_slot:
     banner_falhas(resultados)
 
 # ==========================================
-# 5) FILTROS DE RESULTADO (Data, Ordem e Botão Pop-up IA)
+# 5) FILTROS DE RESULTADO (Data, Ordem e Botão Pop-up IA Harmonizados em 11px)
 # ==========================================
 filtradas = vagas_todas
 periodo = "Qualquer data"
@@ -1028,31 +1087,32 @@ ordem = "Relevância"
 
 with filtros_pos:
     if vagas_todas:
-        st.markdown("<div class='f-sec'>🗓️ Ordem & Publicação</div>", unsafe_allow_html=True)
-        ordem = st.selectbox("Classificação", ["Relevância", "Mais recentes"], key=f"f_ord_{rid}", label_visibility="collapsed")
-        periodo = st.selectbox("Período", ["Qualquer data", "Últimos 3 dias", "Últimos 7 dias", "Últimos 15 dias", "Últimos 30 dias"], key=f"f_per_{rid}", label_visibility="collapsed")
+        with st.container(key="sec_filtros_pos"):
+            st.markdown("<div class='f-sec'>🗓️ Ordem & Publicação</div>", unsafe_allow_html=True)
+            ordem = st.selectbox("Classificação", ["Relevância", "Mais recentes"], key=f"f_ord_{rid}", label_visibility="collapsed")
+            periodo = st.selectbox("Período", ["Qualquer data", "Últimos 3 dias", "Últimos 7 dias", "Últimos 15 dias", "Últimos 30 dias"], key=f"f_per_{rid}", label_visibility="collapsed")
 
-        dias_max = {"Últimos 3 dias": 3, "Últimos 7 dias": 7, "Últimos 15 dias": 15, "Últimos 30 dias": 30}.get(periodo)
-        
-        filtradas = [v for v in vagas_todas
-                     if v["origem"] in fontes_ativas and (not mods or modalidade(v) in mods)
-                     and (dias_max is None or (core.idade_dias(v.get("data")) is not None and core.idade_dias(v["data"]) <= dias_max))]
-        if ordem == "Mais recentes":
-            filtradas = sorted(filtradas, key=lambda v: v.get("data") or core.MIN_DATA, reverse=True)
+            dias_max = {"Últimos 3 dias": 3, "Últimos 7 dias": 7, "Últimos 15 dias": 15, "Últimos 30 dias": 30}.get(periodo)
+            
+            filtradas = [v for v in vagas_todas
+                         if v["origem"] in fontes_ativas and (not mods or modalidade(v) in mods)
+                         and (dias_max is None or (core.idade_dias(v.get("data")) is not None and core.idade_dias(v["data"]) <= dias_max))]
+            if ordem == "Mais recentes":
+                filtradas = sorted(filtradas, key=lambda v: v.get("data") or core.MIN_DATA, reverse=True)
 
-        # BOTÃO QUE ABRE O POP-UP MODAL COM A IA
-        if st.button("✨ Conversar com a IA", use_container_width=True):
-            if not chave:
-                st.warning("Conecte a chave Gemini em 'IA & Opções' abaixo.")
-            elif not filtradas:
-                st.info("Nenhuma vaga para a IA analisar.")
-            else:
-                popup_conversar_ia(
-                    filtradas,
-                    st.session_state.get("termo_busca", ""),
-                    st.session_state.get("nivel_busca", "(qualquer)"),
-                    chave
-                )
+            # Botão Conversar com a IA padronizado em 11px / 28px
+            if st.button("✨ Conversar com a IA", use_container_width=True, key="btn_chat_ia"):
+                if not chave:
+                    st.warning("Conecte a chave Gemini em 'IA & Opções' abaixo.")
+                elif not filtradas:
+                    st.info("Nenhuma vaga para a IA analisar.")
+                else:
+                    popup_conversar_ia(
+                        filtradas,
+                        st.session_state.get("termo_busca", ""),
+                        st.session_state.get("nivel_busca", "(qualquer)"),
+                        chave
+                    )
 
 # ==========================================
 # 6) LISTA DE VAGAS (CENTRO - 510px COM BOTÃO INTERNO)
