@@ -16,13 +16,14 @@ from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 
 import folium
+import requests
 import streamlit as st
 from streamlit_folium import st_folium
 
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.23-Selectbox-Harmonized"
+APP_VERSION = "2026-10-02-v24.24-AI-Dialog-Chat"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
 # Previne tradução automática indevida do Chrome
@@ -213,7 +214,6 @@ label[data-baseweb="checkbox"]:has(input:checked) div,
     box-shadow: none !important;
     outline: none !important;
 }
-/* Elimina a borda vermelha ao focar / clicar */
 .st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] > div:hover,
 .st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus,
 .st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus-within,
@@ -608,23 +608,157 @@ def badge_fonte(nome, mapa, rodando):
     return '<span class="sb sb-off">erro</span>'
 
 
-def analisar_com_gemini(vagas, cargo, nivel, chave):
-    base = [{"i": i, "titulo": v["titulo"], "empresa": v["empresa"], "local": v["local"]} for i, v in enumerate(vagas)]
-    prompt = (f"Busca: {cargo} ({nivel}). Para cada vaga REAL abaixo, escreva 1 frase curta sobre aderência ao perfil "
-              "usando SOMENTE título/empresa/local fornecidos, sem inventar requisitos. Responda APENAS array JSON "
-              f'puro: [{{"i":0,"analise":"..."}}]\n{json.dumps(base, ensure_ascii=False)}')
-    modelo = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
+# ==========================================
+# MOTOR RESILIENTE DO GEMINI (REST API PURA)
+# ==========================================
+def chamar_gemini(prompt, chave):
+    """
+    Executa a requisição HTTP direta para a API do Google Gemini.
+    Elimina permanentemente o erro 'Cannot send a request, as the client has been closed'.
+    """
+    if not chave:
+        raise ValueError("Chave de API Gemini não fornecida.")
+
+    headers = {"Content-Type": "application/json"}
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {"temperature": 0.4}
+    }
+
+    # Modelos prioritários (suporte direto a chaves novas e antigas)
+    modelos = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
+    ultimo_erro = None
+
+    for m in modelos:
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={chave.strip()}"
+            r = requests.post(url, json=payload, headers=headers, timeout=25)
+            if r.status_code == 200:
+                dados = r.json()
+                candidatos = dados.get("candidates", [])
+                if candidatos:
+                    partes = candidatos[0].get("content", {}).get("parts", [])
+                    if partes:
+                        return partes[0].get("text", "")
+            elif r.status_code == 400:
+                err_msg = r.json().get("error", {}).get("message", "Chave ou parâmetros inválidos.")
+                raise ValueError(err_msg)
+        except ValueError:
+            raise
+        except Exception as e:
+            ultimo_erro = str(e)
+            continue
+
+    # Fallback caso os modelos beta específicos variem
     try:
         from google import genai
-        texto = genai.Client(api_key=chave).models.generate_content(
-            model=modelo, contents=prompt, config={"response_mime_type": "application/json"}).text
-    except ImportError:
-        import google.generativeai as legado
-        legado.configure(api_key=chave)
-        texto = legado.GenerativeModel(modelo).generate_content(prompt).text
-    for it in json.loads(texto.replace('```json', '').replace('```', '').strip()):
-        idx = int(it["i"])
-        if 0 <= idx < len(vagas): vagas[idx]["analise"] = it["analise"]
+        c = genai.Client(api_key=chave.strip())
+        res = c.models.generate_content(model="gemini-2.5-flash", contents=prompt)
+        if res and res.text:
+            return res.text
+    except Exception:
+        pass
+
+    raise RuntimeError(ultimo_erro or "Não foi possível obter resposta do Gemini.")
+
+
+# ==========================================
+# POP-UP / MODAL DE CHAT COM A IA (ST.DIALOG)
+# ==========================================
+@st.dialog("✨ Assistente de Carreira Élpis (IA)", width="large")
+def popup_conversar_ia(vagas, termo, nivel, chave):
+    st.markdown(
+        f"<div style='font-size:12px; color:#475569; margin-bottom:10px; line-height:1.4;'>"
+        f"Conectado à IA e contextualizado com as <b>{len(vagas)} vagas</b> de <b>{html.escape(termo or 'sua busca')}</b>."
+        f"</div>",
+        unsafe_allow_html=True
+    )
+
+    st.session_state.setdefault("chat_ia_msgs", [])
+
+    # Botões de atalho rápido no topo do modal
+    b1, b2, b3, b4 = st.columns([1.2, 1.2, 1.3, 0.8])
+    with b1:
+        if st.button("📊 Analisar Vagas", use_container_width=True):
+            prompt = (
+                f"Analise estas vagas encontradas para '{termo}' ({nivel}):\n"
+                f"{json.dumps([{'cargo': v['titulo'], 'empresa': v['empresa'], 'local': v['local']} for v in vagas[:8]], ensure_ascii=False)}\n"
+                "Faça um resumo executivo: 1) Padrões mais exigidos; 2) Diferenciais competitivos para ser chamado para entrevista."
+            )
+            st.session_state.chat_ia_msgs.append({"role": "user", "content": "Gere uma análise executiva destas vagas."})
+            with st.spinner("Analisando vagas com IA..."):
+                try:
+                    resp = chamar_gemini(prompt, chave)
+                    st.session_state.chat_ia_msgs.append({"role": "assistant", "content": resp})
+                except Exception as err:
+                    st.error(f"Erro: {err}")
+            st.rerun()
+
+    with b2:
+        if st.button("📝 Dicas Currículo", use_container_width=True):
+            prompt = (
+                f"Com base nas vagas de '{termo}':\n"
+                f"{json.dumps([{'cargo': v['titulo'], 'empresa': v['empresa']} for v in vagas[:6]], ensure_ascii=False)}\n"
+                "Quais palavras-chave, certificações e conquistas métricas devo destacar no currículo para me destacar?"
+            )
+            st.session_state.chat_ia_msgs.append({"role": "user", "content": "Quais as melhores palavras-chave para o currículo?"})
+            with st.spinner("Gerando recomendações..."):
+                try:
+                    resp = chamar_gemini(prompt, chave)
+                    st.session_state.chat_ia_msgs.append({"role": "assistant", "content": resp})
+                except Exception as err:
+                    st.error(f"Erro: {err}")
+            st.rerun()
+
+    with b3:
+        if st.button("🎯 Simular Entrevista", use_container_width=True):
+            prompt = (
+                f"Para vagas como '{termo}' ({nivel}):\n"
+                f"{json.dumps([{'cargo': v['titulo'], 'empresa': v['empresa']} for v in vagas[:5]], ensure_ascii=False)}\n"
+                "Quais são as 3 perguntas comportamentais/técnicas mais difíceis nessa área e qual a melhor estratégia de resposta (método STAR)?"
+            )
+            st.session_state.chat_ia_msgs.append({"role": "user", "content": "Simule perguntas de entrevista para estas vagas."})
+            with st.spinner("Elaborando perguntas..."):
+                try:
+                    resp = chamar_gemini(prompt, chave)
+                    st.session_state.chat_ia_msgs.append({"role": "assistant", "content": resp})
+                except Exception as err:
+                    st.error(f"Erro: {err}")
+            st.rerun()
+
+    with b4:
+        if st.button("Limpar", use_container_width=True):
+            st.session_state.chat_ia_msgs = []
+            st.rerun()
+
+    # Painel rolável com o histórico da conversa
+    caixa_chat = st.container(height=340)
+    with caixa_chat:
+        if not st.session_state.chat_ia_msgs:
+            st.info("👋 Olá! Sou o consultor de carreira inteligente da Élpis. Clique em uma das ações acima ou digite sua dúvida abaixo.")
+        for m in st.session_state.chat_ia_msgs:
+            with st.chat_message(m["role"]):
+                st.markdown(m["content"])
+
+    # Entrada de texto para o usuário conversar
+    pergunta_usuario = st.chat_input("Pergunte sobre requisitos, salários, dicas de abordagem...")
+    if pergunta_usuario:
+        st.session_state.chat_ia_msgs.append({"role": "user", "content": pergunta_usuario})
+        contexto_chat = "\n".join([f"{m['role'].upper()}: {m['content']}" for m in st.session_state.chat_ia_msgs[-5:]])
+        vagas_brief = json.dumps([{'t': v['titulo'], 'e': v['empresa'], 'l': v['local']} for v in vagas[:6]], ensure_ascii=False)
+        prompt_final = (
+            f"Você é o consultor executivo de carreira da plataforma Élpis. "
+            f"Contexto das vagas pesquisadas para '{termo}' ({nivel}): {vagas_brief}\n\n"
+            f"Histórico:\n{contexto_chat}\n\n"
+            "Responda à última dúvida do candidato com objetividade, foco em empregabilidade e tom profissional:"
+        )
+        with st.spinner("Pensando..."):
+            try:
+                resposta = chamar_gemini(prompt_final, chave)
+                st.session_state.chat_ia_msgs.append({"role": "assistant", "content": resposta})
+            except Exception as err:
+                st.error(f"Erro na IA: {err}")
+        st.rerun()
 
 
 # ==========================================
@@ -770,15 +904,18 @@ with col_filtros:
                     st.session_state["gemini_connected"] = False
                 else:
                     try:
-                        from google import genai
-                        cliente = genai.Client(api_key=chave_t)
-                        if list(cliente.models.list()):
+                        # Validação direta e segura via REST API (não trava o cliente)
+                        r_test = requests.get(f"https://generativelanguage.googleapis.com/v1beta/models?key={chave_t}", timeout=10)
+                        if r_test.status_code == 200:
                             st.session_state["gemini_key"] = chave_t
                             st.session_state["gemini_connected"] = True
                             st.session_state["gemini_status"] = "Conectado."
+                        else:
+                            st.session_state["gemini_connected"] = False
+                            st.session_state["gemini_status"] = "Chave recusada."
                     except Exception:
                         st.session_state["gemini_connected"] = False
-                        st.session_state["gemini_status"] = "Falha."
+                        st.session_state["gemini_status"] = "Falha de rede."
             if col_des.button("Remover", use_container_width=True):
                 st.session_state["gemini_key"], st.session_state["gemini_connected"] = "", False
                 st.session_state["gemini_status"] = "Desconectado."
@@ -876,7 +1013,7 @@ with aviso_slot:
     banner_falhas(resultados)
 
 # ==========================================
-# 5) FILTROS DE RESULTADO (Data e Ordem Compactos & Sem Borda Vermelha)
+# 5) FILTROS DE RESULTADO (Data, Ordem e Botão Pop-up IA)
 # ==========================================
 filtradas = vagas_todas
 periodo = "Qualquer data"
@@ -896,13 +1033,19 @@ with filtros_pos:
         if ordem == "Mais recentes":
             filtradas = sorted(filtradas, key=lambda v: v.get("data") or core.MIN_DATA, reverse=True)
 
-        if chave and filtradas and st.button("✨ Insights IA", use_container_width=True):
-            try:
-                with st.spinner("Analisando..."):
-                    analisar_com_gemini(filtradas[:12], st.session_state.get("termo_busca", ""),
-                                        st.session_state.get("nivel_busca", "(qualquer)"), chave)
-            except Exception as e:
-                st.caption(f"Erro IA: {str(e)[:80]}")
+        # BOTÃO QUE ABRE O POP-UP MODAL COM A IA
+        if st.button("✨ Conversar com a IA", use_container_width=True):
+            if not chave:
+                st.warning("Conecte a chave Gemini em 'IA & Opções' abaixo.")
+            elif not filtradas:
+                st.info("Nenhuma vaga para a IA analisar.")
+            else:
+                popup_conversar_ia(
+                    filtradas,
+                    st.session_state.get("termo_busca", ""),
+                    st.session_state.get("nivel_busca", "(qualquer)"),
+                    chave
+                )
 
 # ==========================================
 # 6) LISTA DE VAGAS (CENTRO - 510px COM BOTÃO INTERNO)
