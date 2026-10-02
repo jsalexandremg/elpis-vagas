@@ -21,7 +21,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v23.9-Blue-Tags"
+APP_VERSION = "2026-10-02-v23.10-Blue-Tags-Clean"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="expanded")
 
 # O Chrome oferece/aplica tradução automática e isso corrompe a interface
@@ -39,7 +39,7 @@ st.markdown("""
     .block-container { padding-top: 1.5rem; padding-bottom: 2rem; padding-left: 2rem; padding-right: 2rem; }
     
     /* ========================================================= */
-    /* BARRA LATERAL: TEXTOS MENORES E TAGS AZUIS EXTREMAMENTE COMPACTAS */
+    /* MODO COMPACTO E TAGS AZUIS BLINDADAS NO MULTISELECT       */
     /* ========================================================= */
     
     /* 1. Reduz tamanho geral da fonte na sidebar */
@@ -50,27 +50,27 @@ st.markdown("""
         font-size: 0.80rem !important;
     }
     
-    /* 2. Forçar a cor AZUL e Tamanho Micro nas Tags do Multiselect (Base Web UI) */
-    span[data-baseweb="tag"] {
+    /* 2. Forçar a cor AZUL e Tamanho Micro nas Tags de QUALQUER Multiselect */
+    [data-testid="stMultiSelect"] [data-baseweb="tag"] {
         background-color: #1D4ED8 !important; /* Azul Executivo */
         border: none !important;
         border-radius: 4px !important;
-        padding: 0px 5px !important;
+        padding: 0px 6px !important;
         margin: 2px !important;
         height: 22px !important; /* Altura super reduzida */
     }
-    span[data-baseweb="tag"] span {
+    [data-testid="stMultiSelect"] [data-baseweb="tag"] span {
         color: #FFFFFF !important; /* Texto branco */
-        font-size: 0.65rem !important; /* Fonte minúscula */
+        font-size: 0.70rem !important; /* Fonte legível */
         font-weight: 500 !important;
     }
-    span[data-baseweb="tag"] svg {
+    [data-testid="stMultiSelect"] [data-baseweb="tag"] svg {
         color: #FFFFFF !important; /* X branco */
         height: 12px !important;
         width: 12px !important;
     }
     /* Muda a cor ao passar o rato no X */
-    span[data-baseweb="tag"] svg:hover {
+    [data-testid="stMultiSelect"] [data-baseweb="tag"] svg:hover {
         color: #F87171 !important; 
     }
 
@@ -231,7 +231,7 @@ def cadastro_dialog():
             st.rerun()
 
 # ==========================================
-# PAINEL LATERAL (CLÁSSICO COMPACTADO)
+# PAINEL LATERAL (CLÁSSICO COMPACTADO E LIMPO)
 # ==========================================
 sid = st.session_state.get("temporary_session_id")
 current_session = sessao_atual(sid)
@@ -248,20 +248,21 @@ with st.sidebar:
             st.rerun()
     else:
         uso_slot = None
-        st.caption("Sessão não iniciada.")
+        st.caption("Sessão não iniciada: o cadastro rápido aparece na sua primeira busca.")
         
+    st.caption(f"Desenvolvido por {CREDITO_EMPRESA}")
     st.markdown("---")
     
-    st.markdown("⚙️ **Configuração**")
+    st.header("⚙️ Configuração")
     todas = core.disponiveis()
     fontes_ativas = st.multiselect("Motores ativos", todas, default=todas, help="Fontes marcadas como beta usam páginas sem API oficial.")
-    prazo = st.slider("Tempo máximo da busca (s)", 8, 40, 20)
+    prazo = st.slider("Tempo máximo da busca (s)", 8, 40, 20, help="Fontes que não responderem a tempo são descartadas.")
     
     st.session_state.setdefault("gemini_key", os.getenv("GEMINI_API_KEY", ""))
     st.session_state.setdefault("gemini_connected", False)
     st.session_state.setdefault("gemini_status", "")
     
-    chave_digitada = st.text_input("Chave de API Gemini (opcional)", type="password", value=st.session_state["gemini_key"])
+    chave_digitada = st.text_input("Chave de API Gemini (opcional)", type="password", value=st.session_state["gemini_key"], help="A chave não é gravada em banco de dados.")
     
     col_con, col_des = st.columns(2)
     if col_con.button("Conectar", use_container_width=True):
@@ -284,7 +285,7 @@ with st.sidebar:
 
     if col_des.button("Desconectar", use_container_width=True):
         st.session_state["gemini_key"], st.session_state["gemini_connected"] = "", False
-        st.session_state["gemini_status"] = "Chave Gemini desconectada nesta sessão."
+        st.session_state["gemini_status"] = "Chave Gemini desconectada."
         
     if st.session_state["gemini_connected"]: st.success(st.session_state["gemini_status"])
     elif st.session_state["gemini_status"]: st.warning(st.session_state["gemini_status"])
@@ -294,21 +295,17 @@ with st.sidebar:
     aproximar = st.checkbox("Aproximar mapa das vagas", value=True)
     parciais = st.checkbox("Incluir correspondências parciais", value=False)
     
-    faltam = core.indisponiveis()
-    if faltam:
-        st.caption("Disponíveis com chave de API: " + "; ".join(f"{n} ({', '.join(k)})" for n, k in faltam.items()))
-
     st.markdown("---")
     with st.expander("👨‍💻 Sobre o Desenvolvedor"):
         st.markdown(
             "**Jeferson Alexandre**\n\n"
             "Especialista em Auditoria, GRC e Engenharia de Dados Aplicada a Controles Internos.\n\n"
-            "Formado em **Ciências Contábeis** e **Sistemas**, com **MBA em Gestão Estratégica**. "
+            "Formado em **Ciências Contábeis** e **Análise e Desenvolvimento de Sistemas**, com **MBA em Gestão Estratégica**. "
             "Combina a profundidade analítica de Compliance com a agilidade da Tecnologia."
         )
 
 # ==========================================
-# FUNÇÕES DE FORMATAÇÃO E IA (Seguras - Anti-XSS)
+# FUNÇÕES DE FORMATAÇÃO E IA
 # ==========================================
 def esc(t): return html.escape(str(t or ""), quote=True)
 
@@ -371,7 +368,7 @@ def montar_mapa(vagas, aproximar):
     return m
 
 # ==========================================
-# HEADER DE BUSCA PRINCIPAL RESPONSIVO
+# HEADER DE BUSCA PRINCIPAL
 # ==========================================
 with st.form("search_form"):
     c0, c1, c2, c3, c4 = st.columns([1.2, 3.8, 3, 2, 2])
@@ -500,7 +497,6 @@ with col_lista:
         badge_cls = "badge-source badge-global" if v.get("grupo") in ("Global", "Empresas") else "badge-source"
         tambem = f'<span class="badge-also">também em {esc(", ".join(v["tambem"]))}</span>' if v.get("tambem") else ""
         
-        # HTML Seguro Escapado
         painel.markdown(
             f'<div class="job-card">'
             f'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'
