@@ -23,13 +23,17 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.30-Zero-Avatar"
+APP_VERSION = "2026-10-02-v24.31-Ultimate-Badge-Killer"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
-# 1. REMOVE TRADUÇÃO INDEVIDA, BADGE E FOTO DE PERFIL NO DOM PAI DO STREAMLIT CLOUD
+# =========================================================
+# 1. WATCHDOG ANTI-BADGE (DOM PAI) E ANTITRADUÇÃO
+# =========================================================
 st.html("""<script>
 try {
   const d = window.parent.document;
+  
+  // Impede tradução automática (Chrome)
   d.documentElement.setAttribute('lang', 'pt-BR');
   d.documentElement.setAttribute('translate', 'no');
   d.documentElement.classList.add('notranslate');
@@ -39,60 +43,47 @@ try {
     d.head.appendChild(m);
   }
 
-  // Elimina distintivos, badges e foto de perfil/avatar flutuante do Streamlit Cloud
-  function purgarElementosHost() {
-    const seletores = [
-      '[data-testid="stStatusWidget"]',
+  // Watchdog agressivo: Oculta elementos sem deletá-los (evita que o React os recrie)
+  function hideStreamlitArtifacts() {
+    const selectors = [
+      '[data-testid="manage-app-button"]',
       'div[class*="viewerBadge"]',
-      'a[class*="viewerBadge"]',
       'div[class*="ProfileBadge"]',
       'div[class*="profileBadge"]',
-      '[data-testid="manage-app-button"]',
-      'button[kind="manageApp"]',
-      'div:has(> img[src*="githubusercontent"])',
-      'div:has(> img[src*="googleusercontent"])',
       'img[src*="githubusercontent"]',
       'img[src*="googleusercontent"]',
-      'div[data-testid="stToolbar"]',
-      'div[data-testid="stDecoration"]',
-      'footer'
+      'a[href*="streamlit.io/cloud"]',
+      '[data-testid="stStatusWidget"]',
+      '#stDeployButton'
     ];
-    seletores.forEach(sel => {
-      d.querySelectorAll(sel).forEach(el => el.remove());
-    });
-
-    // Injeta estilo destrutivo diretamente no <head> do documento pai
-    if (!d.getElementById('elpis-parent-shield')) {
-      const estilo = d.createElement('style');
-      estilo.id = 'elpis-parent-shield';
-      estilo.innerHTML = `
-        [data-testid="stStatusWidget"],
-        [class*="viewerBadge"],
-        [class*="ProfileBadge"],
-        [class*="profileBadge"],
-        [data-testid="manage-app-button"],
-        button[kind="manageApp"],
-        img[src*="githubusercontent"],
-        img[src*="googleusercontent"],
-        div:has(> img[src*="githubusercontent"]),
-        footer {
-          display: none !important;
-          visibility: hidden !important;
-          opacity: 0 !important;
-          height: 0 !important;
-          width: 0 !important;
-          pointer-events: none !important;
+    
+    selectors.forEach(selector => {
+      d.querySelectorAll(selector).forEach(el => {
+        el.style.setProperty('display', 'none', 'important');
+        el.style.setProperty('opacity', '0', 'important');
+        el.style.setProperty('visibility', 'hidden', 'important');
+        el.style.setProperty('pointer-events', 'none', 'important');
+        el.style.setProperty('z-index', '-9999', 'important');
+        
+        // Se for uma imagem ou botão flutuante, esconde também o container pai
+        if(el.tagName === 'IMG' || el.tagName === 'A' || el.tagName === 'BUTTON') {
+            if(el.parentElement) {
+                el.parentElement.style.setProperty('display', 'none', 'important');
+            }
         }
-      `;
-      d.head.appendChild(estilo);
-    }
+      });
+    });
   }
 
-  purgarElementosHost();
-  const obs = new MutationObserver(() => purgarElementosHost());
-  obs.observe(d.body, { childList: true, subtree: true });
-} catch (e) {}
+  // Executa imediatamente e depois a cada 500ms para neutralizar re-renders do React
+  hideStreamlitArtifacts();
+  setInterval(hideStreamlitArtifacts, 500);
+
+} catch (e) {
+  console.log("Watchdog silencioso: Isolamento de iframe detectado.");
+}
 </script>""", unsafe_allow_javascript=True)
+
 
 # 2. Injeta CSS base
 try:
@@ -132,31 +123,22 @@ st.markdown("""
 }
 
 /* =========================================================
-   BLINDAGEM CONTRA AVATAR E BADGES DO STREAMLIT CLOUD (CSS)
+   BLINDAGEM CONTRA AVATAR E BADGES NATIVOS (NO IFRAME)
    ========================================================= */
-[data-testid="stStatusWidget"],
-[class*="viewerBadge"],
-[class*="ProfileBadge"],
-[class*="profileBadge"],
-[data-testid="manage-app-button"],
-button[kind="manageApp"],
-img[src*="githubusercontent"],
-img[src*="googleusercontent"],
-div:has(> img[src*="githubusercontent"]),
-div:has(> [class*="viewerBadge"]),
 footer,
 header[data-testid="stHeader"],
 [data-testid="stSidebar"],
 [data-testid="stSidebarCollapsedControl"],
-[data-testid="collapsedControl"] {
+[data-testid="collapsedControl"],
+[data-testid="stToolbar"],
+[data-testid="stDecoration"],
+#MainMenu {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
     height: 0 !important;
     width: 0 !important;
     pointer-events: none !important;
-    position: absolute !important;
-    left: -9999px !important;
 }
 
 /* Oculta contentores invisíveis para cortar espaço branco no topo */
@@ -1082,7 +1064,7 @@ with col_filtros:
             st.caption("Visitante.")
 
         # Opções de IA e Configuração Harmonizadas
-        with st.expander("⚙️️ IA & Opções"):
+        with st.expander("⚙️ IA & Opções"):
             prazo = st.slider("Timeout (s)", 8, 40, 20)
             st.session_state.setdefault("gemini_key", os.getenv("GEMINI_API_KEY", ""))
             st.session_state.setdefault("gemini_connected", False)
