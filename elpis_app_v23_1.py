@@ -21,7 +21,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v23.10-Blue-Tags-Clean"
+APP_VERSION = "2026-10-02-v23.11-Ultra-Compact-Blue"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="expanded")
 
 # O Chrome oferece/aplica tradução automática e isso corrompe a interface
@@ -39,61 +39,93 @@ st.markdown("""
     .block-container { padding-top: 1.5rem; padding-bottom: 2rem; padding-left: 2rem; padding-right: 2rem; }
     
     /* ========================================================= */
-    /* MODO COMPACTO E TAGS AZUIS BLINDADAS NO MULTISELECT       */
+    /* 1. MÚLTIPLA ESCOLHA (MULTISELECT) - AZUL E MICRO TAMANHO  */
     /* ========================================================= */
+    div[data-baseweb="select"] span[data-baseweb="tag"] {
+        background-color: #1D4ED8 !important; /* Azul Executivo Forçado */
+        border: none !important;
+        border-radius: 4px !important;
+        padding: 0px 4px !important;
+        margin: 2px !important;
+        height: 20px !important; /* Altura ultra reduzida */
+    }
+    div[data-baseweb="select"] span[data-baseweb="tag"] span {
+        color: #FFFFFF !important; /* Texto branco */
+        font-size: 0.65rem !important; /* Fonte minúscula */
+        font-weight: 600 !important;
+        padding-left: 2px !important;
+        padding-right: 2px !important;
+    }
+    div[data-baseweb="select"] span[data-baseweb="tag"] svg {
+        color: #FFFFFF !important; /* X branco */
+        height: 10px !important;
+        width: 10px !important;
+    }
+    div[data-baseweb="select"] span[data-baseweb="tag"] svg:hover {
+        color: #F87171 !important; 
+    }
+
+    /* ========================================================= */
+    /* 2. PÍLULAS DE DIAGNÓSTICO (VERDE, AMARELO, CINZA) - COMPACTO */
+    /* ========================================================= */
+    .pill-green, .pill-yellow, .pill-gray { 
+        border-radius: 4px !important; /* Mais quadrado/corporativo */
+        padding: 2px 6px !important;   /* Menos espaço interno */
+        font-size: 11px !important;    /* Fonte super reduzida */
+        display: inline-block;
+        margin-right: 4px; 
+        margin-bottom: 4px; 
+        white-space: nowrap; 
+        font-weight: 600; 
+        border: 1px solid transparent;
+    }
+    .pill-green { background: #ECFDF5; color: #065F46; border-color: #A7F3D0; }
+    .pill-yellow { background: #FFFBEB; color: #92400E; border-color: #FDE68A; }
+    .pill-gray { background: #F3F4F6; color: #374151; border-color: #D1D5DB; }
+
+    /* ========================================================= */
+    /* 3. CARTÕES DE VAGA E ETIQUETAS INTERNAS                   */
+    /* ========================================================= */
+    .job-card { background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 14px; margin-bottom: 10px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: transform 0.1s, box-shadow 0.1s; }
+    .job-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .job-title { font-size: 15px; font-weight: bold; color: #0F2A4A; line-height: 1.2; }
+    .job-company { font-size: 12px; color: #6B7280; margin-top: 4px; }
     
-    /* 1. Reduz tamanho geral da fonte na sidebar */
+    .badge-source { 
+        background: #EFF6FF; 
+        color: #1D4ED8; 
+        border-radius: 4px; 
+        padding: 2px 6px; 
+        font-size: 10px !important; /* Fonte minúscula na vaga */
+        font-weight: 600; 
+        border: 1px solid #BFDBFE;
+    }
+    .badge-global { background: #F0FDFA; color: #0F766E; border-color: #99F6E4; }
+    .badge-also { font-size: 10px; color: #6B7280; margin-left: 8px; }
+    
+    .btn-apply { background: #F59E0B; color: #0F2A4A !important; border-radius: 6px; padding: 4px 14px; font-size: 12px;
+        font-weight: bold; text-decoration: none !important; display: inline-block; text-align: center; transition: background 0.2s; }
+    .btn-apply:hover { background: #D97706; color: #FFF !important; }
+
+    /* ========================================================= */
+    /* 4. REDUÇÃO DE ESPAÇOS E TEXTOS DA BARRA LATERAL           */
+    /* ========================================================= */
     [data-testid="stSidebar"] p, 
     [data-testid="stSidebar"] label, 
     [data-testid="stSidebar"] span, 
     [data-testid="stSidebar"] div.stMarkdown {
         font-size: 0.80rem !important;
     }
-    
-    /* 2. Forçar a cor AZUL e Tamanho Micro nas Tags de QUALQUER Multiselect */
-    [data-testid="stMultiSelect"] [data-baseweb="tag"] {
-        background-color: #1D4ED8 !important; /* Azul Executivo */
-        border: none !important;
-        border-radius: 4px !important;
-        padding: 0px 6px !important;
-        margin: 2px !important;
-        height: 22px !important; /* Altura super reduzida */
-    }
-    [data-testid="stMultiSelect"] [data-baseweb="tag"] span {
-        color: #FFFFFF !important; /* Texto branco */
-        font-size: 0.70rem !important; /* Fonte legível */
-        font-weight: 500 !important;
-    }
-    [data-testid="stMultiSelect"] [data-baseweb="tag"] svg {
-        color: #FFFFFF !important; /* X branco */
-        height: 12px !important;
-        width: 12px !important;
-    }
-    /* Muda a cor ao passar o rato no X */
-    [data-testid="stMultiSelect"] [data-baseweb="tag"] svg:hover {
-        color: #F87171 !important; 
-    }
-
-    /* 3. Reduzir tamanho dos botões na Sidebar para poupar espaço */
     [data-testid="stSidebar"] button {
         min-height: 28px !important;
         padding-top: 0px !important;
         padding-bottom: 0px !important;
         font-size: 0.8rem !important;
     }
-    
-    /* 4. Comprimir as margens invisíveis entre componentes na Sidebar */
-    [data-testid="stSidebar"] .element-container {
-        margin-bottom: -12px !important;
-    }
-    [data-testid="stSidebarUserContent"] {
-        padding-top: 1rem !important;
-    }
-    hr {
-        margin-top: 0.4rem !important;
-        margin-bottom: 0.4rem !important;
-    }
-    /* ========================================================= */
+    [data-testid="stSidebar"] .element-container { margin-bottom: -12px !important; }
+    [data-testid="stSidebarUserContent"] { padding-top: 1rem !important; }
+    hr { margin-top: 0.4rem !important; margin-bottom: 0.4rem !important; }
 
     /* FORMULÁRIO DE BUSCA - TEMA CORPORATIVO RESPONSIVO */
     [data-testid="stForm"] { background-color: #0F2A4A !important; border-radius: 12px; padding: 16px 24px; border: none;
@@ -106,32 +138,10 @@ st.markdown("""
     [data-testid="stForm"] button[kind="primary"] p, [data-testid="stForm"] button[kind="primaryFormSubmit"] p { color: #0F2A4A !important; }
     [data-testid="stForm"] button[kind="primary"]:hover, [data-testid="stForm"] button[kind="primaryFormSubmit"]:hover {
         background-color: #D97706 !important; }
-        
-    /* PÍLULAS E CARTÕES DE VAGAS */
-    .pill-green, .pill-yellow, .pill-gray { border-radius: 9999px; padding: 4px 12px; font-size: 13px; display: inline-block;
-        margin-right: 6px; margin-bottom: 6px; white-space: nowrap; font-weight: 500; }
-    .pill-green { background: #D1FAE5; color: #065F46; }
-    .pill-yellow { background: #FEF3C7; color: #92400E; }
-    .pill-gray { background: #E5E7EB; color: #374151; }
-    .job-card { background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; padding: 16px; margin-bottom: 12px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: transform 0.1s, box-shadow 0.1s; }
-    .job-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .job-title { font-size: 16px; font-weight: bold; color: #0F2A4A; line-height: 1.2; }
-    .job-company { font-size: 13px; color: #6B7280; margin-top: 4px; }
-    .badge-source { background: #E8EEF7; color: #1D4ED8; border-radius: 9999px; padding: 4px 12px; font-size: 12px; font-weight: 500; }
-    .badge-global { background: #CCFBF1; color: #115E59; }
-    .badge-also { font-size: 11px; color: #6B7280; margin-left: 8px; }
-    .btn-apply { background: #F59E0B; color: #0F2A4A !important; border-radius: 8px; padding: 6px 16px; font-size: 13px;
-        font-weight: bold; text-decoration: none !important; display: inline-block; text-align: center; transition: background 0.2s; }
-    .btn-apply:hover { background: #D97706; color: #FFF !important; }
 
     /* REGRAS CSS RESPONSIVAS PARA NOTEBOOKS E CELULARES */
-    @media (max-width: 1200px) {
-        .block-container { padding-left: 1rem; padding-right: 1rem; }
-    }
-    @media (max-width: 768px) {
-        [data-testid="stForm"] { padding: 12px; }
-    }
+    @media (max-width: 1200px) { .block-container { padding-left: 1rem; padding-right: 1rem; } }
+    @media (max-width: 768px) { [data-testid="stForm"] { padding: 12px; } }
 </style>
 """, unsafe_allow_html=True)
 st.markdown(bv.CSS, unsafe_allow_html=True)
