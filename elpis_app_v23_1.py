@@ -22,7 +22,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.22-Typography-Harmonized"
+APP_VERSION = "2026-10-02-v24.23-Selectbox-Harmonized"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
 # Previne tradução automática indevida do Chrome
@@ -40,7 +40,7 @@ try:
 except Exception:
     pass
 
-# 2. DESIGN SYSTEM CORPORATIVO ÉLPIS (Zero Outer Scroll & Tipografia Padronizada)
+# 2. DESIGN SYSTEM CORPORATIVO ÉLPIS (Zero Outer Scroll & Tipografia Harmonizada)
 st.markdown("""
 <style>
 :root {
@@ -98,7 +98,6 @@ html, body, [data-testid="stAppViewContainer"] {
     max-width: 100% !important;
 }
 .stApp {background: var(--background) !important;}
-div[data-baseweb="select"] ul {max-height: 180px !important;}
 
 /* =========================================================
    BLINDAGEM TOTAL DOS CHECKBOXES (AZUL CORPORATIVO ÉLPIS)
@@ -144,10 +143,10 @@ label[data-baseweb="checkbox"]:has(input:checked) div,
     padding-top: 2px !important;
 }
 .f-sec {
-    font-size: 12px !important;
+    font-size: 11.5px !important;
     font-weight: 700 !important;
     color: var(--elpis-primary) !important;
-    margin: 8px 0 4px 0 !important;
+    margin: 6px 0 3px 0 !important;
     display: flex !important;
     align-items: center !important;
 }
@@ -165,9 +164,8 @@ label[data-baseweb="checkbox"]:has(input:checked) div,
     cursor: help;
 }
 
-/* 1. TIPOGRAFIA UNIFICADA PARA TODOS OS CHECKBOXES DO PAINEL */
 .st-key-painel_filtros [data-testid="stCheckbox"] label p {
-    font-size: 11.5px !important;
+    font-size: 11px !important;
     font-weight: 500 !important;
     color: var(--text-primary) !important;
     line-height: 1.2 !important;
@@ -175,7 +173,6 @@ label[data-baseweb="checkbox"]:has(input:checked) div,
     white-space: nowrap !important;
 }
 
-/* 2. LINHAS DE MOTORES DE BUSCA (ALINHAMENTO SIMÉTRICO) */
 .st-key-lista_fontes [data-testid="stHorizontalBlock"] {
     margin-bottom: -8px !important;
     align-items: center !important;
@@ -186,7 +183,6 @@ label[data-baseweb="checkbox"]:has(input:checked) div,
     align-items: center !important;
 }
 
-/* 3. ADESIVOS DE STATUS (MICRO-TAMANHO HARMONIZADO) */
 .sb {
     display: inline-block;
     border-radius: 6px;
@@ -200,32 +196,86 @@ label[data-baseweb="checkbox"]:has(input:checked) div,
 .sb-wait {background: var(--status-warning-bg); color: #9A5800;}
 .sb-off {background: var(--status-neutral-bg); color: #475569;}
 
-/* 4. SELETORES COMPACTOS E PADRONIZADOS (ORDEM & PUBLICAÇÃO) */
-[data-testid="column"]:first-child [data-testid="stSelectbox"],
+/* =========================================================
+   SELETORES: ORDEM & PUBLICAÇÃO (BLINDADOS CONTRA VERMELHO)
+   ========================================================= */
 .st-key-painel_filtros [data-testid="stSelectbox"] {
-    margin-bottom: 4px !important;
+    margin-bottom: 3px !important;
+    margin-top: 1px !important;
 }
-[data-testid="column"]:first-child [data-testid="stSelectbox"] div[data-baseweb="select"] > div,
 .st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] > div {
-    min-height: 32px !important;
-    height: 32px !important;
-    padding: 0 8px !important;
+    min-height: 28px !important;
+    height: 28px !important;
+    padding: 0 6px !important;
     border-radius: var(--radius-sm) !important;
     border: 1px solid var(--border) !important;
     background-color: var(--surface) !important;
+    box-shadow: none !important;
+    outline: none !important;
 }
-[data-testid="column"]:first-child [data-testid="stSelectbox"] div[data-baseweb="select"] span,
-[data-testid="column"]:first-child [data-testid="stSelectbox"] div[data-baseweb="select"] div,
-.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] span {
-    font-size: 11.5px !important;
+/* Elimina a borda vermelha ao focar / clicar */
+.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] > div:hover,
+.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus,
+.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus-within,
+.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"]:focus-within > div {
+    border-color: var(--elpis-primary) !important;
+    box-shadow: 0 0 0 1px var(--elpis-primary) !important;
+    outline: none !important;
+}
+.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] span,
+.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] div,
+.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] input {
+    font-size: 11px !important;
     font-weight: 500 !important;
     color: var(--text-primary) !important;
-    line-height: 30px !important;
+    line-height: 26px !important;
 }
-[data-testid="column"]:first-child [data-testid="stSelectbox"] svg,
 .st-key-painel_filtros [data-testid="stSelectbox"] svg {
-    width: 16px !important;
-    height: 16px !important;
+    width: 14px !important;
+    height: 14px !important;
+    color: var(--text-secondary) !important;
+}
+
+/* =========================================================
+   POPUP DO MENU SUSPENSO (LISTA DE OPÇÕES COMPACTA & 11px)
+   ========================================================= */
+div[data-baseweb="popover"],
+div[data-baseweb="popover"] > div {
+    border-radius: var(--radius-sm) !important;
+    box-shadow: var(--shadow-md) !important;
+    border: 1px solid var(--border) !important;
+    background-color: var(--surface) !important;
+}
+div[data-baseweb="popover"] ul,
+ul[role="listbox"] {
+    padding: 3px !important;
+    max-height: 160px !important;
+}
+div[data-baseweb="popover"] li,
+div[data-baseweb="menu"] li,
+ul[role="listbox"] li {
+    font-size: 11px !important;
+    padding: 4px 8px !important;
+    min-height: 24px !important;
+    height: 25px !important;
+    line-height: 1.2 !important;
+    border-radius: 4px !important;
+}
+div[data-baseweb="popover"] li *,
+div[data-baseweb="menu"] li *,
+ul[role="listbox"] li * {
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+}
+div[data-baseweb="popover"] li[aria-selected="true"],
+ul[role="listbox"] li[aria-selected="true"] {
+    background-color: #E0E7FF !important;
+    color: var(--elpis-primary) !important;
+    font-weight: 600 !important;
+}
+div[data-baseweb="popover"] li:hover,
+ul[role="listbox"] li:hover {
+    background-color: #F1F5F9 !important;
 }
 
 /* 5. CAIXA INFORMATIVA E SESSÃO */
@@ -237,14 +287,14 @@ label[data-baseweb="checkbox"]:has(input:checked) div,
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 6px 8px;
-    margin: 8px 0;
+    margin: 6px 0;
     font-size: 10px;
     color: var(--text-secondary);
 }
 .info-box b {
     display: block;
     color: var(--elpis-primary);
-    font-size: 11px;
+    font-size: 10.5px;
 }
 .st-key-limpar button {
     background: transparent !important;
@@ -262,21 +312,21 @@ label[data-baseweb="checkbox"]:has(input:checked) div,
 }
 
 /* =========================================================
-   EXPANDER: IA & OPÇÕES (HARMONIZADO COM O RESTANTE)
+   EXPANDER: IA & OPÇÕES (HARMONIZADO)
    ========================================================= */
 [data-testid="stExpander"] {
     border: 1px solid var(--border) !important;
     border-radius: var(--radius-sm) !important;
     background: var(--surface) !important;
     margin-top: 4px !important;
-    margin-bottom: 4px !important;
+    margin-bottom: 2px !important;
 }
 [data-testid="stExpander"] details summary {
     padding: 4px 8px !important;
 }
 [data-testid="stExpander"] details summary p,
 [data-testid="stExpander"] details summary span {
-    font-size: 11.5px !important;
+    font-size: 11px !important;
     font-weight: 700 !important;
     color: var(--elpis-primary) !important;
 }
@@ -286,7 +336,7 @@ label[data-baseweb="checkbox"]:has(input:checked) div,
 [data-testid="stExpander"] label p,
 [data-testid="stExpander"] label span,
 [data-testid="stExpander"] [data-testid="stWidgetLabel"] p {
-    font-size: 11px !important;
+    font-size: 10.5px !important;
     font-weight: 700 !important;
     color: var(--elpis-primary) !important;
     margin-bottom: 2px !important;
@@ -301,30 +351,30 @@ label[data-baseweb="checkbox"]:has(input:checked) div,
 [data-testid="stExpander"] [data-testid="stSlider"] div[data-testid="stMarkdownContainer"] p {
     color: var(--elpis-primary) !important;
     font-weight: 700 !important;
-    font-size: 11px !important;
+    font-size: 10.5px !important;
 }
 [data-testid="stExpander"] input {
-    min-height: 28px !important;
-    height: 28px !important;
-    font-size: 11px !important;
+    min-height: 26px !important;
+    height: 26px !important;
+    font-size: 10.5px !important;
     padding: 2px 8px !important;
     border-radius: var(--radius-sm) !important;
 }
 [data-testid="stExpander"] button {
-    min-height: 26px !important;
-    height: 26px !important;
+    min-height: 24px !important;
+    height: 24px !important;
     padding: 2px 6px !important;
     border-radius: var(--radius-sm) !important;
 }
 [data-testid="stExpander"] button p {
-    font-size: 11px !important;
+    font-size: 10.5px !important;
 }
 [data-testid="stExpander"] [data-testid="stCheckbox"] {
-    margin-top: 4px !important;
+    margin-top: 3px !important;
     margin-bottom: 2px !important;
 }
 [data-testid="stExpander"] [data-testid="stCheckbox"] label p {
-    font-size: 11px !important;
+    font-size: 10.5px !important;
     font-weight: 500 !important;
     white-space: normal !important;
 }
@@ -826,7 +876,7 @@ with aviso_slot:
     banner_falhas(resultados)
 
 # ==========================================
-# 5) FILTROS DE RESULTADO (Data e Ordem Empilhados e Legíveis)
+# 5) FILTROS DE RESULTADO (Data e Ordem Compactos & Sem Borda Vermelha)
 # ==========================================
 filtradas = vagas_todas
 periodo = "Qualquer data"
