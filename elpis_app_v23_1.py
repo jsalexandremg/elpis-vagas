@@ -21,7 +21,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-01-v23.5-Classic-Responsive"
+APP_VERSION = "2026-10-02-v23.6-Secure-Classic"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="expanded")
 
 # O Chrome oferece/aplica tradução automática e isso corrompe a interface
@@ -35,7 +35,7 @@ try { const d = window.parent.document;
 
 st.markdown("""
 <style>
-    header[data-testid="stHeader"] {display: none;}
+    /* O Header NÃO está mais oculto para garantir que o botão de abrir/fechar a sidebar funcione sempre */
     .block-container { padding-top: 1.5rem; padding-bottom: 2rem; padding-left: 2rem; padding-right: 2rem; }
     
     /* FORMULÁRIO DE BUSCA - TEMA CORPORATIVO RESPONSIVO */
@@ -50,7 +50,7 @@ st.markdown("""
     [data-testid="stForm"] button[kind="primary"]:hover, [data-testid="stForm"] button[kind="primaryFormSubmit"]:hover {
         background-color: #D97706 !important; }
         
-    /* PÍLULAS E CARTÕES DE VAGAS */
+    /* PÍLULAS E CARTÕES DE VAGAS (Protegidos via html.escape) */
     .pill-green, .pill-yellow, .pill-gray { border-radius: 9999px; padding: 4px 12px; font-size: 13px; display: inline-block;
         margin-right: 6px; margin-bottom: 6px; white-space: nowrap; font-weight: 500; }
     .pill-green { background: #D1FAE5; color: #065F46; }
@@ -98,7 +98,7 @@ st.session_state.setdefault("vagas", [])
 st.session_state.setdefault("resultados", [])
 
 # ==========================================
-# SESSÃO TEMPORÁRIA (SQLite local)
+# SESSÃO TEMPORÁRIA (SQLite local Seguro)
 # ==========================================
 FREE_DAILY_LIMIT = 10
 SESSION_HOURS = 24
@@ -129,6 +129,7 @@ def hash_email(email):
 def criar_sessao(nome, email):
     con = db(); limpar_sessoes_expiradas(con)
     sid, now = uuid.uuid4().hex, agora()
+    # SQL Parameters previnem injeção
     con.execute("insert into active_sessions values (?, ?, ?, ?, ?, 0)",
                 (sid, nome, hash_email(email), now.isoformat(), (now + timedelta(hours=SESSION_HOURS)).isoformat()))
     con.execute("insert into access_metrics(event, created_at) values (?, ?)", ("entrada", now.isoformat()))
@@ -252,7 +253,7 @@ with st.sidebar:
         )
 
 # ==========================================
-# FUNÇÕES DE FORMATAÇÃO E IA
+# FUNÇÕES DE FORMATAÇÃO E IA (Seguras - Anti-XSS)
 # ==========================================
 def esc(t): return html.escape(str(t or ""), quote=True)
 
@@ -326,7 +327,7 @@ with st.form("search_form"):
     with c4: buscar = st.form_submit_button("Buscar", type="primary", use_container_width=True)
 
 # ==========================================
-# MOTOR DE EXECUÇÃO E RENDENRIZAÇÃO
+# MOTOR DE EXECUÇÃO E RENDERIZAÇÃO
 # ==========================================
 params = None
 if buscar and not cargo.strip(): st.warning("Informe o Cargo / Função para buscar.")
@@ -443,6 +444,8 @@ with col_lista:
         link = v["link"] if core.eh_http(v.get("link")) else "#"
         badge_cls = "badge-source badge-global" if v.get("grupo") in ("Global", "Empresas") else "badge-source"
         tambem = f'<span class="badge-also">também em {esc(", ".join(v["tambem"]))}</span>' if v.get("tambem") else ""
+        
+        # HTML Seguro Escapado
         painel.markdown(
             f'<div class="job-card">'
             f'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'
@@ -454,6 +457,7 @@ with col_lista:
             f'<div><span class="{badge_cls}">{esc(v["origem"])}</span>{tambem}</div>'
             f'<a href="{esc(link)}" target="_blank" rel="noopener noreferrer" class="btn-apply">Candidatar-se</a>'
             f'</div></div>', unsafe_allow_html=True)
+            
     if len(filtradas) > n_mostrar:
         if st.button(f"Mostrar mais ({len(filtradas) - n_mostrar} restantes)", use_container_width=True):
             st.session_state.mostrar_n = n_mostrar + 15
