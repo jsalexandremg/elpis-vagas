@@ -78,13 +78,19 @@ header[data-testid="stHeader"], [data-testid="stSidebar"],
 div[data-baseweb="select"] ul {max-height: 220px !important;}
 
 /* ---------- TAGS DO MULTISELECT ---------- */
+div[data-testid="stMultiSelect"] span[data-baseweb="tag"],
+div[data-baseweb="select"] span[data-baseweb="tag"],
 div[data-baseweb="tag"], .stMultiSelect [data-baseweb="tag"] {
-    background-color: var(--elpis-primary) !important; border-radius: 6px !important;
+    background-color: var(--elpis-primary) !important; border: none !important; border-radius: 6px !important;
     padding: 2px 8px !important; margin: 2px !important; min-height: 24px !important;
 }
+div[data-testid="stMultiSelect"] span[data-baseweb="tag"] span,
+div[data-baseweb="select"] span[data-baseweb="tag"] span,
 div[data-baseweb="tag"] span, .stMultiSelect [data-baseweb="tag"] span {
     color: var(--text-light) !important; font-size: 11px !important; font-weight: 700 !important;
 }
+div[data-testid="stMultiSelect"] span[data-baseweb="tag"] svg,
+div[data-baseweb="select"] span[data-baseweb="tag"] svg,
 div[data-baseweb="tag"] svg {color: var(--text-light) !important; height: 12px !important; width: 12px !important;}
 
 /* ---------- HEADER / FORM DE BUSCA ---------- */
@@ -386,7 +392,7 @@ def analisar_com_gemini(vagas, cargo, nivel, chave):
 
 
 def montar_mapa(vagas, aproximar):
-    m = folium.Map(location=[-15.7801, -47.9292], zoom_start=4, min_zoom=2, tiles="CartoDB positron",
+    m = folium.Map(location=[-15.7801, -47.9292], zoom_start=4, min_zoom=2, tiles="OpenStreetMap",
                    world_copy_jump=True, control_scale=False)
     from folium.plugins import MarkerCluster
     grupo = MarkerCluster(options={"maxClusterRadius": 35}).add_to(m)
@@ -447,12 +453,13 @@ with col_filtros:
         st.markdown("<div class='f-sec'>🗂️ Fontes de vagas "
                     "<span class='help' title='Plataformas consultadas na próxima busca'>?</span></div>",
                     unsafe_allow_html=True)
-        for nome in todas:
-            st.session_state.setdefault(f"fonte_{nome}", True)
-            ca, cb = st.columns([5, 4], vertical_alignment="center", gap="small")
-            if ca.checkbox(nome, key=f"fonte_{nome}"): fontes_ativas.append(nome)
-            badge_slots[nome] = cb.empty()
-            badge_slots[nome].markdown(badge_fonte(nome, mapa_prev, False), unsafe_allow_html=True)
+        with st.container(height=260, key="lista_fontes"):  # barra de rolagem: o resto do painel não é empurrado
+            for nome in todas:
+                st.session_state.setdefault(f"fonte_{nome}", True)
+                ca, cb = st.columns([5, 4], vertical_alignment="center", gap="small")
+                if ca.checkbox(nome, key=f"fonte_{nome}"): fontes_ativas.append(nome)
+                badge_slots[nome] = cb.empty()
+                badge_slots[nome].markdown(badge_fonte(nome, mapa_prev, False), unsafe_allow_html=True)
 
         # Resumo da busca atual (os campos de entrada ficam no header)
         st.markdown(
