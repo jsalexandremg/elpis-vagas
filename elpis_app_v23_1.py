@@ -23,7 +23,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.24-AI-Dialog-Chat"
+APP_VERSION = "2026-10-02-v24.25-Select-Style-Fixed"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
 # Previne tradução automática indevida do Chrome
@@ -198,15 +198,16 @@ label[data-baseweb="checkbox"]:has(input:checked) div,
 .sb-off {background: var(--status-neutral-bg); color: #475569;}
 
 /* =========================================================
-   SELETORES: ORDEM & PUBLICAÇÃO (BLINDADOS CONTRA VERMELHO)
+   SELETORES DA BARRA LATERAL: 11PX, 28PX DE ALTURA & SEM BORDA VERMELHA
    ========================================================= */
-.st-key-painel_filtros [data-testid="stSelectbox"] {
+div[data-testid="column"]:first-child [data-testid="stSelectbox"] {
     margin-bottom: 3px !important;
     margin-top: 1px !important;
 }
-.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+div[data-testid="column"]:first-child [data-testid="stSelectbox"] div[data-baseweb="select"] > div {
     min-height: 28px !important;
     height: 28px !important;
+    max-height: 28px !important;
     padding: 0 6px !important;
     border-radius: var(--radius-sm) !important;
     border: 1px solid var(--border) !important;
@@ -214,33 +215,35 @@ label[data-baseweb="checkbox"]:has(input:checked) div,
     box-shadow: none !important;
     outline: none !important;
 }
-.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] > div:hover,
-.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus,
-.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus-within,
-.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"]:focus-within > div {
+/* Elimina a borda vermelha nativa no foco/clique */
+div[data-testid="column"]:first-child [data-testid="stSelectbox"] div[data-baseweb="select"] > div:hover,
+div[data-testid="column"]:first-child [data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus,
+div[data-testid="column"]:first-child [data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus-within,
+div[data-testid="column"]:first-child [data-testid="stSelectbox"] div[data-baseweb="select"]:focus-within > div,
+div[data-testid="column"]:first-child [data-testid="stSelectbox"] div[data-baseweb="select"] [aria-expanded="true"] {
     border-color: var(--elpis-primary) !important;
     box-shadow: 0 0 0 1px var(--elpis-primary) !important;
     outline: none !important;
 }
-.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] span,
-.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] div,
-.st-key-painel_filtros [data-testid="stSelectbox"] div[data-baseweb="select"] input {
+/* Tipografia interna idêntica ao padrão da barra */
+div[data-testid="column"]:first-child [data-testid="stSelectbox"] div[data-baseweb="select"] * {
     font-size: 11px !important;
     font-weight: 500 !important;
     color: var(--text-primary) !important;
     line-height: 26px !important;
 }
-.st-key-painel_filtros [data-testid="stSelectbox"] svg {
+div[data-testid="column"]:first-child [data-testid="stSelectbox"] svg {
     width: 14px !important;
     height: 14px !important;
     color: var(--text-secondary) !important;
 }
 
 /* =========================================================
-   POPUP DO MENU SUSPENSO (LISTA DE OPÇÕES COMPACTA & 11px)
+   POPOVER DO MENU SUSPENSO (LISTA DE OPÇÕES: 11PX COMPACTA)
    ========================================================= */
 div[data-baseweb="popover"],
-div[data-baseweb="popover"] > div {
+div[data-baseweb="popover"] > div,
+div[data-baseweb="menu"] {
     border-radius: var(--radius-sm) !important;
     box-shadow: var(--shadow-md) !important;
     border: 1px solid var(--border) !important;
@@ -248,34 +251,40 @@ div[data-baseweb="popover"] > div {
 }
 div[data-baseweb="popover"] ul,
 ul[role="listbox"] {
-    padding: 3px !important;
-    max-height: 160px !important;
+    padding: 2px !important;
+    max-height: 150px !important;
 }
 div[data-baseweb="popover"] li,
 div[data-baseweb="menu"] li,
-ul[role="listbox"] li {
+ul[role="listbox"] li,
+li[role="option"] {
     font-size: 11px !important;
-    padding: 4px 8px !important;
+    padding: 2px 8px !important;
     min-height: 24px !important;
     height: 25px !important;
-    line-height: 1.2 !important;
+    line-height: 24px !important;
     border-radius: 4px !important;
+    margin: 1px 0 !important;
 }
 div[data-baseweb="popover"] li *,
 div[data-baseweb="menu"] li *,
-ul[role="listbox"] li * {
+ul[role="listbox"] li *,
+li[role="option"] * {
     font-size: 11px !important;
-    line-height: 1.2 !important;
+    line-height: 24px !important;
 }
 div[data-baseweb="popover"] li[aria-selected="true"],
-ul[role="listbox"] li[aria-selected="true"] {
+ul[role="listbox"] li[aria-selected="true"],
+li[role="option"][aria-selected="true"] {
     background-color: #E0E7FF !important;
     color: var(--elpis-primary) !important;
     font-weight: 600 !important;
 }
 div[data-baseweb="popover"] li:hover,
-ul[role="listbox"] li:hover {
+ul[role="listbox"] li:hover,
+li[role="option"]:hover {
     background-color: #F1F5F9 !important;
+    color: var(--elpis-primary) !important;
 }
 
 /* 5. CAIXA INFORMATIVA E SESSÃO */
@@ -625,7 +634,7 @@ def chamar_gemini(prompt, chave):
         "generationConfig": {"temperature": 0.4}
     }
 
-    # Modelos prioritários (suporte direto a chaves novas e antigas)
+    # Modelos prioritários (suporte direto a chaves novas e legadas)
     modelos = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
     ultimo_erro = None
 
@@ -649,7 +658,6 @@ def chamar_gemini(prompt, chave):
             ultimo_erro = str(e)
             continue
 
-    # Fallback caso os modelos beta específicos variem
     try:
         from google import genai
         c = genai.Client(api_key=chave.strip())
@@ -904,7 +912,6 @@ with col_filtros:
                     st.session_state["gemini_connected"] = False
                 else:
                     try:
-                        # Validação direta e segura via REST API (não trava o cliente)
                         r_test = requests.get(f"https://generativelanguage.googleapis.com/v1beta/models?key={chave_t}", timeout=10)
                         if r_test.status_code == 200:
                             st.session_state["gemini_key"] = chave_t
