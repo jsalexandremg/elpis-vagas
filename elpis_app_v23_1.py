@@ -22,7 +22,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.12-Clean-Panel"
+APP_VERSION = "2026-10-02-v24.13-Clean-Corporate"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
 # O Chrome oferece/aplica tradução automática e isso corrompe a interface
@@ -132,16 +132,6 @@ div[data-baseweb="tag"] svg {color: var(--text-light) !important; height: 12px !
 .st-key-limpar button {background: transparent !important; border: 0 !important; box-shadow: none !important;
     color: var(--status-info) !important; font-size: 12px !important; min-height: 0 !important; padding: 0 !important; float: right;}
 .st-key-limpar button p {color: var(--status-info) !important; font-size: 12px !important;}
-
-/* ---------- CHIPS DE FONTES (TOPO) ---------- */
-.pill-green, .pill-yellow, .pill-gray {
-    border-radius: var(--radius-lg) !important; padding: 8px 16px !important; font-size: 13px !important;
-    display: inline-block; margin: 0 8px 8px 0; white-space: nowrap; font-weight: 500;
-}
-.pill-green {background: var(--status-success-bg) !important; color: #087F68 !important;}
-.pill-yellow {background: var(--status-warning-bg) !important; color: #9A5800 !important;}
-.pill-gray {background: var(--status-neutral-bg) !important; color: #475569 !important;}
-.pill-green b, .pill-yellow b, .pill-gray b {font-weight: 700;}
 
 /* ---------- CARTÕES DE VAGAS ---------- */
 .job-card {
@@ -328,27 +318,6 @@ def modalidade(v):
     return "Remoto" if core.eh_remoto(v) else "Presencial"
 
 
-def chips_html(resultados, pendentes=()):
-    partes = []
-    for r in resultados:
-        n, s = len(r.itens), f"{r.ms / 1000:.1f}".replace(".", ",")
-        nome = f"<b>{esc(r.nome)}</b>"
-        if r.status == "ok":
-            cache = any("cache" in x for x in r.notas)
-            classe, txt = "pill-green", f"{nome} · {n} · " + ("cache" if cache else f"{s} s")
-        elif r.status == "vazio":
-            classe, txt = "pill-yellow", f"{nome} · 0 vagas"
-        elif r.status == "timeout":
-            classe, txt = "pill-gray", f"{nome} · tempo esgotado"
-        else:
-            classe, txt = "pill-gray", f"{nome} · erro"
-        dica = esc((r.erro + " | " if r.erro else "") + " | ".join(r.notas))
-        partes.append(f'<span class="{classe}" title="{dica}">{txt}</span>')
-    for nome in pendentes:
-        partes.append(f'<span class="pill-yellow"><b>{esc(nome)}</b> · carregando…</span>')
-    return f'<div style="margin:2px 0 10px 0;">{"".join(partes)}</div>'
-
-
 def badge_fonte(nome, mapa, rodando):
     r = mapa.get(nome)
     if r is None:
@@ -422,7 +391,6 @@ with st.form("search_form"):
 # ==========================================
 col_filtros, col_main = st.columns([1.35, 6.2], gap="medium")
 with col_main:
-    chips_slot = st.empty()
     status_slot = st.container()
     aviso_slot = st.container()
     col_lista, col_mapa = st.columns([3, 2], gap="medium")
@@ -440,7 +408,7 @@ with col_filtros:
         h1.markdown("<div class='f-title'>🎚️ Filtros</div>", unsafe_allow_html=True)
         h2.button("Limpar tudo", key="limpar", on_click=limpar_filtros)
 
-        st.markdown("<div class='f-sec'>🗂️️ Fontes de vagas "
+        st.markdown("<div class='f-sec'>🗂️ Fontes de vagas "
                     "<span class='help' title='Selecione os motores ativos. O filtro atualiza os resultados automaticamente.'>?</span></div>",
                     unsafe_allow_html=True)
         with st.container(height=280, key="lista_fontes"):
@@ -455,7 +423,7 @@ with col_filtros:
         mod_cols = st.columns(3, gap="small")
         mods = [m for m, c in zip(MODALIDADES, mod_cols) if c.checkbox(m, key=f"mod_{m}")]
 
-        filtros_pos = st.container()  # Selectboxes de data e ordem (sem o multiselect duplicado)
+        filtros_pos = st.container()  # Selectboxes de data e ordem
 
         st.markdown(
             "<div class='info-box'><svg width='30' height='30' viewBox='0 0 24 24' fill='none' stroke='#142F50' "
@@ -524,16 +492,12 @@ def executar_busca(params):
 
     for n in fontes_ativas:
         badge_slots[n].markdown(badge_fonte(n, {}, True), unsafe_allow_html=True)
-    chips_slot.markdown(chips_html([], fontes_ativas), unsafe_allow_html=True)
 
     with status_slot:
         with st.status("Consultando bases de dados...", expanded=False) as box:
             for r in core.executar(fontes_ativas, termo, loc, prazo=prazo):
                 resultados.append(r)
                 brutas += r.itens
-                feitas = {x.nome for x in resultados}
-                chips_slot.markdown(chips_html(resultados, [n for n in fontes_ativas if n not in feitas]),
-                                    unsafe_allow_html=True)
                 if r.nome in badge_slots:
                     badge_slots[r.nome].markdown(badge_fonte(r.nome, {r.nome: r}, True), unsafe_allow_html=True)
                 box.update(label=f"Processando {len(resultados)}/{len(fontes_ativas)} fontes · {len(brutas)} registos")
@@ -594,8 +558,6 @@ vagas_todas = st.session_state["vagas"]
 resultados = st.session_state.get("resultados", [])
 rid = st.session_state.get("resultado_id", 0)
 
-if resultados: chips_slot.markdown(chips_html(resultados), unsafe_allow_html=True)
-
 
 def banner_falhas(resultados):
     falhas = [r for r in resultados if r.status in ("erro", "timeout")]
@@ -620,7 +582,7 @@ with filtros_pos:
 
         dias_max = {"Últimos 3 dias": 3, "Últimos 7 dias": 7, "Últimos 15 dias": 15, "Últimos 30 dias": 30}.get(periodo)
         
-        # Filtra diretamente usando as fontes ativas no topo (sem o multiselect duplicado)
+        # Filtra diretamente usando as fontes ativas no topo
         filtradas = [v for v in vagas_todas
                      if v["origem"] in fontes_ativas and (not mods or modalidade(v) in mods)
                      and (dias_max is None or (core.idade_dias(v.get("data")) is not None and core.idade_dias(v["data"]) <= dias_max))]
