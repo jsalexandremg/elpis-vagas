@@ -22,7 +22,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.17-Modalidade-Fixed"
+APP_VERSION = "2026-10-02-v24.18-Modalidade-Fixed"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
 # Previne tradução automática indevida do Chrome
@@ -40,7 +40,7 @@ try:
 except Exception:
     pass
 
-# 2. DESIGN SYSTEM CORPORATIVO ÉLPIS (Zero Outer Scroll & Alta Densidade)
+# 2. DESIGN SYSTEM CORPORATIVO ÉLPIS (Zero Outer Scroll & Tipografia Nítida)
 st.markdown("""
 <style>
 :root {
@@ -114,7 +114,11 @@ div[data-baseweb="checkbox"] div[aria-checked="true"],
     fill: #FFFFFF !important;
 }
 
-/* ---------- COMPACTAÇÃO DA SEÇÃO MODALIDADE (SEM CORTE DE TEXTO) ---------- */
+/* ---------- CORREÇÃO COMPLETA DA SEÇÃO MODALIDADE (SEM FATIAMENTO) ---------- */
+.st-key-sec_modalidade [data-testid="column"] {
+    padding: 0 1px !important;
+    min-width: 0 !important;
+}
 .st-key-sec_modalidade [data-testid="stCheckbox"] {
     width: 100% !important;
     margin: 0 !important;
@@ -123,22 +127,30 @@ div[data-baseweb="checkbox"] div[aria-checked="true"],
 .st-key-sec_modalidade [data-testid="stCheckbox"] label {
     gap: 3px !important;
     padding: 0 !important;
-    min-height: auto !important;
+    min-height: 22px !important;
+    height: 22px !important;
+    display: flex !important;
     align-items: center !important;
 }
 .st-key-sec_modalidade [data-testid="stCheckbox"] label div:first-child {
-    margin-right: 0px !important;
     flex-shrink: 0 !important;
+    margin-right: 0 !important;
     width: 14px !important;
     height: 14px !important;
 }
+.st-key-sec_modalidade [data-testid="stCheckbox"] label div:last-child {
+    overflow: visible !important;
+    height: auto !important;
+}
 .st-key-sec_modalidade [data-testid="stCheckbox"] label p {
-    font-size: 10.5px !important;
-    line-height: 1.1 !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
     margin: 0 !important;
     white-space: nowrap !important;
     overflow: visible !important;
     text-overflow: clip !important;
+    color: var(--text-primary) !important;
 }
 
 /* ---------- COMPACTAÇÃO DA LISTA DE FONTES ---------- */
@@ -490,7 +502,8 @@ with st.form("search_form"):
 # ==========================================
 # 2) ESTRUTURA HORIZONTAL CALIBRADA (VIEWPORT)
 # ==========================================
-col_filtros, col_main = st.columns([1.22, 4.78], gap="small")
+# Proporção 1.38 para 4.62 garante largura ideal para a coluna esquerda sem comprimir o painel central
+col_filtros, col_main = st.columns([1.38, 4.62], gap="small")
 with col_main:
     status_slot = st.container()
     aviso_slot = st.container()
@@ -512,7 +525,6 @@ with col_filtros:
         st.markdown("<div class='f-sec'>🗂️ Fontes de vagas "
                     "<span class='help' title='Motores consultados'>?</span></div>",
                     unsafe_allow_html=True)
-        # Altura enxuta para caber perfeitamente no monitor sem estourar o rodapé
         with st.container(height=160, key="lista_fontes"):
             for nome in todas:
                 st.session_state.setdefault(f"fonte_{nome}", True)
@@ -522,7 +534,7 @@ with col_filtros:
                 badge_slots[nome].markdown(badge_fonte(nome, mapa_prev, False), unsafe_allow_html=True)
 
         st.markdown("<div class='f-sec'>🎛️ Modalidade</div>", unsafe_allow_html=True)
-        # Colunas com proporção dinâmica: 'Presencial' recebe mais espaço para não truncar
+        # Distribuição proporcional: 'Presencial' recebe mais espaço para exibição limpa
         with st.container(key="sec_modalidade"):
             c_pres, c_rem, c_hib = st.columns([1.35, 1.0, 1.0], gap="small")
             mod_cols = [c_pres, c_rem, c_hib]
@@ -679,7 +691,6 @@ filtradas = vagas_todas
 with filtros_pos:
     if vagas_todas:
         st.markdown("<div class='f-sec'>🗓️ Ordem & Publicação</div>", unsafe_allow_html=True)
-        # Empilhados para evitar corte do texto "Relevância" e "Qualquer data"
         ordem = st.selectbox("Classificação", ["Relevância", "Mais recentes"], key=f"f_ord_{rid}", label_visibility="collapsed")
         periodo = st.selectbox("Período", ["Qualquer data", "Últimos 3 dias", "Últimos 7 dias", "Últimos 15 dias", "Últimos 30 dias"], key=f"f_per_{rid}", label_visibility="collapsed")
 
@@ -706,7 +717,6 @@ with col_lista:
     if vagas_todas:
         st.caption(f"**{len(filtradas)}** vagas encontradas · busca em {st.session_state.get('tempo', 0):.1f}s")
     
-    # Altura calibrada a 510px: alinhamento milimétrico com o painel lateral e mapa
     painel = st.container(height=510)
     with painel:
         if not vagas_todas and not resultados:
