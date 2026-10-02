@@ -4,6 +4,7 @@
 # É proibida a reprodução, total ou parcial, sem autorização prévia da INOVHIA.
 # Instale dependências com: python -m pip install -r requirements.txt
 # Execute com:              python -m streamlit run elpis_app_v23_1.py
+
 from collections import Counter
 import html
 import json
@@ -11,13 +12,13 @@ import os
 import sqlite3
 import time
 import uuid
+
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
-
 import folium
 import streamlit as st
-from streamlit_folium import st_folium
 
+from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
