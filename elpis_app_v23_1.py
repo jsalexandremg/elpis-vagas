@@ -376,4 +376,320 @@ def analisar_com_gemini(vagas, cargo, nivel, chave):
         import google.generativeai as legado
         legado.configure(api_key=chave)
         texto = legado.GenerativeModel(modelo).generate_content(prompt).text
-    for it in json.loads(texto.replace('```json', '').replace('
+    for it in json.loads(texto.replace('```json', '').replace('```', '').strip()):
+        idx = int(it["i"])
+        if 0 <= idx < len(vagas): vagas[idx]["analise"] = it["analise"]
+
+
+def montar_mapa(vagas, aproximar):
+    m = folium.Map(location=[-15.7801, -47.9292], zoom_start=4, min_zoom=2, tiles="OpenStreetMap",
+                   world_copy_jump=True, control_scale=False)
+    from folium.plugins import MarkerCluster
+    grupo = MarkerCluster(options={"maxClusterRadius": 35}).add_to(m)
+    pts = []
+    for v in vagas:
+        if not v.get("lat"): continue
+        pts.append([v["lat"], v["lon"]])
+        d = core.idade_dias(v.get("data"))
+        cor = "#94A3B8" if d is None or d > 10 else ("#10B981" if d <= 2 else "#F59E0B")
+        folium.CircleMarker(location=[v["lat"], v["lon"]], radius=7, color="white", weight=1.5, fill=True,
+                            fill_color=cor, fill_opacity=1, tooltip=f"{v['empresa']} | {v['titulo']}"[:120]).add_to(grupo)
+    if pts and aproximar: m.fit_bounds(pts, max_zoom=6, padding=(40, 40))
+    return m
+
+
+def limpar_filtros():
+    """Botão 'Limpar tudo': reativa todas as fontes e zera os filtros de resultado."""
+    for n in core.disponiveis(): st.session_state[f"fonte_{n}"] = True
+    for m in MODALIDADES: st.session_state[f"mod_{m}"] = False
+    rid_ = st.session_state.get("resultado_id", 0)
+    for k in (f"f_per_{rid_}", f"f_ord_{rid_}"): st.session_state.pop(k, None)
+
+
+# ==========================================
+# 1) HEADER DE BUSCA (faixa azul superior)
+# ==========================================
+with st.form("search_form"):
+    c0, c1, c2, c3, c4 = st.columns([1.2, 3.6, 2.6, 1.9, 1.6], vertical_alignment="center")
+    with c0: st.markdown("<div class='elpis-brand'>Élpis</div>", unsafe_allow_html=True)
+    with c1: cargo = st.text_input("Cargo / Função", placeholder="💼  Cargo / Função", label_visibility="collapsed")
+    with c2: local = st.text_input("Localidade", placeholder="📍  Localidade (ex: Belo Horizonte)", label_visibility="collapsed")
+    with c3: nivel = st.selectbox("Senioridade", ["(qualquer)", "Analista", "Especialista", "Coordenador", "Gerente", "Diretor", "VP"], label_visibility="collapsed")
+    with c4: buscar = st.form_submit_button("🔍  Buscar", type="primary", use_container_width=True)
+
+# ==========================================
+# 2) ESTRUTURA PRINCIPAL: [FILTROS À ESQUERDA] | [PAINEL CENTRAL]
+# ==========================================
+col_filtros, col_main = st.columns([1.35, 6.2], gap="medium")
+with col_main:
+    chips_slot = st.empty()
+    status_slot = st.container()
+    aviso_slot = st.container()
+    col_lista, col_mapa = st.columns([3, 2], gap="medium")
+
+# ==========================================
+# 3) PAINEL DE FILTROS LIMPO (Sem repetições)
+# ==========================================
+mapa_prev = {r.nome: r for r in st.session_state.get("resultados", [])}
+todas = core.disponiveis()
+fontes_ativas, badge_slots = [], {}
+
+with col_filtros:
+    with st.container(key="painel_filtros"):
+        h1, h2 = st.columns(2, vertical_alignment="center")
+        h1.markdown("<div class='f-title'>🎚️ Filtros</div>", unsafe_allow_html=True)
+        h2.button("Limpar tudo", key="limpar", on_click=limpar_filtros)
+
+        st.markdown("<div class='f-sec'>🗂️️ Fontes de vagas "
+                    "<span class='help' title='Selecione os motores ativos. O filtro atualiza os resultados automaticamente.'>?</span></div>",
+                    unsafe_allow_html=True)
+        with st.container(height=280, key="lista_fontes"):
+            for nome in todas:
+                st.session_state.setdefault(f"fonte_{nome}", True)
+                ca, cb = st.columns([5, 4], vertical_alignment="center", gap="small")
+                if ca.checkbox(nome, key=f"fonte_{nome}"): fontes_ativas.append(nome)
+                badge_slots[nome] = cb.empty()
+                badge_slots[nome].markdown(badge_fonte(nome, mapa_prev, False), unsafe_allow_html=True)
+
+        st.markdown("<div class='f-sec'>🎛️ Modalidade</div>", unsafe_allow_html=True)
+        mod_cols = st.columns(3, gap="small")
+        mods = [m for m, c in zip(MODALIDADES, mod_cols) if c.checkbox(m, key=f"mod_{m}")]
+
+        filtros_pos = st.container()  # Selectboxes de data e ordem (sem o multiselect duplicado)
+
+        st.markdown(
+            "<div class='info-box'><svg width='30' height='30' viewBox='0 0 24 24' fill='none' stroke='#142F50' "
+            "stroke-width='1.8'><path d='M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z'/><path d='M9 12l2 2 4-4'/></svg>"
+            "<div><b>Vagas atualizadas em tempo real</b>Com filtros inteligentes e IA opcional</div></div>",
+            unsafe_allow_html=True)
+
+        # ---- Sessão e Conta ----
+        if current_session:
+            st.markdown(f"<div style='color:var(--elpis-primary);font-weight:700;font-size:14px;'>👤 {esc(current_session['nome'])}</div>",
+                        unsafe_allow_html=True)
+            uso_slot = st.empty()
+            uso_slot.caption(f"Uso: **{usage_today(sid)} / {FREE_DAILY_LIMIT}** buscas gratuitas")
+            if st.button("Encerrar sessão", use_container_width=True):
+                apagar_sessao(sid)
+                st.session_state.pop("temporary_session_id", None)
+                st.session_state.vagas, st.session_state.resultados = [], []
+                st.rerun()
+        else:
+            uso_slot = None
+            st.caption("Acesso visitante.")
+
+        # ---- Configurações Opcionais ----
+        with st.expander("⚙️ Configurações & IA"):
+            prazo = st.slider("Timeout da busca (segundos)", 8, 40, 20)
+            st.markdown("**🧠 Inteligência Artificial**")
+            st.session_state.setdefault("gemini_key", os.getenv("GEMINI_API_KEY", ""))
+            st.session_state.setdefault("gemini_connected", False)
+            st.session_state.setdefault("gemini_status", "")
+            chave_digitada = st.text_input("Chave Gemini API", type="password", value=st.session_state["gemini_key"],
+                                           placeholder="Insira a chave (opcional)")
+            col_con, col_des = st.columns(2)
+            if col_con.button("Conectar", use_container_width=True):
+                chave_t = (chave_digitada or "").strip()
+                if not chave_t:
+                    st.session_state["gemini_status"] = "Informe a chave."
+                    st.session_state["gemini_connected"] = False
+                else:
+                    try:
+                        from google import genai
+                        cliente = genai.Client(api_key=chave_t)
+                        if list(cliente.models.list()):
+                            st.session_state["gemini_key"] = chave_t
+                            st.session_state["gemini_connected"] = True
+                            st.session_state["gemini_status"] = "Conectado."
+                    except Exception:
+                        st.session_state["gemini_connected"] = False
+                        st.session_state["gemini_status"] = "Falha na conexão."
+            if col_des.button("Remover", use_container_width=True):
+                st.session_state["gemini_key"], st.session_state["gemini_connected"] = "", False
+                st.session_state["gemini_status"] = "Desconectado."
+            if st.session_state["gemini_connected"]: st.success(st.session_state["gemini_status"])
+            elif st.session_state["gemini_status"]: st.warning(st.session_state["gemini_status"])
+            chave = st.session_state["gemini_key"] if st.session_state["gemini_connected"] else ""
+            st.markdown("---")
+            aproximar = st.checkbox("Aproximar mapa automaticamente", value=True)
+            parciais = st.checkbox("Exibir correspondências parciais", value=False)
+
+# ==========================================
+# 4) MOTOR DE EXECUÇÃO
+# ==========================================
+def executar_busca(params):
+    termo, loc, niv = params["cargo"], params["local"], params["nivel"]
+    st.markdown(bv.ESCONDER, unsafe_allow_html=True)
+    brutas, resultados, t0 = [], [], time.perf_counter()
+
+    for n in fontes_ativas:
+        badge_slots[n].markdown(badge_fonte(n, {}, True), unsafe_allow_html=True)
+    chips_slot.markdown(chips_html([], fontes_ativas), unsafe_allow_html=True)
+
+    with status_slot:
+        with st.status("Consultando bases de dados...", expanded=False) as box:
+            for r in core.executar(fontes_ativas, termo, loc, prazo=prazo):
+                resultados.append(r)
+                brutas += r.itens
+                feitas = {x.nome for x in resultados}
+                chips_slot.markdown(chips_html(resultados, [n for n in fontes_ativas if n not in feitas]),
+                                    unsafe_allow_html=True)
+                if r.nome in badge_slots:
+                    badge_slots[r.nome].markdown(badge_fonte(r.nome, {r.nome: r}, True), unsafe_allow_html=True)
+                box.update(label=f"Processando {len(resultados)}/{len(fontes_ativas)} fontes · {len(brutas)} registos")
+            box.update(label=f"Concluído em {time.perf_counter() - t0:.1f}s", state="complete", expanded=False)
+
+    falhas = [r for r in resultados if r.status in ("erro", "timeout")]
+    st.session_state.rede = core.verificar_rede() if len(falhas) >= max(3, len(resultados) // 2) else None
+    unicas = core.consolidar(brutas, niv, limite=60, min_exatas=999 if parciais else 5)
+
+    if aproximar and unicas:
+        cache_loc, inicio, consultas = {}, time.perf_counter(), 0
+        for v in unicas:
+            lc = v["local"]
+            if lc not in cache_loc:
+                pos = core.geo_offline(lc)
+                if not pos and not core.local_generico(lc) and consultas < 5 and time.perf_counter() - inicio < 6:
+                    consultas += 1
+                    pos = core.geo_nominatim(lc)
+                cache_loc[lc] = pos
+            v["lat"], v["lon"] = cache_loc[lc] or (None, None)
+    else:
+        for v in unicas: v["lat"], v["lon"] = None, None
+
+    for v in unicas: v["analise"] = None
+
+    record_usage(sid)
+    if uso_slot is not None:
+        uso_slot.caption(f"Uso: **{usage_today(sid)} / {FREE_DAILY_LIMIT}** buscas gratuitas")
+
+    st.session_state.update(vagas=unicas, resultados=resultados, tempo=time.perf_counter() - t0,
+                            resultado_id=time.time_ns(), mostrar_n=15, termo_busca=termo,
+                            nivel_busca=niv, local_busca=loc)
+
+
+params = None
+if buscar and not cargo.strip():
+    st.warning("Informe o Cargo / Função para buscar.")
+elif buscar:
+    pedido = {"cargo": cargo.strip(), "local": local, "nivel": nivel}
+    if current_session is None:
+        st.session_state.busca_aguardando = pedido
+        cadastro_dialog()
+    else:
+        params = pedido
+
+if params is None and current_session is not None:
+    params = st.session_state.pop("busca_pendente", None)
+
+if params:
+    if usage_today(sid) >= FREE_DAILY_LIMIT:
+        aviso_slot.error("Limite gratuito diário atingido.")
+    elif not fontes_ativas:
+        aviso_slot.warning("Selecione ao menos uma fonte no painel de filtros.")
+    else:
+        executar_busca(params)
+
+vagas_todas = st.session_state["vagas"]
+resultados = st.session_state.get("resultados", [])
+rid = st.session_state.get("resultado_id", 0)
+
+if resultados: chips_slot.markdown(chips_html(resultados), unsafe_allow_html=True)
+
+
+def banner_falhas(resultados):
+    falhas = [r for r in resultados if r.status in ("erro", "timeout")]
+    if len(falhas) < max(3, len(resultados) // 2): return
+    comuns = Counter((r.erro or "")[:90] for r in falhas).most_common(3)
+    st.error(f"{len(falhas)} fontes falharam. Causas principais:\n\n" + "\n".join(f"- **{n}×** `{msg}`" for msg, n in comuns))
+
+
+with aviso_slot:
+    banner_falhas(resultados)
+
+# ==========================================
+# 5) FILTROS DE RESULTADO (Data e Ordem)
+# ==========================================
+filtradas = vagas_todas
+with filtros_pos:
+    if vagas_todas:
+        st.markdown("<div class='f-sec'>🗓️ Publicação e ordem</div>", unsafe_allow_html=True)
+        periodo = st.selectbox("Data de publicação", ["Qualquer data", "Últimos 3 dias", "Últimos 7 dias", "Últimos 15 dias", "Últimos 30 dias"],
+                               key=f"f_per_{rid}")
+        ordem = st.selectbox("Classificação", ["Relevância", "Mais recentes"], key=f"f_ord_{rid}")
+
+        dias_max = {"Últimos 3 dias": 3, "Últimos 7 dias": 7, "Últimos 15 dias": 15, "Últimos 30 dias": 30}.get(periodo)
+        
+        # Filtra diretamente usando as fontes ativas no topo (sem o multiselect duplicado)
+        filtradas = [v for v in vagas_todas
+                     if v["origem"] in fontes_ativas and (not mods or modalidade(v) in mods)
+                     and (dias_max is None or (core.idade_dias(v.get("data")) is not None and core.idade_dias(v["data"]) <= dias_max))]
+        if ordem == "Mais recentes":
+            filtradas = sorted(filtradas, key=lambda v: v.get("data") or core.MIN_DATA, reverse=True)
+
+        if chave and filtradas and st.button("✨ Gerar Insights (Gemini AI)", use_container_width=True):
+            try:
+                with st.spinner("Analisando competências..."):
+                    analisar_com_gemini(filtradas[:12], st.session_state.get("termo_busca", ""),
+                                        st.session_state.get("nivel_busca", "(qualquer)"), chave)
+            except Exception as e:
+                st.warning(f"Erro na IA: {str(e)[:120]}")
+
+# ==========================================
+# 6) LISTA DE VAGAS (centro)
+# ==========================================
+with col_lista:
+    if vagas_todas:
+        st.caption(f"{len(filtradas)} resultados processados em {st.session_state.get('tempo', 0):.1f}s")
+    painel = st.container(height=680)
+    if not vagas_todas and not resultados:
+        painel.markdown(bv.html_boas_vindas(len(fontes_ativas), FREE_DAILY_LIMIT), unsafe_allow_html=True)
+    elif not vagas_todas:
+        painel.info("Utilize a barra superior para realizar uma nova pesquisa.")
+    elif not filtradas:
+        painel.info("Nenhuma vaga atende aos filtros atuais.")
+
+    n_mostrar = st.session_state.get("mostrar_n", 15)
+    for v in filtradas[:n_mostrar]:
+        dias = core.idade_dias(v.get("data"))
+        descricao = (v.get("analise") or v.get("resumo") or "")[:240]
+        link = v["link"] if core.eh_http(v.get("link")) else "#"
+        badge_cls = "badge-source badge-global" if v.get("grupo") in ("Global", "Empresas") else "badge-source"
+        origem_txt = f'{v["origem"]} · {v["grupo"]}' if v.get("grupo") else v["origem"]
+        tambem = f'<span class="badge-also">também via {esc(", ".join(v["tambem"]))}</span>' if v.get("tambem") else ""
+        desc_html = f'<div class="job-desc">{esc(descricao)}{"…" if len(descricao) >= 240 else ""}</div>' if descricao else ""
+
+        painel.markdown(
+            f'<div class="job-card">'
+            f'<div class="job-top"><div style="flex:1;"><div class="job-title">{esc(v["titulo"])}</div>'
+            f'<div class="job-company">{esc(v["empresa"])} &middot; {esc(v["local"])}</div></div>'
+            f'<div class="{classe_idade(dias)} age">🕒 {texto_idade(dias)}</div></div>'
+            f'{desc_html}'
+            f'<div class="job-bottom"><div><span class="{badge_cls}">{esc(origem_txt)}</span>{tambem}</div>'
+            f'<a href="{esc(link)}" target="_blank" rel="noopener noreferrer" class="btn-apply">Candidatar-se</a>'
+            f'</div></div>', unsafe_allow_html=True)
+
+    if len(filtradas) > n_mostrar:
+        if st.button(f"Carregar mais resultados ({len(filtradas) - n_mostrar})", use_container_width=True):
+            st.session_state.mostrar_n = n_mostrar + 15
+            st.rerun()
+
+# ==========================================
+# 7) MAPA (direita)
+# ==========================================
+with col_mapa:
+    with st.container(key="mapa_card"):
+        com_pino = sum(1 for v in filtradas if v.get("lat"))
+        st.markdown(f"<div class='map-head'>📍 Mapa · {com_pino} vagas</div>", unsafe_allow_html=True)
+        chave_mapa = (tuple(v["link"] for v in filtradas), aproximar)
+        if st.session_state.get("_mapa_chave") != chave_mapa:
+            st.session_state["_mapa_chave"], st.session_state["_mapa"] = chave_mapa, montar_mapa(filtradas, aproximar)
+        st_folium(st.session_state["_mapa"], height=560, use_container_width=True, returned_objects=[], key="mapa")
+        st.markdown(
+            "<div class='legend'>"
+            "<span><i class='dot' style='background:#10B981'></i>verde recente</span>"
+            "<span><i class='dot' style='background:#F59E0B'></i>âmbar médio</span>"
+            "<span><i class='dot' style='background:#94A3B8'></i>cinza antigo</span></div>",
+            unsafe_allow_html=True)
+
+rodape_inovhia()
