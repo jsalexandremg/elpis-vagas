@@ -18,21 +18,77 @@ from hashlib import sha256
 import folium
 import requests
 import streamlit as st
+import streamlit.components.v1 as components
 from streamlit_folium import st_folium
 
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.32-Stable-Cloud"
+APP_VERSION = "2026-10-02-v24.33-Zero-Cloud-Badge"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
-# 1. Injeta CSS base do modulo de boas-vindas
+# =========================================================
+# 1. WATCHDOG SEGURO: OCULTA O AVATAR E O SELO DO STREAMLIT CLOUD
+# =========================================================
+components.html("""
+<script>
+try {
+  const d = window.parent.document;
+  
+  // Impede a tradução automática indevida do Chrome
+  d.documentElement.setAttribute('lang', 'pt-BR');
+  d.documentElement.setAttribute('translate', 'no');
+  d.documentElement.classList.add('notranslate');
+  if (!d.querySelector('meta[name="google"]')) {
+    const m = d.createElement('meta');
+    m.name = 'google'; m.content = 'notranslate';
+    d.head.appendChild(m);
+  }
+
+  // Watchdog seguro: Oculta elementos intrusivos do Cloud sem deletar o nó (não assusta o React)
+  function hideStreamlitArtifacts() {
+    const selectors = [
+      'a[href*="streamlit.io/cloud"]',
+      'img[src*="githubusercontent"]',
+      'img[src*="googleusercontent"]',
+      '[class*="viewerBadge"]',
+      '[class*="ProfileBadge"]',
+      '[data-testid="stStatusWidget"]',
+      '[data-testid="manage-app-button"]'
+    ];
+    
+    selectors.forEach(selector => {
+      d.querySelectorAll(selector).forEach(el => {
+        el.style.setProperty('display', 'none', 'important');
+        el.style.setProperty('opacity', '0', 'important');
+        el.style.setProperty('visibility', 'hidden', 'important');
+        el.style.setProperty('pointer-events', 'none', 'important');
+        
+        // Esconde o container pai direto se ele encapsular a imagem/botão
+        if (el.parentElement && el.parentElement.tagName === 'DIV') {
+            el.parentElement.style.setProperty('display', 'none', 'important');
+            el.parentElement.style.setProperty('opacity', '0', 'important');
+            el.parentElement.style.setProperty('z-index', '-9999', 'important');
+        }
+      });
+    });
+  }
+
+  // Aplica a limpeza a cada 500ms para neutralizar qualquer re-render
+  hideStreamlitArtifacts();
+  setInterval(hideStreamlitArtifacts, 500);
+
+} catch (e) {}
+</script>
+""", height=0, width=0)
+
+# 2. Injeta CSS base
 try:
     st.markdown(bv.CSS, unsafe_allow_html=True)
 except Exception:
     pass
 
-# 2. DESIGN SYSTEM CORPORATIVO ÉLPIS E BLINDAGEM DO CLOUD
+# 3. DESIGN SYSTEM CORPORATIVO ÉLPIS (Zero Outer Scroll & Blindagem Completa)
 st.markdown("""
 <style>
 :root {
@@ -64,7 +120,7 @@ st.markdown("""
 }
 
 /* =========================================================
-   BLINDAGEM SEGURA CONTRA BADGES E AVATAR DA NUVEM
+   BLINDAGEM CONTRA AVATAR E BADGES DA NUVEM (CSS DE BACKUP)
    ========================================================= */
 [data-testid="stStatusWidget"],
 [data-testid="manage-app-button"],
@@ -73,18 +129,27 @@ st.markdown("""
 [class*="ProfileBadge_container"],
 [class*="profileBadge"],
 a[href*="share.streamlit.io"],
-a[href*="streamlit.io/cloud"] {
+a[href*="streamlit.io/cloud"],
+img[src*="githubusercontent"],
+img[src*="googleusercontent"] {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
     pointer-events: none !important;
 }
 
+div:has(> a[href*="streamlit.io/cloud"]),
+div:has(> img[src*="githubusercontent"]),
+div:has(> div[class*="viewerBadge"]) {
+    display: none !important;
+}
+
 /* Oculta cabeçalho nativo e barra lateral do Streamlit */
 header[data-testid="stHeader"], [data-testid="stSidebar"],
-[data-testid="stSidebarCollapsedControl"], [data-testid="collapsedControl"] {display: none !important;}
+[data-testid="stSidebarCollapsedControl"], [data-testid="collapsedControl"],
+footer {display: none !important;}
 
-/* Oculta contentores invisíveis para evitar espaçamento em branco */
+/* Oculta contentores invisíveis para cortar espaço branco no topo */
 div[data-testid="stElementContainer"]:has(> style),
 div[data-testid="stElementContainer"]:has(> script),
 div[data-testid="stElementContainer"]:empty {
