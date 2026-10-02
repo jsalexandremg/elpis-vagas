@@ -606,7 +606,6 @@ with col_lista:
         if st.button(f"Carregar mais resultados ({len(filtradas) - n_mostrar})", use_container_width=True):
             st.session_state.mostrar_n = n_mostrar + 15
             st.rerun()
-
 with col_mapa:
     com_pino = sum(1 for v in filtradas if v.get("lat"))
     st.markdown(f"<div style='font-size:17px; font-weight:800; color:var(--elpis-primary); margin-bottom:10px;'>"
