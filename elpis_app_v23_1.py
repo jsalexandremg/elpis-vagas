@@ -23,25 +23,52 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.28-Clean-Cloud-Badge"
+APP_VERSION = "2026-10-02-v24.29-Zero-Badge"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
-# Previne tradução automática indevida do Chrome
+# 1. REMOVE TRADUÇÃO INDEVIDA E ELIMINA O BADGE "HOSTED WITH STREAMLIT" NO DOM PAI
 st.html("""<script>
-try { const d = window.parent.document;
-  d.documentElement.setAttribute('lang', 'pt-BR'); d.documentElement.setAttribute('translate', 'no');
+try {
+  const d = window.parent.document;
+  d.documentElement.setAttribute('lang', 'pt-BR');
+  d.documentElement.setAttribute('translate', 'no');
   d.documentElement.classList.add('notranslate');
-  if (!d.querySelector('meta[name="google"]')) { const m = d.createElement('meta');
-    m.name = 'google'; m.content = 'notranslate'; d.head.appendChild(m); } } catch (e) {}
+  if (!d.querySelector('meta[name="google"]')) {
+    const m = d.createElement('meta');
+    m.name = 'google'; m.content = 'notranslate';
+    d.head.appendChild(m);
+  }
+
+  // Função para deletar o selo do Streamlit Community Cloud no pai
+  function killBadge() {
+    const selectors = [
+      '[data-testid="stStatusWidget"]',
+      'div[class*="viewerBadge"]',
+      'a[class*="viewerBadge"]',
+      'div[class*="ProfileBadge"]',
+      'footer',
+      'div[data-testid="stToolbar"]',
+      'div[data-testid="stDecoration"]'
+    ];
+    selectors.forEach(sel => {
+      d.querySelectorAll(sel).forEach(el => el.remove());
+    });
+  }
+  killBadge();
+
+  // Monitora e impede o Streamlit de recriar o selo no DOM
+  const obs = new MutationObserver(() => killBadge());
+  obs.observe(d.body, { childList: true, subtree: true });
+} catch (e) {}
 </script>""", unsafe_allow_javascript=True)
 
-# 1. Injeta CSS base
+# 2. Injeta CSS base
 try:
     st.markdown(bv.CSS, unsafe_allow_html=True)
 except Exception:
     pass
 
-# 2. DESIGN SYSTEM CORPORATIVO ÉLPIS (Zero Outer Scroll & Ocultação de Badges)
+# 3. DESIGN SYSTEM CORPORATIVO ÉLPIS (Zero Outer Scroll & Blindagem Completa)
 st.markdown("""
 <style>
 :root {
@@ -73,30 +100,26 @@ st.markdown("""
 }
 
 /* =========================================================
-   OCULTAR CRÉDITOS DE HOSPEDAGEM (STREAMLIT COMMUNITY CLOUD)
+   BLINDAGEM CONTRA O BADGE "HOSTED WITH STREAMLIT" (CSS)
    ========================================================= */
 [data-testid="stStatusWidget"],
-.viewerBadge_container__1QSob,
-.viewerBadge_link__1S137,
-div[class*="viewerBadge_container"],
-footer {
+[class*="viewerBadge"],
+[class*="ProfileBadge"],
+div:has(> [class*="viewerBadge"]),
+footer,
+header[data-testid="stHeader"],
+[data-testid="stSidebar"],
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="collapsedControl"] {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
     height: 0 !important;
+    width: 0 !important;
     pointer-events: none !important;
+    position: absolute !important;
+    left: -9999px !important;
 }
-
-div:has(> a[href*="streamlit.io/cloud"]),
-div:has(> a[href*="share.streamlit.io"]),
-a[href*="streamlit.io/cloud"],
-button[title*="View app in Streamlit Community Cloud"] {
-    display: none !important;
-}
-
-/* Oculta cabeçalho nativo e barra lateral do Streamlit */
-header[data-testid="stHeader"], [data-testid="stSidebar"],
-[data-testid="stSidebarCollapsedControl"], [data-testid="collapsedControl"] {display: none !important;}
 
 /* Oculta contentores invisíveis para cortar espaço branco no topo */
 div[data-testid="stElementContainer"]:has(> style),
@@ -406,7 +429,7 @@ li[role="option"]:hover {
     color: var(--elpis-primary) !important;
 }
 
-/* 5. CAIXA INFORMATIVA E SESSÃO */
+/* 4. CAIXA INFORMATIVA E SESSÃO */
 .info-box {
     display: flex;
     gap: 6px;
