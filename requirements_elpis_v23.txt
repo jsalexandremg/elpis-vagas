@@ -1,0 +1,8 @@
+streamlit>=1.50
+streamlit-folium>=0.22
+folium>=0.17
+beautifulsoup4>=4.12
+requests>=2.31
+curl_cffi>=0.7
+python-jobspy>=1.1.80
+google-genai>=1.0
