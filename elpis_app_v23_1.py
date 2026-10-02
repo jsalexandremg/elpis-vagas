@@ -22,7 +22,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.19-Expander-Harmonized"
+APP_VERSION = "2026-10-02-v24.20-Expander-Fixed"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
 # Previne tradução automática indevida do Chrome
@@ -103,22 +103,41 @@ div[data-baseweb="select"] ul {max-height: 180px !important;}
 /* =========================================================
    BLINDAGEM GERAL DE CHECKBOXES (AZUL CORPORATIVO ÉLPIS)
    ========================================================= */
-[data-testid="stCheckbox"] div[role="checkbox"][aria-checked="true"],
-[data-testid="stCheckbox"] span[aria-checked="true"],
-[data-testid="stCheckbox"] div[aria-checked="true"],
-div[data-baseweb="checkbox"] span[aria-checked="true"],
-div[data-baseweb="checkbox"] div[aria-checked="true"],
+[data-testid="stCheckbox"] {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+[data-testid="stCheckbox"] label {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    cursor: pointer !important;
+}
+[data-testid="stCheckbox"] label div[data-baseweb="checkbox"] {
+    flex-shrink: 0 !important;
+    width: 16px !important;
+    height: 16px !important;
+}
 [data-testid="stCheckbox"] input:checked + div,
-[data-testid="stCheckbox"] label div:has(svg) {
+[data-testid="stCheckbox"] div[role="checkbox"][aria-checked="true"],
+[data-testid="stCheckbox"] div[aria-checked="true"] {
     background-color: var(--elpis-primary) !important;
     border-color: var(--elpis-primary) !important;
 }
 [data-testid="stCheckbox"] svg {
     fill: #FFFFFF !important;
 }
+[data-testid="stCheckbox"] label p {
+    font-size: 11px !important;
+    line-height: 1.3 !important;
+    color: var(--text-primary) !important;
+    margin: 0 !important;
+    white-space: normal !important;
+    word-break: normal !important;
+}
 
 /* =========================================================
-   HARMONIZAÇÃO TOTAL DO EXPANDER (IA & OPÇÕES)
+   EXPANDER: IA & OPÇÕES (SEM CONFLITO DE LARGURA)
    ========================================================= */
 [data-testid="stExpander"] {
     border: 1px solid var(--border) !important;
@@ -128,7 +147,7 @@ div[data-baseweb="checkbox"] div[aria-checked="true"],
     margin-bottom: 4px !important;
 }
 [data-testid="stExpander"] details summary {
-    padding: 3px 6px !important;
+    padding: 4px 8px !important;
 }
 [data-testid="stExpander"] details summary p,
 [data-testid="stExpander"] details summary span {
@@ -137,32 +156,34 @@ div[data-baseweb="checkbox"] div[aria-checked="true"],
     color: var(--elpis-primary) !important;
 }
 [data-testid="stExpander"] details div[data-testid="stExpanderDetails"] {
-    padding: 4px 6px !important;
+    padding: 6px 8px !important;
 }
-/* Labels do Expander */
+
+/* Labels internas do Expander */
 [data-testid="stExpander"] label p,
 [data-testid="stExpander"] label span,
 [data-testid="stExpander"] [data-testid="stWidgetLabel"] p {
     font-size: 11px !important;
     font-weight: 700 !important;
     color: var(--elpis-primary) !important;
-    margin-bottom: 1px !important;
+    margin-bottom: 2px !important;
 }
-/* Slider (cor do número, trilha e botão) */
-[data-testid="stExpander"] [data-testid="stSlider"] div[data-testid="stMarkdownContainer"] p,
-[data-testid="stExpander"] [data-testid="stSlider"] div:has(> p) {
-    color: var(--elpis-primary) !important;
-    font-size: 11px !important;
-    font-weight: 700 !important;
-}
+
+/* Slider: Azul Corporativo total (Substitui o vermelho) */
 [data-testid="stExpander"] [data-testid="stSlider"] div[role="slider"] {
     background-color: var(--elpis-primary) !important;
-    border-color: var(--elpis-primary) !important;
-    box-shadow: none !important;
+    border: 2px solid #FFFFFF !important;
+    box-shadow: 0 0 0 1px var(--elpis-primary) !important;
 }
-[data-testid="stExpander"] [data-testid="stSlider"] div[data-baseweb="slider"] > div > div:first-child {
+[data-testid="stExpander"] [data-testid="stSlider"] div[data-baseweb="slider"] div[style*="background-color"] {
     background-color: var(--elpis-primary) !important;
 }
+[data-testid="stExpander"] [data-testid="stSlider"] div[data-testid="stMarkdownContainer"] p {
+    color: var(--elpis-primary) !important;
+    font-weight: 700 !important;
+    font-size: 11px !important;
+}
+
 /* Input de chave dentro do Expander */
 [data-testid="stExpander"] input {
     min-height: 28px !important;
@@ -171,35 +192,28 @@ div[data-baseweb="checkbox"] div[aria-checked="true"],
     padding: 2px 8px !important;
     border-radius: var(--radius-sm) !important;
 }
-/* Botões Conectar / Remover dentro do Expander */
+
+/* Botões dentro do Expander */
 [data-testid="stExpander"] button {
     min-height: 26px !important;
     height: 26px !important;
-    font-size: 11px !important;
-    padding: 1px 6px !important;
+    padding: 2px 6px !important;
     border-radius: var(--radius-sm) !important;
-    font-weight: 600 !important;
 }
 [data-testid="stExpander"] button p {
     font-size: 11px !important;
-    line-height: 1.2 !important;
 }
-/* Checkboxes dentro do Expander */
-[data-testid="stExpander"] [data-testid="stCheckbox"] label {
-    gap: 4px !important;
-    min-height: 20px !important;
-    align-items: center !important;
-}
-[data-testid="stExpander"] [data-testid="stCheckbox"] label div:first-child {
-    width: 14px !important;
-    height: 14px !important;
+
+/* Checkboxes dentro do Expander (Legíveis e com espaçamento) */
+[data-testid="stExpander"] [data-testid="stCheckbox"] {
+    margin-top: 6px !important;
+    margin-bottom: 4px !important;
 }
 [data-testid="stExpander"] [data-testid="stCheckbox"] label p {
     font-size: 11px !important;
     font-weight: 500 !important;
-    color: var(--text-primary) !important;
-    line-height: 1.2 !important;
-    margin: 0 !important;
+    white-space: normal !important;
+    overflow: visible !important;
 }
 
 /* ---------- COMPACTAÇÃO DA SEÇÃO MODALIDADE ---------- */
@@ -207,38 +221,14 @@ div[data-baseweb="checkbox"] div[aria-checked="true"],
     padding: 0 1px !important;
     min-width: 0 !important;
 }
-.st-key-sec_modalidade [data-testid="stCheckbox"] {
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
 .st-key-sec_modalidade [data-testid="stCheckbox"] label {
     gap: 3px !important;
-    padding: 0 !important;
-    min-height: 22px !important;
-    height: 22px !important;
-    display: flex !important;
-    align-items: center !important;
-}
-.st-key-sec_modalidade [data-testid="stCheckbox"] label div:first-child {
-    flex-shrink: 0 !important;
-    margin-right: 0 !important;
-    width: 14px !important;
-    height: 14px !important;
-}
-.st-key-sec_modalidade [data-testid="stCheckbox"] label div:last-child {
-    overflow: visible !important;
-    height: auto !important;
+    min-height: 20px !important;
 }
 .st-key-sec_modalidade [data-testid="stCheckbox"] label p {
     font-size: 10px !important;
     font-weight: 600 !important;
-    line-height: 1.2 !important;
-    margin: 0 !important;
     white-space: nowrap !important;
-    overflow: visible !important;
-    text-overflow: clip !important;
-    color: var(--text-primary) !important;
 }
 
 /* ---------- COMPACTAÇÃO DA LISTA DE FONTES ---------- */
@@ -246,18 +236,11 @@ div[data-baseweb="checkbox"] div[aria-checked="true"],
     margin-bottom: -12px !important;
     align-items: center !important;
 }
-.st-key-lista_fontes [data-testid="stCheckbox"] {
-    margin: 0 !important;
-    padding: 0 !important;
-}
 .st-key-lista_fontes [data-testid="stCheckbox"] label {
     min-height: 20px !important;
-    padding: 0 !important;
 }
 .st-key-lista_fontes [data-testid="stCheckbox"] p {
     font-size: 11px !important;
-    line-height: 1.1 !important;
-    margin: 0 !important;
 }
 
 /* ADESIVOS DE STATUS (MICRO-TAMANHO) */
@@ -274,7 +257,7 @@ div[data-baseweb="checkbox"] div[aria-checked="true"],
 .sb-wait {background: var(--status-warning-bg); color: #9A5800;}
 .sb-off {background: var(--status-neutral-bg); color: #475569;}
 
-/* ---------- CAMPOS DE SELEÇÃO (ORDEM & DATA LEGÍVEIS) ---------- */
+/* ---------- CAMPOS DE SELEÇÃO (ORDEM & DATA) ---------- */
 .st-key-painel_filtros [data-testid="stSelectbox"] {
     margin-bottom: -4px !important;
 }
@@ -771,7 +754,7 @@ with aviso_slot:
     banner_falhas(resultados)
 
 # ==========================================
-# 5) FILTROS DE RESULTADO (Data e Ordem Empilhados e Legíveis)
+# 5) FILTROS DE RESULTADO (Data e Ordem)
 # ==========================================
 filtradas = vagas_todas
 with filtros_pos:
