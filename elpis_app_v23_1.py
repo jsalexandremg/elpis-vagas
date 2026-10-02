@@ -21,7 +21,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.1-Elpis-Corporate"
+APP_VERSION = "2026-10-02-v24.2-Design-Tokens"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="expanded")
 
 # O Chrome oferece/aplica tradução automática e isso corrompe a interface
@@ -36,21 +36,51 @@ try { const d = window.parent.document;
 st.markdown("""
 <style>
 /* =========================================================
-   ELPIS V24 — DESIGN SYSTEM CORPORATIVO
+   SISTEMA DE DESIGN ÉLPIS (Design Tokens)
    ========================================================= */
 :root {
-    --elpis-navy: #142F50;
-    --elpis-navy-dark: #0A192F;
-    --elpis-orange: #F6A000;
-    --elpis-orange-hover: #D98900;
-    --elpis-green: #10B981;
-    --elpis-green-bg: #D2F7EF;
-    --elpis-blue-bg: #E8F0FE;
-    --elpis-warning-bg: #FFF3CD;
-    --elpis-gray-bg: #F1F5F9;
-    --elpis-bg: #F8FAFC;
-    --elpis-text: #111827;
-    --elpis-border: #E2E8F0;
+  /* IDENTIDADE ÉLPIS */
+  --elpis-primary: #142F50;
+  --elpis-primary-dark: #0D223A;
+  --elpis-orange: #F6A000;
+  --elpis-orange-hover: #D98900;
+
+  /* STATUS */
+  --status-success: #10B981;
+  --status-success-bg: #D2F7EF;
+  --status-info: #3B82F6;
+  --status-info-bg: #DCE9FA;
+  --status-warning: #F59E0B;
+  --status-warning-bg: #FFF2C7;
+  --status-neutral: #94A3B8;
+  --status-neutral-bg: #E5E7EB;
+  --status-error: #EF4444;
+  --status-error-bg: #FEE2E2;
+
+  /* SUPERFÍCIES */
+  --background: #F8FAFC;
+  --surface: #FFFFFF;
+  --map-background: #E8EFF8;
+
+  /* TIPOGRAFIA */
+  --text-primary: #111827;
+  --text-secondary: #64748B;
+  --text-light: #FFFFFF;
+
+  /* BORDAS */
+  --border: #E2E8F0;
+  --border-dark: #CBD5E1;
+
+  /* SOMBRAS */
+  --shadow-sm: 0 2px 6px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.12);
+
+  /* RADIUS */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
 }
 
 header[data-testid="stHeader"] {display: none;}
@@ -61,59 +91,57 @@ header[data-testid="stHeader"] {display: none;}
     padding-right: 2rem !important;
     max-width: 100% !important;
 }
-.stApp { background: var(--elpis-bg); }
+.stApp { background: var(--background); }
 
 /* ---------- SIDEBAR ---------- */
 [data-testid="stSidebar"] {
-    background: #FFFFFF !important;
-    border-right: 1px solid #E2E8F0 !important;
+    background: var(--surface) !important;
+    border-right: 1px solid var(--border) !important;
 }
 [data-testid="stSidebar"] p, [data-testid="stSidebar"] label, [data-testid="stSidebar"] span {
     font-size: 0.85rem !important;
-    color: #334155;
+    color: var(--text-secondary);
 }
 [data-testid="stSidebar"] hr {
-    border-color: #E2E8F0 !important;
+    border-color: var(--border) !important;
     margin: 0.8rem 0 !important;
 }
-
-/* Ocultar barra rolável desnecessária no multiselect */
 div[data-baseweb="select"] ul { max-height: 220px !important; }
 
 /* ---------- HEADER / FORM DE BUSCA ---------- */
 [data-testid="stForm"] {
-    background: var(--elpis-navy) !important;
+    background: var(--elpis-primary) !important;
     border: 0 !important;
-    border-radius: 12px !important;
+    border-radius: var(--radius-md) !important;
     padding: 16px 24px !important;
-    box-shadow: 0 4px 12px rgba(20,47,80,.15) !important;
+    box-shadow: var(--shadow-md) !important;
     margin-bottom: 1.5rem !important;
 }
 [data-testid="stForm"] input, [data-testid="stForm"] div[data-baseweb="select"] > div {
-    background: #FFFFFF !important;
-    color: var(--elpis-text) !important;
+    background: var(--surface) !important;
+    color: var(--text-primary) !important;
     border: none !important;
-    border-radius: 8px !important;
+    border-radius: var(--radius-sm) !important;
     min-height: 44px !important;
 }
 [data-testid="stForm"] button[kind="primary"] {
     background: var(--elpis-orange) !important;
-    color: var(--elpis-navy-dark) !important;
+    color: var(--elpis-primary-dark) !important;
     border: 0 !important;
-    border-radius: 8px !important;
+    border-radius: var(--radius-sm) !important;
     min-height: 44px !important;
     font-weight: 800 !important;
     transition: background .2s ease;
 }
 [data-testid="stForm"] button[kind="primary"]:hover {
     background: var(--elpis-orange-hover) !important;
-    color: #FFFFFF !important;
+    color: var(--text-light) !important;
 }
 .elpis-brand { color: var(--elpis-orange); font-weight: 800; font-size: 28px; line-height: 44px;}
 
 /* ---------- CHIPS SUPERIORES (FONTES) ---------- */
 .pill-green, .pill-yellow, .pill-gray {
-    border-radius: 20px !important;
+    border-radius: var(--radius-lg) !important;
     padding: 6px 14px !important;
     font-size: 12px !important;
     display: inline-block;
@@ -122,33 +150,33 @@ div[data-baseweb="select"] ul { max-height: 220px !important; }
     white-space: nowrap;
     font-weight: 600;
 }
-.pill-green { background: var(--elpis-green-bg); color: #087F68; }
-.pill-yellow { background: var(--elpis-warning-bg); color: #9A5800; }
-.pill-gray { background: var(--elpis-gray-bg); color: #475569; }
+.pill-green { background: var(--status-success-bg); color: var(--status-success); border: 1px solid rgba(16, 185, 129, 0.2); }
+.pill-yellow { background: var(--status-warning-bg); color: var(--status-warning); border: 1px solid rgba(245, 158, 11, 0.2); }
+.pill-gray { background: var(--status-neutral-bg); color: var(--text-secondary); border: 1px solid rgba(148, 163, 184, 0.2); }
 
 /* ---------- CARTÕES DE RESULTADOS ---------- */
 .job-card {
-    background: #FFFFFF;
-    border: 1px solid var(--elpis-border);
-    border-radius: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
     padding: 20px;
     margin-bottom: 14px;
-    box-shadow: 0 2px 5px rgba(0,0,0,.02);
+    box-shadow: var(--shadow-sm);
     transition: transform .15s ease, box-shadow .15s ease;
 }
 .job-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0,0,0,.08);
+    box-shadow: var(--shadow-md);
 }
-.job-title { font-size: 17px; font-weight: 800; color: var(--elpis-navy); line-height: 1.3; }
-.job-company { font-size: 13px; color: #64748B; margin-top: 4px; }
-.badge-source { background: var(--elpis-blue-bg); color: #142F50; border-radius: 20px; padding: 4px 10px; font-size: 11px; font-weight: 700;}
-.badge-also { font-size: 11px; color: #94A3B8; margin-left: 8px; }
+.job-title { font-size: 17px; font-weight: 800; color: var(--elpis-primary); line-height: 1.3; }
+.job-company { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+.badge-source { background: var(--status-info-bg); color: var(--elpis-primary); border-radius: var(--radius-lg); padding: 4px 10px; font-size: 11px; font-weight: 700;}
+.badge-also { font-size: 11px; color: var(--status-neutral); margin-left: 8px; }
 
 .btn-apply {
     background: var(--elpis-orange);
-    color: var(--elpis-navy-dark) !important;
-    border-radius: 8px;
+    color: var(--elpis-primary-dark) !important;
+    border-radius: var(--radius-sm);
     padding: 8px 20px;
     font-size: 13px;
     font-weight: 800;
@@ -156,27 +184,27 @@ div[data-baseweb="select"] ul { max-height: 220px !important; }
     display: inline-block;
     transition: background .2s ease;
 }
-.btn-apply:hover { background: var(--elpis-orange-hover); color: #FFF !important;}
+.btn-apply:hover { background: var(--elpis-orange-hover); color: var(--text-light) !important;}
 
 /* ---------- MAPA E EXTRAS ---------- */
 iframe[title="streamlit_folium.st_folium"] {
-    border-radius: 12px !important;
-    border: 1px solid var(--elpis-border) !important;
+    border-radius: var(--radius-sm) !important;
+    border: 1px solid var(--border) !important;
 }
 
 .elpis-footer {
-    background-color: var(--elpis-navy-dark);
-    color: #CBD5E1;
+    background-color: var(--elpis-primary-dark);
+    color: var(--border-dark);
     padding: 16px 24px;
     border-top: 3px solid var(--elpis-orange);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     margin-top: 30px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-size: 0.8rem;
 }
-.elpis-footer b { color: #FFFFFF; }
+.elpis-footer b { color: var(--text-light); }
 .elpis-footer a { color: var(--elpis-orange); text-decoration: none; font-weight: bold;}
 
 @media (max-width: 900px) {
@@ -288,7 +316,7 @@ current_session = sessao_atual(sid)
 
 with st.sidebar:
     if current_session:
-        st.markdown(f"<div style='color:#142F50; font-weight:bold; font-size:16px;'>👤 {html.escape(current_session['nome'])}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='color: var(--elpis-primary); font-weight:bold; font-size:16px;'>👤 {html.escape(current_session['nome'])}</div>", unsafe_allow_html=True)
         uso_slot = st.empty()
         uso_slot.caption(f"Uso: **{usage_today(sid)} / {FREE_DAILY_LIMIT}** buscas gratuitas")
         if st.button("Encerrar sessão", use_container_width=True):
@@ -395,7 +423,6 @@ def analisar_com_gemini(vagas, cargo, nivel, chave):
         if 0 <= idx < len(vagas): vagas[idx]["analise"] = it["analise"]
 
 def montar_mapa(vagas, aproximar):
-    # Alterado para CartoDB positron para espelhar o mapa limpo do layout corporativo
     m = folium.Map(location=[-15.7801, -47.9292], zoom_start=4, min_zoom=2, tiles="CartoDB positron", world_copy_jump=True, control_scale=False)
     from folium.plugins import MarkerCluster
     grupo = MarkerCluster(options={"maxClusterRadius": 35}).add_to(m)
@@ -404,7 +431,7 @@ def montar_mapa(vagas, aproximar):
         if not v.get("lat"): continue
         pts.append([v["lat"], v["lon"]])
         d = core.idade_dias(v.get("data"))
-        cor = "#9CA3AF" if d is None or d > 10 else ("#10B981" if d <= 2 else "#F59E0B")
+        cor = "#94A3B8" if d is None or d > 10 else ("#10B981" if d <= 2 else "#F59E0B")
         folium.CircleMarker(location=[v["lat"], v["lon"]], radius=7, color="white", weight=1.5, fill=True,
                             fill_color=cor, fill_opacity=1, tooltip=f"{v['empresa']} | {v['titulo']}"[:120]).add_to(grupo)
     if pts and aproximar: m.fit_bounds(pts, max_zoom=6, padding=(40, 40))
@@ -544,7 +571,7 @@ with col_lista:
             f'<div style="flex:1;"><div class="job-title">{esc(v["titulo"])}</div>'
             f'<div class="job-company">{esc(v["empresa"])} &middot; {esc(v["local"])}</div></div>'
             f'<div class="{classe_idade(dias)}">{texto_idade(dias)}</div></div>'
-            f'<div style="font-size:13px;color:#64748B;margin:12px 0;line-height:1.5;">{esc(descricao)}...</div>'
+            f'<div style="font-size:13px;color:var(--text-secondary);margin:12px 0;line-height:1.5;">{esc(descricao)}...</div>'
             f'<div style="display:flex;justify-content:space-between;align-items:center;">'
             f'<div><span class="{badge_cls}">{esc(v["origem"])}</span>{tambem}</div>'
             f'<a href="{esc(link)}" target="_blank" rel="noopener noreferrer" class="btn-apply">Candidatar-se</a>'
@@ -557,13 +584,13 @@ with col_lista:
 
 with col_mapa:
     com_pino = sum(1 for v in filtradas if v.get("lat"))
-    st.markdown(f"<div style='font-size:17px; font-weight:800; color:#142F50; margin-bottom:10px;'>"
+    st.markdown(f"<div style='font-size:17px; font-weight:800; color:var(--elpis-primary); margin-bottom:10px;'>"
                 f"📍 Mapeamento Geoespacial ({com_pino} vagas)</div>", unsafe_allow_html=True)
     chave_mapa = (tuple(v["link"] for v in filtradas), aproximar)
     if st.session_state.get("_mapa_chave") != chave_mapa:
         st.session_state["_mapa_chave"], st.session_state["_mapa"] = chave_mapa, montar_mapa(filtradas, aproximar)
     st_folium(st.session_state["_mapa"], height=560, use_container_width=True, returned_objects=[], key="mapa")
-    st.markdown("<div style='text-align:center; font-size:12px; color:#64748B; margin-top:8px;'>"
+    st.markdown("<div style='text-align:center; font-size:12px; color:var(--text-secondary); margin-top:8px;'>"
                 "🟢 Recente (até 2 dias) &nbsp;&nbsp;|&nbsp;&nbsp; 🟠 Médio (até 10 dias) &nbsp;&nbsp;|&nbsp;&nbsp; ⚪ Antigo / S/Data</div>", unsafe_allow_html=True)
 
 rodape_inovhia()
