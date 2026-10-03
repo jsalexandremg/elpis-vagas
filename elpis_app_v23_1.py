@@ -23,7 +23,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-03-v24.34-Aliases-Engenharia"
+APP_VERSION = "2026-10-03-v24.35-Filtro-Titulo-Contexto"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
 # 1. REMOVE TRADUÇÃO INDEVIDA E ELIMINA O BADGE "HOSTED WITH STREAMLIT" NO DOM PAI
@@ -1140,10 +1140,11 @@ def _tokens_cargo(texto):
     return set(re.findall(r"[a-z0-9]+", texto))
 
 
-def cargo_atende_titulo(titulo, termo):
-    """Exige cargo-base + domínio no título; evita tema correto com senioridade errada."""
+def cargo_atende_titulo(titulo, termo, contexto=""):
+    """Exige cargo-base no título e domínio no título ou no texto da vaga."""
     consulta = _tokens_cargo(termo)
     titulo_tokens = _tokens_cargo(titulo)
+    contexto_tokens = _tokens_cargo(contexto)
     stop = {"de", "da", "do", "das", "dos", "e", "em", "na", "no", "para", "a", "o"}
     consulta -= stop
     if not consulta:
@@ -1174,12 +1175,20 @@ def cargo_atende_titulo(titulo, termo):
     dominio = [p for p in palavras[1:] if p not in stop]
     if not dominio:
         return True
-    return any(bool(titulo_tokens & equivalencias.get(p, {p})) for p in dominio)
+    # O cargo-base continua obrigatório no título para bloquear Analista/Head/
+    # Consultor quando o usuário pesquisou Gerente ou Coordenador.
+    # O domínio pode estar no título ou no resumo/descrição retornado pela fonte.
+    return any(bool((titulo_tokens | contexto_tokens) & equivalencias.get(p, {p})) for p in dominio)
 
 
 def filtrar_cargo_exato(vagas, termo):
-    """Filtra títulos após a consolidação, antes de exibir/mapear resultados."""
-    return [v for v in vagas if cargo_atende_titulo(v.get("titulo", ""), termo)]
+    """Filtra após consolidação usando título + resumo/descrição da vaga."""
+    saida = []
+    for vaga in vagas:
+        contexto = " ".join(str(vaga.get(k, "") or "") for k in ("resumo", "descricao", "description", "texto"))
+        if cargo_atende_titulo(vaga.get("titulo", ""), termo, contexto):
+            saida.append(vaga)
+    return saida
 
 
 def limite_exatas_cargo(termo, parciais):
