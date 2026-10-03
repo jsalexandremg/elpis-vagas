@@ -25,7 +25,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-03-v24.39-Filtro-Localidade"
+APP_VERSION = "2026-10-03-v24.40-Auto-Fill-Location"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
 # 1. REMOVE TRADUÇÃO INDEVIDA E ELIMINA O BADGE "HOSTED WITH STREAMLIT" NO DOM PAI
@@ -179,15 +179,9 @@ html, body, [data-testid="stAppViewContainer"] {
 }
 
 @keyframes elpis-glow {
-    0% {
-        filter: drop-shadow(0 1px 3px rgba(246, 160, 0, 0.35));
-    }
-    50% {
-        filter: drop-shadow(0 2px 8px rgba(246, 160, 0, 0.65));
-    }
-    100% {
-        filter: drop-shadow(0 2px 12px rgba(255, 209, 102, 0.85));
-    }
+    0% { filter: drop-shadow(0 1px 3px rgba(246, 160, 0, 0.35)); }
+    50% { filter: drop-shadow(0 2px 8px rgba(246, 160, 0, 0.65)); }
+    100% { filter: drop-shadow(0 2px 12px rgba(255, 209, 102, 0.85)); }
 }
 
 /* =========================================================
@@ -770,10 +764,6 @@ def badge_fonte(nome, mapa, rodando):
 # MOTOR RESILIENTE DO GEMINI (REST API PURA)
 # ==========================================
 def chamar_gemini(prompt, chave):
-    """
-    Executa a requisição HTTP direta para a API do Google Gemini.
-    Elimina permanentemente o erro 'Cannot send a request, as the client has been closed'.
-    """
     if not chave:
         raise ValueError("Chave de API Gemini não fornecida.")
 
@@ -1008,19 +998,22 @@ def normalizar_localidade_ibge(entrada):
     texto = _normalizar_texto_local(partes[0] if partes else bruto)
     estado = next((por_uf.get(_normalizar_texto_local(p)) for p in partes[1:]), None)
     estado_sozinho = por_uf.get(texto)
+    
+    # Formato cidade/estado/pais
     if estado_sozinho and not estado:
-        return f"{estado_sozinho['nome']}/{estado_sozinho['sigla']}, Brasil", ""
+        return f"{estado_sozinho['nome']}/{estado_sozinho['sigla']}/Brasil", ""
     candidatas = [c for c in cidades if _normalizar_texto_local(c["nome"]) == texto]
     if estado:
         candidatas = [c for c in candidatas if c["uf"] == estado["sigla"]]
     if len(candidatas) == 1:
         c = candidatas[0]
-        return f"{c['nome']} - {c['estado']}/{c['uf']}, Brasil", ""
+        return f"{c['nome']}/{c['uf']}/Brasil", ""
     if len(candidatas) > 1:
         opcoes = ", ".join(f"{c['nome']}/{c['uf']}" for c in candidatas[:6])
         return bruto, f"A localidade '{bruto}' é ambígua. Informe a UF; opções: {opcoes}."
     return bruto, f"'{bruto}' não foi localizada no catálogo do IBGE; usando o texto original."
 
+# ==========================================
 # 1) HEADER DE BUSCA COM LOGO DESTACADO E ANIMADO
 # ==========================================
 with st.form("search_form"):
@@ -1030,9 +1023,13 @@ with st.form("search_form"):
             "<div class='elpis-brand-container'><span class='elpis-brand'>Élpis</span></div>",
             unsafe_allow_html=True
         )
-    with c1: cargo = st.text_input("Cargo / Função", placeholder="💼  Cargo / Função", label_visibility="collapsed")
-    with c2: local = st.text_input("Localidade", placeholder="📍  Localidade (ex: Belo Horizonte)", label_visibility="collapsed")
-    with c3: nivel = st.selectbox("Senioridade", ["(qualquer)", "Analista", "Especialista", "Coordenador", "Gerente", "Diretor", "VP"], label_visibility="collapsed")
+    with c1: cargo = st.text_input("Cargo / Função", value=st.session_state.get("termo_busca", ""), placeholder="💼  Cargo / Função", label_visibility="collapsed")
+    with c2: local = st.text_input("Localidade", value=st.session_state.get("local_busca", ""), placeholder="📍  Localidade (ex: Belo Horizonte)", label_visibility="collapsed")
+    
+    niveis = ["(qualquer)", "Analista", "Especialista", "Coordenador", "Gerente", "Diretor", "VP"]
+    nivel_val = st.session_state.get("nivel_busca", "(qualquer)")
+    nivel_idx = niveis.index(nivel_val) if nivel_val in niveis else 0
+    with c3: nivel = st.selectbox("Senioridade", niveis, index=nivel_idx, label_visibility="collapsed")
     with c4: buscar = st.form_submit_button("🔍  Buscar", type="primary", use_container_width=True)
 
 # ==========================================
@@ -1040,7 +1037,6 @@ with st.form("search_form"):
 # ==========================================
 col_filtros, col_main = st.columns([1.38, 4.62], gap="small")
 with col_main:
-    st.caption(f"Élpis {APP_VERSION}")
     status_slot = st.container()
     aviso_slot = st.container()
     col_lista, col_mapa = st.columns([1.45, 1.15], gap="small")
@@ -1069,7 +1065,7 @@ with col_filtros:
                 badge_slots[nome] = cb.empty()
                 badge_slots[nome].markdown(badge_fonte(nome, mapa_prev, False), unsafe_allow_html=True)
 
-        st.markdown("<div class='f-sec'>🎛️ Modalidade</div>", unsafe_allow_html=True)
+        st.markdown("<div class='f-sec'>🎛️️ Modalidade</div>", unsafe_allow_html=True)
         with st.container(key="sec_modalidade"):
             c_pres, c_rem, c_hib = st.columns([1.35, 1.0, 1.0], gap="small")
             mod_cols = [c_pres, c_rem, c_hib]
@@ -1138,7 +1134,6 @@ with col_filtros:
 # 4) MOTOR DE EXECUÇÃO
 # ==========================================
 def variantes_cargo(termo):
-    """Gera alternativas controladas para cargos compostos sem ampliar demais a busca."""
     bruto = " ".join(str(termo or "").split()).strip()
     if not bruto:
         return []
@@ -1147,7 +1142,6 @@ def variantes_cargo(termo):
     significativas = [p for p in palavras if p.casefold() not in stopwords]
     saida = [bruto]
     if len(significativas) >= 3:
-        # Preserva o cargo-base e consulta os dois eixos profissionais principais.
         base = significativas[0]
         saida.extend([
             " ".join(significativas),
@@ -1158,8 +1152,6 @@ def variantes_cargo(termo):
     elif len(significativas) == 2 and len(palavras) >= 3:
         saida.append(" ".join(significativas))
 
-    # Aliases usados pelos portais brasileiros e internacionais.
-    # Mantemos o cargo-base e o domínio para não abrir a busca para qualquer vaga.
     base = significativas[0].casefold() if significativas else ""
     dominio = [p.casefold() for p in significativas[1:]]
     if base in {"gerente", "manager"} and "engenharia" in dominio:
@@ -1187,16 +1179,13 @@ def variantes_cargo(termo):
             unicas.append(item)
     return unicas
 
-
 def _tokens_cargo(texto):
     import re
     import unicodedata
     texto = unicodedata.normalize("NFKD", str(texto or "")).encode("ascii", "ignore").decode().casefold()
     return set(re.findall(r"[a-z0-9]+", texto))
 
-
 def cargo_atende_titulo(titulo, termo, contexto=""):
-    """Exige cargo-base no título e domínio no título ou no texto da vaga."""
     consulta = _tokens_cargo(termo)
     titulo_tokens = _tokens_cargo(titulo)
     contexto_tokens = _tokens_cargo(contexto)
@@ -1218,26 +1207,18 @@ def cargo_atende_titulo(titulo, termo, contexto=""):
         "engenharia": {"engenharia", "engineering"},
         "planejamento": {"planejamento", "planning"},
     }
-    # O primeiro termo significativo é o cargo-base e é obrigatório.
-    base = next(iter(consulta)) if len(consulta) == 1 else None
     palavras = [p for p in str(termo or "").casefold().split() if p not in stop]
     base = palavras[0] if palavras else ""
     base_ok = bool(titulo_tokens & equivalencias.get(base, {base}))
     if not base_ok:
         return False
 
-    # Os demais termos formam o domínio; pelo menos um precisa aparecer.
     dominio = [p for p in palavras[1:] if p not in stop]
     if not dominio:
         return True
-    # O cargo-base continua obrigatório no título para bloquear Analista/Head/
-    # Consultor quando o usuário pesquisou Gerente ou Coordenador.
-    # O domínio pode estar no título ou no resumo/descrição retornado pela fonte.
     return any(bool((titulo_tokens | contexto_tokens) & equivalencias.get(p, {p})) for p in dominio)
 
-
 def cargo_base_no_titulo(titulo, termo):
-    """Mantém o cargo-base no título quando o domínio está no contexto."""
     stop = {"de", "da", "do", "das", "dos", "e", "em", "na", "no", "para", "a", "o"}
     palavras = [p for p in str(termo or "").casefold().split() if p not in stop]
     if not palavras:
@@ -1251,9 +1232,7 @@ def cargo_base_no_titulo(titulo, termo):
     }
     return bool(_tokens_cargo(titulo) & equivalencias.get(palavras[0], {palavras[0]}))
 
-
 def filtrar_cargo_exato(vagas, termo):
-    """Filtra após consolidação usando título + resumo/descrição da vaga."""
     saida = []
     for vaga in vagas:
         contexto = " ".join(str(vaga.get(k, "") or "") for k in ("resumo", "descricao", "description", "texto"))
@@ -1261,20 +1240,12 @@ def filtrar_cargo_exato(vagas, termo):
             saida.append(vaga)
     return saida
 
-
 def limite_exatas_cargo(termo, parciais):
-    """Cargos longos precisam aceitar títulos equivalentes, sem liberar parciais para cargos simples."""
-    significativas = [p for p in str(termo or "").split()
-                      if p.casefold() not in {"de", "da", "do", "das", "dos", "e", "em", "na", "no", "para"}]
     if parciais:
         return 999
-    # No core.consolidar, este valor é o limiar a partir do qual
-    # correspondências parciais são ocultadas. Com 1, uma única vaga
-    # exata escondia todas as variações relacionadas do cargo.
     return 5
 
 def localidade_atende_vaga(local_vaga, localidade_canonica):
-    """Impede que vagas estrangeiras apareçam numa busca brasileira específica."""
     atual = _normalizar_texto_local(local_vaga)
     if not localidade_canonica:
         return True
@@ -1289,13 +1260,10 @@ def localidade_atende_vaga(local_vaga, localidade_canonica):
     uf = _normalizar_texto_local(partes[1].split(",", 1)[0]) if len(partes) > 1 else ""
     return estado in atual or (uf and uf in set(atual.split()))
 
-
 def filtrar_localidade_vagas(vagas, localidade_canonica):
     return [v for v in vagas if localidade_atende_vaga(v.get("local", ""), localidade_canonica)]
 
-
 def consolidar_cobertura(brutas, termo, nivel, limite=60, localidade=""):
-    """Consolida registros sem o corte excessivo do core e respeita a localidade."""
     brutas = filtrar_localidade_vagas(brutas, localidade)
     rigorosas = filtrar_cargo_exato(brutas, termo)
     if len(rigorosas) < 5:
@@ -1323,10 +1291,29 @@ def executar_busca(params):
     termo, loc, niv = params["cargo"], params["local"], params["nivel"]
     loc_original = loc
     loc, aviso_local = normalizar_localidade_ibge(loc)
+    
+    # ATUALIZAÇÃO IMEDIATA DO CAMPO "LOCALIDADE" VIA JAVASCRIPT INJECTION
+    if loc and loc != loc_original:
+        safe_loc = loc.replace("'", "\\'")
+        st.html(f"""<script>
+        try {{
+            const doc = window.parent.document;
+            const inputs = Array.from(doc.querySelectorAll('input'));
+            const localInput = inputs.find(inp => inp.getAttribute('aria-label') === 'Localidade');
+            if (localInput) {{
+                localInput.value = '{safe_loc}';
+                let tracker = localInput._valueTracker;
+                if (tracker) {{ tracker.setValue(''); }}
+                localInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+            }}
+        }} catch (e) {{}}
+        </script>""")
+
     if aviso_local:
         st.warning(aviso_local)
     elif loc:
         st.caption(f"Localidade reconhecida pelo IBGE: **{loc}**")
+        
     st.markdown(bv.ESCONDER, unsafe_allow_html=True)
     brutas, resultados, t0 = [], [], time.perf_counter()
 
@@ -1344,17 +1331,10 @@ def executar_busca(params):
             box.update(label=f"Concluído em {time.perf_counter() - t0:.1f}s", state="complete", expanded=False)
 
     limite_exatas = limite_exatas_cargo(termo, parciais)
-    # Mantemos a consolidação do core apenas como diagnóstico; a lista final
-    # será montada sobre todos os registros brutos coletados.
     unicas_core = core.consolidar(brutas, niv, limite=60, min_exatas=limite_exatas)
     unicas = unicas_core
 
-    # Fallback quando a consulta principal não encontra ou encontra poucas vagas.
-    # Uma única correspondência não deve impedir a busca de variações válidas:
-    # "Gerente de Engenharia" também pode aparecer como "Gerente Engenharia".
     variantes = variantes_cargo(termo)
-    # Para aliases, buscamos uma amostra maior antes de parar; a lista final
-    # continua limitada a 60 pelo consolidator.
     alvo_minimo = 10 if len(variantes) > 1 else 0
     if len(unicas) < alvo_minimo:
         for alternativa in variantes[1:]:
@@ -1364,15 +1344,11 @@ def executar_busca(params):
                     brutas.extend(r.itens)
                 cobertura = consolidar_cobertura(brutas, termo, niv, limite=60, localidade=loc)
                 unicas = cobertura
-                # Continua até atingir um conjunto útil; depois para para não
-                # aumentar o tempo da busca sem necessidade.
                 if len(cobertura) >= alvo_minimo:
                     break
             except Exception:
                 continue
 
-    # A lista exibida vem de todos os registros brutos, não do corte rígido
-    # do core.consolidar. Isso evita perder vagas que vieram de aliases.
     consolidadas_antes_filtro = len(unicas_core)
     brutas_localizadas = filtrar_localidade_vagas(brutas, loc)
     rigorosas = filtrar_cargo_exato(brutas_localizadas, termo)
@@ -1433,7 +1409,7 @@ if params:
     else:
         executar_busca(params)
 
-vagas_todas = st.session_state["vagas"]
+vagas_todas = st.session_state.get("vagas", [])
 resultados = st.session_state.get("resultados", [])
 rid = st.session_state.get("resultado_id", 0)
 
@@ -1449,7 +1425,7 @@ with aviso_slot:
     banner_falhas(resultados)
 
 # ==========================================
-# 5) FILTROS DE RESULTADO (Data, Ordem e Botão Pop-up IA Harmonizados em 11px)
+# 5) FILTROS DE RESULTADO (Data, Ordem e Botão Pop-up IA)
 # ==========================================
 filtradas = vagas_todas
 periodo = "Qualquer data"
