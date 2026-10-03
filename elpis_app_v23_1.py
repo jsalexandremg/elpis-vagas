@@ -23,7 +23,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-02-v24.29-Zero-Badge"
+APP_VERSION = "2026-10-03-v24.30-Busca-Composta"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
 # 1. REMOVE TRADUÇÃO INDEVIDA E ELIMINA O BADGE "HOSTED WITH STREAMLIT" NO DOM PAI
@@ -1082,6 +1082,44 @@ with col_filtros:
 # ==========================================
 # 4) MOTOR DE EXECUÇÃO
 # ==========================================
+def variantes_cargo(termo):
+    """Gera alternativas controladas para cargos compostos sem ampliar demais a busca."""
+    bruto = " ".join(str(termo or "").split()).strip()
+    if not bruto:
+        return []
+    palavras = bruto.split()
+    stopwords = {"de", "da", "do", "das", "dos", "e", "em", "na", "no", "para"}
+    significativas = [p for p in palavras if p.casefold() not in stopwords]
+    saida = [bruto]
+    if len(significativas) >= 3:
+        # Preserva o cargo-base e consulta os dois eixos profissionais principais.
+        base = significativas[0]
+        saida.extend([
+            " ".join(significativas),
+            f"{base} {significativas[1]}",
+            f"{base} {significativas[-1]}",
+            " ".join(significativas[1:]),
+        ])
+    elif len(significativas) == 2 and len(palavras) >= 3:
+        saida.append(" ".join(significativas))
+    unicas = []
+    vistos = set()
+    for item in saida:
+        chave = " ".join(item.casefold().split())
+        if chave and chave not in vistos:
+            vistos.add(chave)
+            unicas.append(item)
+    return unicas
+
+
+def limite_exatas_cargo(termo, parciais):
+    """Cargos longos precisam aceitar títulos equivalentes, sem liberar parciais para cargos simples."""
+    significativas = [p for p in str(termo or "").split()
+                      if p.casefold() not in {"de", "da", "do", "das", "dos", "e", "em", "na", "no", "para"}]
+    if parciais:
+        return 999
+    return 1 if len(significativas) >= 3 else 5
+
 def executar_busca(params):
     termo, loc, niv = params["cargo"], params["local"], params["nivel"]
     st.markdown(bv.ESCONDER, unsafe_allow_html=True)
@@ -1100,9 +1138,26 @@ def executar_busca(params):
                 box.update(label=f"Processando {len(resultados)}/{len(fontes_ativas)} fontes · {len(brutas)} registos")
             box.update(label=f"Concluído em {time.perf_counter() - t0:.1f}s", state="complete", expanded=False)
 
+    limite_exatas = limite_exatas_cargo(termo, parciais)
+    unicas = core.consolidar(brutas, niv, limite=60, min_exatas=limite_exatas)
+
+    # Fallback somente quando o cargo composto não produziu nenhuma vaga.
+    # Evita multiplicar consultas em buscas normais e cobre variações como
+    # "Gerente de Engenharia e Planejamento" / "Gerente de Engenharia".
+    if not unicas and len(variantes_cargo(termo)) > 1:
+        for alternativa in variantes_cargo(termo)[1:]:
+            try:
+                for r in core.executar(fontes_ativas, alternativa, loc, prazo=prazo):
+                    resultados.append(r)
+                    brutas.extend(r.itens)
+                unicas = core.consolidar(brutas, niv, limite=60, min_exatas=limite_exatas)
+                if unicas:
+                    break
+            except Exception:
+                continue
+
     falhas = [r for r in resultados if r.status in ("erro", "timeout")]
     st.session_state.rede = core.verificar_rede() if len(falhas) >= max(3, len(resultados) // 2) else None
-    unicas = core.consolidar(brutas, niv, limite=60, min_exatas=999 if parciais else 5)
 
     if aproximar and unicas:
         cache_loc, inicio, consultas = {}, time.perf_counter(), 0
