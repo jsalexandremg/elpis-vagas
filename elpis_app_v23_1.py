@@ -23,7 +23,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-03-v24.33-Filtro-Cargo"
+APP_VERSION = "2026-10-03-v24.34-Aliases-Engenharia"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
 # 1. REMOVE TRADUÇÃO INDEVIDA E ELIMINA O BADGE "HOSTED WITH STREAMLIT" NO DOM PAI
@@ -1102,6 +1102,27 @@ def variantes_cargo(termo):
         ])
     elif len(significativas) == 2 and len(palavras) >= 3:
         saida.append(" ".join(significativas))
+
+    # Aliases usados pelos portais brasileiros e internacionais.
+    # Mantemos o cargo-base e o domínio para não abrir a busca para qualquer vaga.
+    base = significativas[0].casefold() if significativas else ""
+    dominio = [p.casefold() for p in significativas[1:]]
+    if base in {"gerente", "manager"} and "engenharia" in dominio:
+        saida.extend([
+            "Engineering Manager",
+            "Manager Engineering",
+            "Gerente de Engenharia e Projetos",
+            "Gerente de Projetos de Engenharia",
+        ])
+    if base in {"gerente", "manager"} and "engenharia" in dominio and "planejamento" in dominio:
+        saida.extend([
+            "Engineering and Planning Manager",
+            "Manager Engineering Planning",
+            "Gerente de Engenharia, Projetos e Planejamento",
+        ])
+    if base in {"coordenador", "coordinator"} and "engenharia" in dominio:
+        saida.extend(["Engineering Coordinator", "Coordinator Engineering"])
+
     unicas = []
     vistos = set()
     for item in saida:
@@ -1197,7 +1218,9 @@ def executar_busca(params):
     # Uma única correspondência não deve impedir a busca de variações válidas:
     # "Gerente de Engenharia" também pode aparecer como "Gerente Engenharia".
     variantes = variantes_cargo(termo)
-    alvo_minimo = 5 if len(variantes) > 1 else 0
+    # Para aliases, buscamos uma amostra maior antes de parar; a lista final
+    # continua limitada a 60 pelo consolidator.
+    alvo_minimo = 10 if len(variantes) > 1 else 0
     if len(unicas) < alvo_minimo:
         for alternativa in variantes[1:]:
             try:
