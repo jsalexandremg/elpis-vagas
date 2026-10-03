@@ -23,7 +23,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-03-v24.31-Busca-Composta-Completa"
+APP_VERSION = "2026-10-03-v24.32-Busca-Composta-Corrigida"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
 # 1. REMOVE TRADUÇÃO INDEVIDA E ELIMINA O BADGE "HOSTED WITH STREAMLIT" NO DOM PAI
@@ -1118,7 +1118,10 @@ def limite_exatas_cargo(termo, parciais):
                       if p.casefold() not in {"de", "da", "do", "das", "dos", "e", "em", "na", "no", "para"}]
     if parciais:
         return 999
-    return 1 if len(significativas) >= 3 else 5
+    # No core.consolidar, este valor é o limiar a partir do qual
+    # correspondências parciais são ocultadas. Com 1, uma única vaga
+    # exata escondia todas as variações relacionadas do cargo.
+    return 5
 
 def executar_busca(params):
     termo, loc, niv = params["cargo"], params["local"], params["nivel"]
