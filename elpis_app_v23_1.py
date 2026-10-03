@@ -20,18 +20,24 @@ from hashlib import sha256
 import folium
 import requests
 import streamlit as st
+import streamlit.components.v1 as components
 from streamlit_folium import st_folium
 
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-03-v24.40-Auto-Fill-Location"
+APP_VERSION = "2026-10-03-v24.41-Sync-Location"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
-# 1. REMOVE TRADUÇÃO INDEVIDA E ELIMINA O BADGE "HOSTED WITH STREAMLIT" NO DOM PAI
-st.html("""<script>
+# =========================================================
+# 1. WATCHDOG SEGURO: OCULTA O AVATAR E O SELO DO STREAMLIT CLOUD
+# =========================================================
+components.html("""
+<script>
 try {
   const d = window.parent.document;
+  
+  // Impede a tradução automática indevida do Chrome
   d.documentElement.setAttribute('lang', 'pt-BR');
   d.documentElement.setAttribute('translate', 'no');
   d.documentElement.classList.add('notranslate');
@@ -41,28 +47,42 @@ try {
     d.head.appendChild(m);
   }
 
-  // Função para deletar o selo do Streamlit Community Cloud no pai
-  function killBadge() {
+  // Watchdog seguro: Oculta elementos intrusivos do Cloud sem deletar o nó (não assusta o React)
+  function hideStreamlitArtifacts() {
     const selectors = [
+      'a[href*="streamlit.io/cloud"]',
+      'img[src*="githubusercontent"]',
+      'img[src*="googleusercontent"]',
+      '[class*="viewerBadge"]',
+      '[class*="ProfileBadge"]',
       '[data-testid="stStatusWidget"]',
-      'div[class*="viewerBadge"]',
-      'a[class*="viewerBadge"]',
-      'div[class*="ProfileBadge"]',
-      'footer',
-      'div[data-testid="stToolbar"]',
-      'div[data-testid="stDecoration"]'
+      '[data-testid="manage-app-button"]'
     ];
-    selectors.forEach(sel => {
-      d.querySelectorAll(sel).forEach(el => el.remove());
+    
+    selectors.forEach(selector => {
+      d.querySelectorAll(selector).forEach(el => {
+        el.style.setProperty('display', 'none', 'important');
+        el.style.setProperty('opacity', '0', 'important');
+        el.style.setProperty('visibility', 'hidden', 'important');
+        el.style.setProperty('pointer-events', 'none', 'important');
+        
+        // Esconde o container pai direto se ele encapsular a imagem/botão
+        if (el.parentElement && el.parentElement.tagName === 'DIV') {
+            el.parentElement.style.setProperty('display', 'none', 'important');
+            el.parentElement.style.setProperty('opacity', '0', 'important');
+            el.parentElement.style.setProperty('z-index', '-9999', 'important');
+        }
+      });
     });
   }
-  killBadge();
 
-  // Monitora e impede o Streamlit de recriar o selo no DOM
-  const obs = new MutationObserver(() => killBadge());
-  obs.observe(d.body, { childList: true, subtree: true });
+  // Aplica a limpeza a cada 500ms para neutralizar qualquer re-render
+  hideStreamlitArtifacts();
+  setInterval(hideStreamlitArtifacts, 500);
+
 } catch (e) {}
-</script>""", unsafe_allow_javascript=True)
+</script>
+""", height=0, width=0)
 
 # 2. Injeta CSS base
 try:
@@ -102,26 +122,34 @@ st.markdown("""
 }
 
 /* =========================================================
-   BLINDAGEM CONTRA O BADGE "HOSTED WITH STREAMLIT" (CSS)
+   BLINDAGEM CONTRA AVATAR E BADGES DA NUVEM (CSS DE BACKUP)
    ========================================================= */
 [data-testid="stStatusWidget"],
-[class*="viewerBadge"],
-[class*="ProfileBadge"],
-div:has(> [class*="viewerBadge"]),
-footer,
-header[data-testid="stHeader"],
-[data-testid="stSidebar"],
-[data-testid="stSidebarCollapsedControl"],
-[data-testid="collapsedControl"] {
+[data-testid="manage-app-button"],
+[class*="viewerBadge_container"],
+[class*="viewerBadge_link"],
+[class*="ProfileBadge_container"],
+[class*="profileBadge"],
+a[href*="share.streamlit.io"],
+a[href*="streamlit.io/cloud"],
+img[src*="githubusercontent"],
+img[src*="googleusercontent"] {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
-    height: 0 !important;
-    width: 0 !important;
     pointer-events: none !important;
-    position: absolute !important;
-    left: -9999px !important;
 }
+
+div:has(> a[href*="streamlit.io/cloud"]),
+div:has(> img[src*="githubusercontent"]),
+div:has(> div[class*="viewerBadge"]) {
+    display: none !important;
+}
+
+/* Oculta cabeçalho nativo e barra lateral do Streamlit */
+header[data-testid="stHeader"], [data-testid="stSidebar"],
+[data-testid="stSidebarCollapsedControl"], [data-testid="collapsedControl"],
+footer {display: none !important;}
 
 /* Oculta contentores invisíveis para cortar espaço branco no topo */
 div[data-testid="stElementContainer"]:has(> style),
@@ -764,6 +792,10 @@ def badge_fonte(nome, mapa, rodando):
 # MOTOR RESILIENTE DO GEMINI (REST API PURA)
 # ==========================================
 def chamar_gemini(prompt, chave):
+    """
+    Executa a requisição HTTP direta para a API do Google Gemini.
+    Elimina permanentemente o erro 'Cannot send a request, as the client has been closed'.
+    """
     if not chave:
         raise ValueError("Chave de API Gemini não fornecida.")
 
@@ -999,7 +1031,6 @@ def normalizar_localidade_ibge(entrada):
     estado = next((por_uf.get(_normalizar_texto_local(p)) for p in partes[1:]), None)
     estado_sozinho = por_uf.get(texto)
     
-    # Formato cidade/estado/pais
     if estado_sozinho and not estado:
         return f"{estado_sozinho['nome']}/{estado_sozinho['sigla']}/Brasil", ""
     candidatas = [c for c in cidades if _normalizar_texto_local(c["nome"]) == texto]
@@ -1037,6 +1068,7 @@ with st.form("search_form"):
 # ==========================================
 col_filtros, col_main = st.columns([1.38, 4.62], gap="small")
 with col_main:
+    st.caption(f"Élpis {APP_VERSION}")
     status_slot = st.container()
     aviso_slot = st.container()
     col_lista, col_mapa = st.columns([1.45, 1.15], gap="small")
@@ -1065,7 +1097,7 @@ with col_filtros:
                 badge_slots[nome] = cb.empty()
                 badge_slots[nome].markdown(badge_fonte(nome, mapa_prev, False), unsafe_allow_html=True)
 
-        st.markdown("<div class='f-sec'>🎛️️ Modalidade</div>", unsafe_allow_html=True)
+        st.markdown("<div class='f-sec'>🎛 Modalidade</div>", unsafe_allow_html=True)
         with st.container(key="sec_modalidade"):
             c_pres, c_rem, c_hib = st.columns([1.35, 1.0, 1.0], gap="small")
             mod_cols = [c_pres, c_rem, c_hib]
@@ -1095,7 +1127,7 @@ with col_filtros:
             st.caption("Visitante.")
 
         # Opções de IA e Configuração Harmonizadas
-        with st.expander("⚙️ IA & Opções"):
+        with st.expander("⚙️️ IA & Opções"):
             prazo = st.slider("Timeout (s)", 8, 40, 20)
             st.session_state.setdefault("gemini_key", os.getenv("GEMINI_API_KEY", ""))
             st.session_state.setdefault("gemini_connected", False)
@@ -1292,20 +1324,27 @@ def executar_busca(params):
     loc_original = loc
     loc, aviso_local = normalizar_localidade_ibge(loc)
     
-    # ATUALIZAÇÃO IMEDIATA DO CAMPO "LOCALIDADE" VIA JAVASCRIPT INJECTION
+    # ATUALIZAÇÃO IMEDIATA DO CAMPO "LOCALIDADE" VIA JAVASCRIPT INJECTION COM WATCHDOG
     if loc and loc != loc_original:
         safe_loc = loc.replace("'", "\\'")
         st.html(f"""<script>
         try {{
-            const doc = window.parent.document;
-            const inputs = Array.from(doc.querySelectorAll('input'));
-            const localInput = inputs.find(inp => inp.getAttribute('aria-label') === 'Localidade');
-            if (localInput) {{
-                localInput.value = '{safe_loc}';
-                let tracker = localInput._valueTracker;
-                if (tracker) {{ tracker.setValue(''); }}
-                localInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+            function updateLoc() {{
+                const doc = window.parent.document;
+                const inputs = Array.from(doc.querySelectorAll('input'));
+                const localInput = inputs.find(inp => inp.placeholder && inp.placeholder.includes('Localidade'));
+                if (localInput && localInput.value !== '{safe_loc}') {{
+                    localInput.value = '{safe_loc}';
+                    let tracker = localInput._valueTracker;
+                    if (tracker) {{ tracker.setValue(''); }}
+                    localInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                    localInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                }}
             }}
+            updateLoc();
+            setTimeout(updateLoc, 150);
+            setTimeout(updateLoc, 500);
+            setTimeout(updateLoc, 1200);
         }} catch (e) {{}}
         </script>""")
 
