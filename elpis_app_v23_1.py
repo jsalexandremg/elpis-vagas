@@ -23,7 +23,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-03-v24.35-Filtro-Titulo-Contexto"
+APP_VERSION = "2026-10-03-v24.36-Filtro-Cobertura"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
 # 1. REMOVE TRADUÇÃO INDEVIDA E ELIMINA O BADGE "HOSTED WITH STREAMLIT" NO DOM PAI
@@ -986,6 +986,7 @@ with st.form("search_form"):
 # ==========================================
 col_filtros, col_main = st.columns([1.38, 4.62], gap="small")
 with col_main:
+    st.caption(f"Élpis {APP_VERSION}")
     status_slot = st.container()
     aviso_slot = st.container()
     col_lista, col_mapa = st.columns([1.45, 1.15], gap="small")
@@ -1181,6 +1182,22 @@ def cargo_atende_titulo(titulo, termo, contexto=""):
     return any(bool((titulo_tokens | contexto_tokens) & equivalencias.get(p, {p})) for p in dominio)
 
 
+def cargo_base_no_titulo(titulo, termo):
+    """Mantém o cargo-base no título quando o domínio está no contexto."""
+    stop = {"de", "da", "do", "das", "dos", "e", "em", "na", "no", "para", "a", "o"}
+    palavras = [p for p in str(termo or "").casefold().split() if p not in stop]
+    if not palavras:
+        return False
+    equivalencias = {
+        "coordenador": {"coordenador", "coordenadora", "coordinator"},
+        "gerente": {"gerente", "manager"},
+        "diretor": {"diretor", "diretora", "director"},
+        "especialista": {"especialista", "specialist"},
+        "analista": {"analista", "analyst"},
+    }
+    return bool(_tokens_cargo(titulo) & equivalencias.get(palavras[0], {palavras[0]}))
+
+
 def filtrar_cargo_exato(vagas, termo):
     """Filtra após consolidação usando título + resumo/descrição da vaga."""
     saida = []
@@ -1244,10 +1261,20 @@ def executar_busca(params):
             except Exception:
                 continue
 
-    # Segurança de relevância: não basta coincidir com o assunto.
-    # "Coordenador de Auditoria Interna" não pode exibir Analista, Head
-    # ou Consultor de Auditoria Interna como se fossem coordenadores.
-    unicas = filtrar_cargo_exato(unicas, termo)
+    # A consulta da fonte já validou o domínio. Se o filtro título+contexto
+    # for severo demais, preservamos vagas que mantêm o cargo-base no título.
+    consolidadas_antes_filtro = len(unicas)
+    rigorosas = filtrar_cargo_exato(unicas, termo)
+    if len(rigorosas) < 5 and len(unicas) > len(rigorosas):
+        por_cargo = [v for v in unicas if cargo_base_no_titulo(v.get("titulo", ""), termo)]
+        unicas = por_cargo or rigorosas
+    else:
+        unicas = rigorosas
+    st.session_state["diagnostico_busca"] = {
+        "brutas": len(brutas), "consolidadas": consolidadas_antes_filtro,
+        "rigorosas": len(rigorosas), "exibidas": len(unicas),
+        "termo": termo, "versao": APP_VERSION,
+    }
 
     falhas = [r for r in resultados if r.status in ("erro", "timeout")]
     st.session_state.rede = core.verificar_rede() if len(falhas) >= max(3, len(resultados) // 2) else None
