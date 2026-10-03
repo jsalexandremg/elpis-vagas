@@ -23,7 +23,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-03-v24.32-Busca-Composta-Corrigida"
+APP_VERSION = "2026-10-03-v24.33-Filtro-Cargo"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
 # 1. REMOVE TRADUÇÃO INDEVIDA E ELIMINA O BADGE "HOSTED WITH STREAMLIT" NO DOM PAI
@@ -1112,6 +1112,55 @@ def variantes_cargo(termo):
     return unicas
 
 
+def _tokens_cargo(texto):
+    import re
+    import unicodedata
+    texto = unicodedata.normalize("NFKD", str(texto or "")).encode("ascii", "ignore").decode().casefold()
+    return set(re.findall(r"[a-z0-9]+", texto))
+
+
+def cargo_atende_titulo(titulo, termo):
+    """Exige cargo-base + domínio no título; evita tema correto com senioridade errada."""
+    consulta = _tokens_cargo(termo)
+    titulo_tokens = _tokens_cargo(titulo)
+    stop = {"de", "da", "do", "das", "dos", "e", "em", "na", "no", "para", "a", "o"}
+    consulta -= stop
+    if not consulta:
+        return False
+
+    equivalencias = {
+        "coordenador": {"coordenador", "coordenadora", "coordinator"},
+        "gerente": {"gerente", "manager"},
+        "diretor": {"diretor", "diretora", "director"},
+        "especialista": {"especialista", "specialist"},
+        "analista": {"analista", "analyst"},
+        "auditoria": {"auditoria", "auditor", "audit"},
+        "auditor": {"auditoria", "auditor", "audit"},
+        "interna": {"interna", "interno", "internal"},
+        "interno": {"interna", "interno", "internal"},
+        "engenharia": {"engenharia", "engineering"},
+        "planejamento": {"planejamento", "planning"},
+    }
+    # O primeiro termo significativo é o cargo-base e é obrigatório.
+    base = next(iter(consulta)) if len(consulta) == 1 else None
+    palavras = [p for p in str(termo or "").casefold().split() if p not in stop]
+    base = palavras[0] if palavras else ""
+    base_ok = bool(titulo_tokens & equivalencias.get(base, {base}))
+    if not base_ok:
+        return False
+
+    # Os demais termos formam o domínio; pelo menos um precisa aparecer.
+    dominio = [p for p in palavras[1:] if p not in stop]
+    if not dominio:
+        return True
+    return any(bool(titulo_tokens & equivalencias.get(p, {p})) for p in dominio)
+
+
+def filtrar_cargo_exato(vagas, termo):
+    """Filtra títulos após a consolidação, antes de exibir/mapear resultados."""
+    return [v for v in vagas if cargo_atende_titulo(v.get("titulo", ""), termo)]
+
+
 def limite_exatas_cargo(termo, parciais):
     """Cargos longos precisam aceitar títulos equivalentes, sem liberar parciais para cargos simples."""
     significativas = [p for p in str(termo or "").split()
@@ -1162,6 +1211,11 @@ def executar_busca(params):
                     break
             except Exception:
                 continue
+
+    # Segurança de relevância: não basta coincidir com o assunto.
+    # "Coordenador de Auditoria Interna" não pode exibir Analista, Head
+    # ou Consultor de Auditoria Interna como se fossem coordenadores.
+    unicas = filtrar_cargo_exato(unicas, termo)
 
     falhas = [r for r in resultados if r.status in ("erro", "timeout")]
     st.session_state.rede = core.verificar_rede() if len(falhas) >= max(3, len(resultados) // 2) else None
