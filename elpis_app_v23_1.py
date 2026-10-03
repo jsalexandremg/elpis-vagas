@@ -9,6 +9,8 @@ from collections import Counter
 import html
 import json
 import os
+import re
+import unicodedata
 import sqlite3
 import time
 import uuid
@@ -23,7 +25,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-03-v24.37-Consolidacao-Cobertura"
+APP_VERSION = "2026-10-03-v24.39-Filtro-Localidade"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
 # 1. REMOVE TRADUÇÃO INDEVIDA E ELIMINA O BADGE "HOSTED WITH STREAMLIT" NO DOM PAI
@@ -967,6 +969,58 @@ def limpar_filtros():
 
 
 # ==========================================
+# LOCALIDADES OFICIAIS — IBGE
+IBGE_ESTADOS_URL = "https://servicodados.ibge.gov.br/api/v1/localidades/estados"
+IBGE_MUNICIPIOS_URL = "https://servicodados.ibge.gov.br/api/v1/localidades/municipios"
+
+def _normalizar_texto_local(texto):
+    texto = unicodedata.normalize("NFKD", str(texto or ""))
+    texto = "".join(c for c in texto if not unicodedata.combining(c))
+    return " ".join(re.sub(r"[^a-zA-Z0-9 ]", " ", texto).casefold().split())
+
+@st.cache_data(ttl=86400, show_spinner=False)
+def catalogo_ibge():
+    estados = requests.get(IBGE_ESTADOS_URL, timeout=20).json()
+    municipios = requests.get(IBGE_MUNICIPIOS_URL, timeout=30).json()
+    estados_out = [{"id": e["id"], "sigla": e["sigla"], "nome": e["nome"]} for e in estados]
+    por_uf = {}
+    for e in estados_out:
+        por_uf[e["sigla"].casefold()] = e
+        por_uf[_normalizar_texto_local(e["nome"])] = e
+    por_id = {e["id"]: e for e in estados_out}
+    cidades = []
+    for m in municipios:
+        uf = por_id.get(((m.get("microrregiao") or {}).get("mesorregiao") or {}).get("UF", {}).get("id"))
+        if uf:
+            cidades.append({"id": m["id"], "nome": m["nome"], "uf": uf["sigla"], "estado": uf["nome"]})
+    return estados_out, cidades, por_uf
+
+def normalizar_localidade_ibge(entrada):
+    bruto = " ".join(str(entrada or "").replace("/", ",").split()).strip()
+    if not bruto:
+        return "", ""
+    try:
+        _, cidades, por_uf = catalogo_ibge()
+    except Exception:
+        return bruto, "Não foi possível consultar o catálogo do IBGE; usando o texto digitado."
+    partes = [p.strip() for p in bruto.split(",") if p.strip()]
+    partes = [p for p in partes if _normalizar_texto_local(p) not in {"brasil", "brazil"}]
+    texto = _normalizar_texto_local(partes[0] if partes else bruto)
+    estado = next((por_uf.get(_normalizar_texto_local(p)) for p in partes[1:]), None)
+    estado_sozinho = por_uf.get(texto)
+    if estado_sozinho and not estado:
+        return f"{estado_sozinho['nome']}/{estado_sozinho['sigla']}, Brasil", ""
+    candidatas = [c for c in cidades if _normalizar_texto_local(c["nome"]) == texto]
+    if estado:
+        candidatas = [c for c in candidatas if c["uf"] == estado["sigla"]]
+    if len(candidatas) == 1:
+        c = candidatas[0]
+        return f"{c['nome']} - {c['estado']}/{c['uf']}, Brasil", ""
+    if len(candidatas) > 1:
+        opcoes = ", ".join(f"{c['nome']}/{c['uf']}" for c in candidatas[:6])
+        return bruto, f"A localidade '{bruto}' é ambígua. Informe a UF; opções: {opcoes}."
+    return bruto, f"'{bruto}' não foi localizada no catálogo do IBGE; usando o texto original."
+
 # 1) HEADER DE BUSCA COM LOGO DESTACADO E ANIMADO
 # ==========================================
 with st.form("search_form"):
@@ -1219,8 +1273,30 @@ def limite_exatas_cargo(termo, parciais):
     # exata escondia todas as variações relacionadas do cargo.
     return 5
 
-def consolidar_cobertura(brutas, termo, nivel, limite=60):
-    """Consolida os itens coletados sem o corte excessivo do core.consolidar."""
+def localidade_atende_vaga(local_vaga, localidade_canonica):
+    """Impede que vagas estrangeiras apareçam numa busca brasileira específica."""
+    atual = _normalizar_texto_local(local_vaga)
+    if not localidade_canonica:
+        return True
+    if not atual:
+        return False
+    canon = str(localidade_canonica)
+    if " - " in canon:
+        cidade = _normalizar_texto_local(canon.split(" - ", 1)[0])
+        return cidade in atual
+    partes = canon.split("/", 1)
+    estado = _normalizar_texto_local(partes[0])
+    uf = _normalizar_texto_local(partes[1].split(",", 1)[0]) if len(partes) > 1 else ""
+    return estado in atual or (uf and uf in set(atual.split()))
+
+
+def filtrar_localidade_vagas(vagas, localidade_canonica):
+    return [v for v in vagas if localidade_atende_vaga(v.get("local", ""), localidade_canonica)]
+
+
+def consolidar_cobertura(brutas, termo, nivel, limite=60, localidade=""):
+    """Consolida registros sem o corte excessivo do core e respeita a localidade."""
+    brutas = filtrar_localidade_vagas(brutas, localidade)
     rigorosas = filtrar_cargo_exato(brutas, termo)
     if len(rigorosas) < 5:
         por_cargo = [v for v in brutas if cargo_base_no_titulo(v.get("titulo", ""), termo)]
@@ -1245,6 +1321,12 @@ def consolidar_cobertura(brutas, termo, nivel, limite=60):
 
 def executar_busca(params):
     termo, loc, niv = params["cargo"], params["local"], params["nivel"]
+    loc_original = loc
+    loc, aviso_local = normalizar_localidade_ibge(loc)
+    if aviso_local:
+        st.warning(aviso_local)
+    elif loc:
+        st.caption(f"Localidade reconhecida pelo IBGE: **{loc}**")
     st.markdown(bv.ESCONDER, unsafe_allow_html=True)
     brutas, resultados, t0 = [], [], time.perf_counter()
 
@@ -1280,7 +1362,7 @@ def executar_busca(params):
                 for r in core.executar(fontes_ativas, alternativa, loc, prazo=prazo):
                     resultados.append(r)
                     brutas.extend(r.itens)
-                cobertura = consolidar_cobertura(brutas, termo, niv, limite=60)
+                cobertura = consolidar_cobertura(brutas, termo, niv, limite=60, localidade=loc)
                 unicas = cobertura
                 # Continua até atingir um conjunto útil; depois para para não
                 # aumentar o tempo da busca sem necessidade.
@@ -1292,10 +1374,11 @@ def executar_busca(params):
     # A lista exibida vem de todos os registros brutos, não do corte rígido
     # do core.consolidar. Isso evita perder vagas que vieram de aliases.
     consolidadas_antes_filtro = len(unicas_core)
-    rigorosas = filtrar_cargo_exato(brutas, termo)
-    unicas = consolidar_cobertura(brutas, termo, niv, limite=60)
+    brutas_localizadas = filtrar_localidade_vagas(brutas, loc)
+    rigorosas = filtrar_cargo_exato(brutas_localizadas, termo)
+    unicas = consolidar_cobertura(brutas_localizadas, termo, niv, limite=60, localidade=loc)
     st.session_state["diagnostico_busca"] = {
-        "brutas": len(brutas), "consolidadas_core": consolidadas_antes_filtro,
+        "brutas": len(brutas), "brutas_localizadas": len(brutas_localizadas), "consolidadas_core": consolidadas_antes_filtro,
         "rigorosas": len(rigorosas), "exibidas": len(unicas),
         "termo": termo, "versao": APP_VERSION,
     }
