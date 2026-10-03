@@ -23,7 +23,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-03-v24.36-Filtro-Cobertura"
+APP_VERSION = "2026-10-03-v24.37-Consolidacao-Cobertura"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
 # 1. REMOVE TRADUÇÃO INDEVIDA E ELIMINA O BADGE "HOSTED WITH STREAMLIT" NO DOM PAI
@@ -1219,6 +1219,30 @@ def limite_exatas_cargo(termo, parciais):
     # exata escondia todas as variações relacionadas do cargo.
     return 5
 
+def consolidar_cobertura(brutas, termo, nivel, limite=60):
+    """Consolida os itens coletados sem o corte excessivo do core.consolidar."""
+    rigorosas = filtrar_cargo_exato(brutas, termo)
+    if len(rigorosas) < 5:
+        por_cargo = [v for v in brutas if cargo_base_no_titulo(v.get("titulo", ""), termo)]
+        candidatas = por_cargo or rigorosas
+    else:
+        candidatas = rigorosas
+
+    vistos, unicas = set(), []
+    for vaga in candidatas:
+        link = str(vaga.get("link", "") or "").strip()
+        chave = link or "|".join(str(vaga.get(k, "") or "") for k in ("titulo", "empresa", "local"))
+        if chave in vistos:
+            continue
+        vistos.add(chave)
+        item = dict(vaga)
+        item.setdefault("relevancia", 0)
+        unicas.append(item)
+
+    unicas.sort(key=lambda v: (v.get("relevancia", 0), v.get("data") or core.MIN_DATA), reverse=True)
+    return unicas[:limite]
+
+
 def executar_busca(params):
     termo, loc, niv = params["cargo"], params["local"], params["nivel"]
     st.markdown(bv.ESCONDER, unsafe_allow_html=True)
@@ -1238,7 +1262,10 @@ def executar_busca(params):
             box.update(label=f"Concluído em {time.perf_counter() - t0:.1f}s", state="complete", expanded=False)
 
     limite_exatas = limite_exatas_cargo(termo, parciais)
-    unicas = core.consolidar(brutas, niv, limite=60, min_exatas=limite_exatas)
+    # Mantemos a consolidação do core apenas como diagnóstico; a lista final
+    # será montada sobre todos os registros brutos coletados.
+    unicas_core = core.consolidar(brutas, niv, limite=60, min_exatas=limite_exatas)
+    unicas = unicas_core
 
     # Fallback quando a consulta principal não encontra ou encontra poucas vagas.
     # Uma única correspondência não deve impedir a busca de variações válidas:
@@ -1253,25 +1280,22 @@ def executar_busca(params):
                 for r in core.executar(fontes_ativas, alternativa, loc, prazo=prazo):
                     resultados.append(r)
                     brutas.extend(r.itens)
-                unicas = core.consolidar(brutas, niv, limite=60, min_exatas=limite_exatas)
+                cobertura = consolidar_cobertura(brutas, termo, niv, limite=60)
+                unicas = cobertura
                 # Continua até atingir um conjunto útil; depois para para não
                 # aumentar o tempo da busca sem necessidade.
-                if len(unicas) >= alvo_minimo:
+                if len(cobertura) >= alvo_minimo:
                     break
             except Exception:
                 continue
 
-    # A consulta da fonte já validou o domínio. Se o filtro título+contexto
-    # for severo demais, preservamos vagas que mantêm o cargo-base no título.
-    consolidadas_antes_filtro = len(unicas)
-    rigorosas = filtrar_cargo_exato(unicas, termo)
-    if len(rigorosas) < 5 and len(unicas) > len(rigorosas):
-        por_cargo = [v for v in unicas if cargo_base_no_titulo(v.get("titulo", ""), termo)]
-        unicas = por_cargo or rigorosas
-    else:
-        unicas = rigorosas
+    # A lista exibida vem de todos os registros brutos, não do corte rígido
+    # do core.consolidar. Isso evita perder vagas que vieram de aliases.
+    consolidadas_antes_filtro = len(unicas_core)
+    rigorosas = filtrar_cargo_exato(brutas, termo)
+    unicas = consolidar_cobertura(brutas, termo, niv, limite=60)
     st.session_state["diagnostico_busca"] = {
-        "brutas": len(brutas), "consolidadas": consolidadas_antes_filtro,
+        "brutas": len(brutas), "consolidadas_core": consolidadas_antes_filtro,
         "rigorosas": len(rigorosas), "exibidas": len(unicas),
         "termo": termo, "versao": APP_VERSION,
     }
