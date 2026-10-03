@@ -23,7 +23,7 @@ from streamlit_folium import st_folium
 import elpis_fontes as core
 import elpis_boas_vindas as bv
 
-APP_VERSION = "2026-10-03-v24.30-Busca-Composta"
+APP_VERSION = "2026-10-03-v24.31-Busca-Composta-Completa"
 st.set_page_config(page_title=f"Élpis {APP_VERSION}", layout="wide", initial_sidebar_state="collapsed")
 
 # 1. REMOVE TRADUÇÃO INDEVIDA E ELIMINA O BADGE "HOSTED WITH STREAMLIT" NO DOM PAI
@@ -1141,17 +1141,21 @@ def executar_busca(params):
     limite_exatas = limite_exatas_cargo(termo, parciais)
     unicas = core.consolidar(brutas, niv, limite=60, min_exatas=limite_exatas)
 
-    # Fallback somente quando o cargo composto não produziu nenhuma vaga.
-    # Evita multiplicar consultas em buscas normais e cobre variações como
-    # "Gerente de Engenharia e Planejamento" / "Gerente de Engenharia".
-    if not unicas and len(variantes_cargo(termo)) > 1:
-        for alternativa in variantes_cargo(termo)[1:]:
+    # Fallback quando a consulta principal não encontra ou encontra poucas vagas.
+    # Uma única correspondência não deve impedir a busca de variações válidas:
+    # "Gerente de Engenharia" também pode aparecer como "Gerente Engenharia".
+    variantes = variantes_cargo(termo)
+    alvo_minimo = 5 if len(variantes) > 1 else 0
+    if len(unicas) < alvo_minimo:
+        for alternativa in variantes[1:]:
             try:
                 for r in core.executar(fontes_ativas, alternativa, loc, prazo=prazo):
                     resultados.append(r)
                     brutas.extend(r.itens)
                 unicas = core.consolidar(brutas, niv, limite=60, min_exatas=limite_exatas)
-                if unicas:
+                # Continua até atingir um conjunto útil; depois para para não
+                # aumentar o tempo da busca sem necessidade.
+                if len(unicas) >= alvo_minimo:
                     break
             except Exception:
                 continue
